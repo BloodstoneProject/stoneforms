@@ -84,7 +84,7 @@ export default function FormResponsesPage({ params }: { params: Promise<{ id: st
             <div className="bg-green-50 rounded-lg p-4">
               <div className="text-green-700 text-sm mb-1">Completed</div>
               <div className="text-2xl font-bold text-green-900">
-                {submissions.filter(s => s.completedAt).length}
+                {submissions.filter(s => s.status === "completed").length}
               </div>
             </div>
             <div className="bg-blue-50 rounded-lg p-4">
