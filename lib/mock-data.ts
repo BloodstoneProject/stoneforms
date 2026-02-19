@@ -9,7 +9,6 @@ export const mockForms: Form[] = Array.from({ length: 100 }, (_, i) => {
   
   return {
     id: `form-${i + 1}`,
-    workspaceId: 'demo',
     title: `${category} Form ${Math.floor(i / 10) + 1}`,
     description: `A professional ${category.toLowerCase()} form for collecting responses`,
     questions: [],
@@ -57,7 +56,6 @@ export const mockContacts: Contact[] = Array.from({ length: 500 }, (_, i) => {
   
   return {
     id: `contact-${i + 1}`,
-    workspaceId: 'demo',
     firstName,
     lastName,
     email,
@@ -83,7 +81,6 @@ export const mockDeals: Deal[] = Array.from({ length: 50 }, (_, i) => {
   
   return {
     id: `deal-${i + 1}`,
-    workspaceId: 'demo',
     contactId: `contact-${i + 1}`,
     title: `${mockContacts[i].company || 'New Company'} - ${['Starter', 'Professional', 'Business', 'Enterprise'][i % 4]} Plan`,
     value: values[i % values.length],
@@ -105,7 +102,6 @@ export const mockSubmissions: Submission[] = Array.from({ length: 1000 }, (_, i)
   return {
     id: `submission-${i + 1}`,
     formId,
-    workspaceId: 'demo',
     answers: [
       {
         questionId: 'q1',
@@ -120,11 +116,11 @@ export const mockSubmissions: Submission[] = Array.from({ length: 1000 }, (_, i)
     ],
     metadata: {
       userAgent: 'Mozilla/5.0',
-      ip: '192.168.1.' + (i % 255),
+      ipAddress: '192.168.1.' + (i % 255),
+      startedAt: new Date(2024, 1, 1 + (i % 28)).toISOString(),
       referrer: ['Google', 'Direct', 'Facebook', 'LinkedIn'][i % 4],
     },
     createdAt: new Date(2024, 1, 1 + (i % 28), Math.floor(Math.random() * 24), Math.floor(Math.random() * 60)).toISOString(),
-    completedAt: new Date(2024, 1, 1 + (i % 28), Math.floor(Math.random() * 24), Math.floor(Math.random() * 60)).toISOString(),
   }
 })
 
