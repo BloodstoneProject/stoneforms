@@ -1,7 +1,17 @@
+import { createServerClient } from '@/lib/supabase-client'
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 
 export async function GET(request: Request) {
-  // For demo purposes, just redirect to dashboard
-  // Real authentication will be added when Supabase is connected
-  return NextResponse.redirect(new URL('/dashboard', request.url))
+  const requestUrl = new URL(request.url)
+  const code = requestUrl.searchParams.get('code')
+
+  if (code) {
+    const cookieStore = cookies()
+    const supabase = createServerClient()
+    await supabase.auth.exchangeCodeForSession(code)
+  }
+
+  // Redirect to dashboard after successful auth
+  return NextResponse.redirect(new URL('/dashboard', requestUrl.origin))
 }
