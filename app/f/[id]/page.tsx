@@ -15,9 +15,9 @@ export default function FormPlayerPage({ params }: { params: Promise<{ id: strin
 
   // Default questions if form has none
   const questions: Question[] = form?.questions && form.questions.length > 0 ? form.questions : [
-    { id: 'q1', type: 'email', label: 'What is your email address?', required: true },
-    { id: 'q2', type: 'short_text', label: 'What is your name?', required: true },
-    { id: 'q3', type: 'long_text', label: 'How can we help you?', required: false },
+    { id: 'q1', type: 'email', label: 'What is your email address?', required: true, order: 0 },
+    { id: 'q2', type: 'short_text', label: 'What is your name?', required: true, order: 1 },
+    { id: 'q3', type: 'long_text', label: 'How can we help you?', required: false, order: 2 },
   ]
 
   if (!form) {
