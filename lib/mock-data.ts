@@ -9,6 +9,7 @@ export const mockForms: Form[] = Array.from({ length: 100 }, (_, i) => {
   
   return {
     id: `form-${i + 1}`,
+    workspaceId: 'demo',
     title: `${category} Form ${Math.floor(i / 10) + 1}`,
     description: `A professional ${category.toLowerCase()} form for collecting responses`,
     questions: [],
