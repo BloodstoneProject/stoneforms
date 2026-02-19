@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase-client'
 import { NextResponse } from 'next/server'
 import { checkCanAcceptResponse } from '@/lib/plan-enforcement'
+import { sendSubmissionNotification } from '@/lib/email-utils'
 
 // POST /api/forms/[id]/submit - Submit form response
 export async function POST(
@@ -16,7 +17,7 @@ export async function POST(
     // Get form to verify it exists and is published
     const { data: form, error: formError } = await supabase
       .from('forms')
-      .select('id, status')
+      .select('id, status, title, user_id')
       .eq('id', params.id)
       .single()
 
@@ -28,7 +29,7 @@ export async function POST(
       return NextResponse.json({ error: 'Form is not published' }, { status: 400 })
     }
 
-    // Check plan limits BEFORE accepting response
+    // Check plan limits
     const limitCheck = await checkCanAcceptResponse(params.id)
     
     if (!limitCheck.allowed) {
@@ -44,6 +45,7 @@ export async function POST(
       .from('form_fields')
       .select('*')
       .eq('form_id', params.id)
+      .order('position')
 
     // Validate required fields
     const requiredFields = fields?.filter(f => f.required) || []
@@ -69,6 +71,30 @@ export async function POST(
     if (submissionError) {
       console.error('Submission error:', submissionError)
       return NextResponse.json({ error: 'Failed to submit form' }, { status: 500 })
+    }
+
+    // Send email notification (async, don't wait)
+    try {
+      const { data: notificationSettings } = await supabase
+        .from('notification_settings')
+        .select('*')
+        .eq('form_id', params.id)
+        .single()
+
+      if (notificationSettings?.notify_on_submission && notificationSettings.notification_emails?.length > 0) {
+        // Send email in background (don't await)
+        sendSubmissionNotification({
+          formTitle: form.title,
+          formId: params.id,
+          submissionId: submission.id,
+          responses,
+          notificationEmails: notificationSettings.notification_emails,
+          formFields: fields || []
+        }).catch(err => console.error('Email notification error:', err))
+      }
+    } catch (emailError) {
+      // Don't fail submission if email fails
+      console.error('Email notification error:', emailError)
     }
 
     return NextResponse.json({ 
