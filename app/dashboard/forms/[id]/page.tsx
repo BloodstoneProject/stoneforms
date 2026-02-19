@@ -30,7 +30,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
   const [fields, setFields] = useState<Field[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [editingField, setEditingField] = useState<string | null>(null)
+  const [publishing, setPublishing] = useState(false)
 
   const fieldTypes = [
     { value: 'short_text', label: 'Short Text', icon: '📝' },
@@ -53,23 +53,22 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
 
   const fetchFormAndFields = async () => {
     try {
-      // Fetch form
       const formRes = await fetch(`/api/forms/${formId}`)
-      const formData = await formRes.json()
-      
-      if (formData.form) {
-        setForm(formData.form)
+      if (!formRes.ok) {
+        const error = await formRes.json()
+        alert(`Error loading form: ${error.error}`)
+        router.push('/dashboard/forms')
+        return
       }
+      const formData = await formRes.json()
+      if (formData.form) setForm(formData.form)
 
-      // Fetch fields
       const fieldsRes = await fetch(`/api/forms/${formId}/fields`)
       const fieldsData = await fieldsRes.json()
-      
-      if (fieldsData.fields) {
-        setFields(fieldsData.fields)
-      }
+      if (fieldsData.fields) setFields(fieldsData.fields)
     } catch (error) {
       console.error('Failed to fetch:', error)
+      alert('Failed to load form')
     } finally {
       setLoading(false)
     }
@@ -80,7 +79,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
     setSaving(true)
 
     try {
-      await fetch(`/api/forms/${formId}`, {
+      const res = await fetch(`/api/forms/${formId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -88,7 +87,13 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
           description: form.description
         })
       })
-      alert('Form saved successfully!')
+
+      if (!res.ok) {
+        const error = await res.json()
+        alert(`Error saving: ${error.error}`)
+      } else {
+        alert('Form saved successfully!')
+      }
     } catch (error) {
       console.error('Failed to save:', error)
       alert('Failed to save form')
@@ -108,13 +113,20 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
           required: false
         })
       })
+
+      if (!res.ok) {
+        const error = await res.json()
+        alert(`Error adding field: ${error.error}`)
+        return
+      }
+
       const data = await res.json()
-      
       if (data.field) {
         setFields([...fields, data.field])
       }
     } catch (error) {
       console.error('Failed to add field:', error)
+      alert('Failed to add field')
     }
   }
 
@@ -125,8 +137,14 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       })
+
+      if (!res.ok) {
+        const error = await res.json()
+        alert(`Error updating field: ${error.error}`)
+        return
+      }
+
       const data = await res.json()
-      
       if (data.field) {
         setFields(fields.map(f => f.id === fieldId ? data.field : f))
       }
@@ -139,9 +157,16 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
     if (!confirm('Delete this field?')) return
 
     try {
-      await fetch(`/api/forms/${formId}/fields/${fieldId}`, {
+      const res = await fetch(`/api/forms/${formId}/fields/${fieldId}`, {
         method: 'DELETE'
       })
+
+      if (!res.ok) {
+        const error = await res.json()
+        alert(`Error deleting: ${error.error}`)
+        return
+      }
+
       setFields(fields.filter(f => f.id !== fieldId))
     } catch (error) {
       console.error('Failed to delete field:', error)
@@ -150,17 +175,27 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
 
   const publishForm = async () => {
     if (!form) return
+    setPublishing(true)
     
     try {
-      await fetch(`/api/forms/${formId}`, {
+      const res = await fetch(`/api/forms/${formId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'published' })
       })
-      setForm({ ...form, status: 'published' })
-      alert('Form published!')
+
+      if (!res.ok) {
+        const error = await res.json()
+        alert(`Error publishing: ${error.error}`)
+      } else {
+        setForm({ ...form, status: 'published' })
+        alert('Form published! Share this link: ' + window.location.origin + '/f/' + formId)
+      }
     } catch (error) {
       console.error('Failed to publish:', error)
+      alert('Failed to publish form')
+    } finally {
+      setPublishing(false)
     }
   }
 
@@ -203,7 +238,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                   type="text"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  className="text-xl font-bold text-stone-900 border-none focus:outline-none"
+                  className="text-xl font-bold text-stone-900 border-none focus:outline-none bg-transparent"
                   placeholder="Form Title"
                 />
                 <p className="text-sm text-stone-600">{form.status} · {fields.length} fields</p>
@@ -230,10 +265,19 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
               {form.status === 'draft' && (
                 <button
                   onClick={publishForm}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  disabled={publishing}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
                 >
-                  Publish
+                  {publishing ? 'Publishing...' : 'Publish'}
                 </button>
+              )}
+              {form.status === 'published' && (
+                <Link
+                  href={`/dashboard/forms/${formId}/responses`}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  View Responses
+                </Link>
               )}
             </div>
           </div>
@@ -251,7 +295,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                   <button
                     key={type.value}
                     onClick={() => addField(type.value)}
-                    className="w-full flex items-center gap-3 px-4 py-3 border border-stone-200 rounded-lg hover:bg-stone-50 text-left"
+                    className="w-full flex items-center gap-3 px-4 py-3 border border-stone-200 rounded-lg hover:bg-stone-50 text-left transition-colors"
                   >
                     <span className="text-2xl">{type.icon}</span>
                     <span className="text-sm font-medium text-stone-900">{type.label}</span>
@@ -311,7 +355,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                         type="text"
                         value={field.placeholder || ''}
                         onChange={(e) => updateField(field.id, { placeholder: e.target.value })}
-                        className="w-full text-sm text-stone-600 border border-stone-200 rounded px-3 py-2 mb-4"
+                        className="w-full text-sm text-stone-600 border border-stone-200 rounded px-3 py-2 mb-4 focus:outline-none focus:border-stone-900"
                         placeholder="Placeholder text..."
                       />
 
@@ -336,6 +380,31 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                   </div>
                 </div>
               ))
+            )}
+
+            {/* Share Link */}
+            {form.status === 'published' && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+                <h3 className="font-bold text-green-900 mb-2">✅ Form Published!</h3>
+                <p className="text-sm text-green-700 mb-4">Share this link with others:</p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={`${window.location.origin}/f/${formId}`}
+                    readOnly
+                    className="flex-1 px-4 py-2 bg-white border border-green-300 rounded-lg text-sm"
+                  />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/f/${formId}`)
+                      alert('Link copied!')
+                    }}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  >
+                    Copy Link
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </div>
