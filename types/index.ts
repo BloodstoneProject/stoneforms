@@ -117,6 +117,7 @@ export interface Submission {
   };
   contactId?: string;
   tags?: string[];
+  status?: 'pending' | 'completed' | 'incomplete';
   createdAt: string;
 }
 
