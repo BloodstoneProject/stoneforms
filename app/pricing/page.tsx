@@ -43,7 +43,7 @@ export default function PricingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-3 gap-6">
             {plans.map((plan, i) => (
-              <div key={i} className={\`relative p-10 bg-white/40 backdrop-blur-sm border rounded-3xl transition-all duration-300 \${plan.highlighted ? 'border-[#8e1c1c] scale-105' : 'border-[#0a0a0a]/5'}\`}>
+              <div key={i} className={`relative p-10 bg-white/40 backdrop-blur-sm border rounded-3xl transition-all duration-300 ${plan.highlighted ? 'border-[#8e1c1c] scale-105' : 'border-[#0a0a0a]/5'}`}>
                 {plan.highlighted && <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-[#8e1c1c] text-white text-xs font-light rounded-full">Most Popular</div>}
                 <div className="mb-8">
                   <h3 className="text-2xl font-light mb-2">{plan.name}</h3>
@@ -61,7 +61,7 @@ export default function PricingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link href="/auth/signup" className={\`block w-full text-center py-3 rounded-full text-sm font-light transition-all duration-300 \${plan.highlighted ? 'bg-[#0a0a0a] text-[#fafaf9] hover:bg-[#8e1c1c]' : 'border border-[#0a0a0a]/10 hover:border-[#0a0a0a]/20'}\`}>
+                <Link href="/auth/signup" className={`block w-full text-center py-3 rounded-full text-sm font-light transition-all duration-300 ${plan.highlighted ? 'bg-[#0a0a0a] text-[#fafaf9] hover:bg-[#8e1c1c]' : 'border border-[#0a0a0a]/10 hover:border-[#0a0a0a]/20'}`}>
                   {plan.cta}
                 </Link>
               </div>
@@ -76,7 +76,7 @@ export default function PricingPage() {
         </div>
       </footer>
 
-      <style jsx global>{\`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap');*{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;}\`}</style>
+      <style jsx global>{\`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap');*{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;}`}</style>
     </div>
   )
 }
