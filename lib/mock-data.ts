@@ -57,6 +57,7 @@ export const mockContacts: Contact[] = Array.from({ length: 500 }, (_, i) => {
   
   return {
     id: `contact-${i + 1}`,
+    workspaceId: 'demo',
     firstName,
     lastName,
     email,
@@ -82,6 +83,7 @@ export const mockDeals: Deal[] = Array.from({ length: 50 }, (_, i) => {
   
   return {
     id: `deal-${i + 1}`,
+    workspaceId: 'demo',
     contactId: `contact-${i + 1}`,
     title: `${mockContacts[i].company || 'New Company'} - ${['Starter', 'Professional', 'Business', 'Enterprise'][i % 4]} Plan`,
     value: values[i % values.length],
