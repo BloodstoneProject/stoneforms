@@ -177,8 +177,8 @@ export default function FormResponsesPage({ params }: { params: Promise<{ id: st
                 {/* Metadata */}
                 <div className="border-t border-stone-100 pt-4 mt-4 flex items-center gap-6 text-xs text-stone-500">
                   <div>Source: {submission.metadata?.referrer || 'Direct'}</div>
-                  <div>IP: {submission.metadata?.ip || 'Hidden'}</div>
-                  {submission.completedAt && (
+                  <div>IP: {submission.metadata?.ipAddress || 'Hidden'}</div>
+                  {submission.status === "completed" && (
                     <div className="text-green-600 font-medium">✓ Completed</div>
                   )}
                 </div>
