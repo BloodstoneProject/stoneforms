@@ -18,6 +18,7 @@ export default function FormsPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft' | 'archived'>('all')
+  const [creating, setCreating] = useState(false)
 
   useEffect(() => {
     fetchForms()
@@ -27,29 +28,59 @@ export default function FormsPage() {
     try {
       const res = await fetch('/api/forms')
       const data = await res.json()
+      
+      if (!res.ok) {
+        alert(`Error fetching forms: ${data.error || res.statusText}`)
+        return
+      }
+      
       if (data.forms) {
         setForms(data.forms)
       }
     } catch (error) {
       console.error('Failed to fetch forms:', error)
+      alert(`Network error: ${error.message}`)
     } finally {
       setLoading(false)
     }
   }
 
   const createForm = async () => {
+    setCreating(true)
     try {
+      console.log('Creating form...')
       const res = await fetch('/api/forms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: 'Untitled Form' })
       })
+      
+      console.log('Response status:', res.status)
       const data = await res.json()
+      console.log('Response data:', data)
+      
+      if (!res.ok) {
+        // Show error to user
+        if (data.upgrade) {
+          alert(`Plan Limit Reached!\n\n${data.error}\n\nYou're on the ${data.plan} plan.\nCurrent forms: ${data.current}/${data.limit}\n\nUpgrade to Pro for unlimited forms!`)
+        } else {
+          alert(`Error: ${data.error || 'Failed to create form'}`)
+        }
+        setCreating(false)
+        return
+      }
+      
       if (data.form) {
+        console.log('Redirecting to:', `/dashboard/forms/${data.form.id}`)
         window.location.href = `/dashboard/forms/${data.form.id}`
+      } else {
+        alert('Error: No form returned from server')
+        setCreating(false)
       }
     } catch (error) {
       console.error('Failed to create form:', error)
+      alert(`Network error: ${error.message}`)
+      setCreating(false)
     }
   }
 
@@ -57,10 +88,18 @@ export default function FormsPage() {
     if (!confirm('Are you sure you want to delete this form?')) return
     
     try {
-      await fetch(`/api/forms/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/forms/${id}`, { method: 'DELETE' })
+      
+      if (!res.ok) {
+        const data = await res.json()
+        alert(`Error: ${data.error || 'Failed to delete form'}`)
+        return
+      }
+      
       setForms(forms.filter(f => f.id !== id))
     } catch (error) {
       console.error('Failed to delete form:', error)
+      alert(`Network error: ${error.message}`)
     }
   }
 
@@ -98,10 +137,11 @@ export default function FormsPage() {
             </div>
             <button 
               onClick={createForm}
-              className="flex items-center gap-2 px-6 py-3 bg-stone-900 text-white rounded-lg hover:bg-stone-800 font-medium"
+              disabled={creating}
+              className="flex items-center gap-2 px-6 py-3 bg-stone-900 text-white rounded-lg hover:bg-stone-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus className="w-5 h-5" />
-              Create Form
+              {creating ? 'Creating...' : 'Create Form'}
             </button>
           </div>
 
