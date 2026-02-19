@@ -149,15 +149,15 @@ export default function FormPlayerPage({ params }: { params: Promise<{ id: strin
                   {currentQuestion.choices.map((choice, idx) => (
                     <button
                       key={choice.id}
-                      onClick={() => setAnswers({ ...answers, [currentQuestion.id]: choice.text })}
+                      onClick={() => setAnswers({ ...answers, [currentQuestion.id]: choice.label })}
                       className={`w-full text-left px-6 py-4 text-lg border-2 rounded-xl transition-all ${
-                        answers[currentQuestion.id] === choice.text
+                        answers[currentQuestion.id] === choice.label
                           ? 'border-stone-900 bg-stone-50'
                           : 'border-stone-300 hover:border-stone-400 hover:bg-stone-50'
                       }`}
                     >
                       <span className="font-medium text-stone-400 mr-3">{String.fromCharCode(65 + idx)}</span>
-                      {choice.text}
+                      {choice.label}
                     </button>
                   ))}
                 </div>
