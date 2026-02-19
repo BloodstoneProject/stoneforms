@@ -1,195 +1,391 @@
 'use client'
 
-import type { Question } from "@/types"
-import { use, useState } from 'react'
-import { getFormById } from '@/lib/mock-data'
-import { ArrowRight, Check } from 'lucide-react'
+import { use, useState, useEffect } from 'react'
+import Link from 'next/link'
+import { CheckCircle, Loader } from 'lucide-react'
 
-export default function FormPlayerPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
-  const form = getFormById(id)
+interface Form {
+  id: string
+  title: string
+  description: string
+  status: string
+}
+
+interface Field {
+  id: string
+  field_type: string
+  label: string
+  placeholder: string
+  required: boolean
+  options: string[] | null
+}
+
+export default function PublicFormPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: formId } = use(params)
   
-  const [currentStep, setCurrentStep] = useState(0)
-  const [answers, setAnswers] = useState<Record<string, string>>({})
-  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [form, setForm] = useState<Form | null>(null)
+  const [fields, setFields] = useState<Field[]>([])
+  const [responses, setResponses] = useState<Record<string, string>>({})
+  const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState('')
 
-  // Default questions if form has none
-  const questions: Question[] = form?.questions && form.questions.length > 0 ? form.questions : [
-    { id: 'q1', type: 'email', label: 'What is your email address?', required: true, order: 0 },
-    { id: 'q2', type: 'short_text', label: 'What is your name?', required: true, order: 1 },
-    { id: 'q3', type: 'long_text', label: 'How can we help you?', required: false, order: 2 },
-  ]
+  useEffect(() => {
+    fetchForm()
+  }, [formId])
 
-  if (!form) {
+  const fetchForm = async () => {
+    try {
+      // Fetch form
+      const formRes = await fetch(`/api/forms/${formId}`)
+      const formData = await formRes.json()
+      
+      if (!formData.form || formData.form.status !== 'published') {
+        setError('This form is not available')
+        setLoading(false)
+        return
+      }
+
+      setForm(formData.form)
+
+      // Fetch fields
+      const fieldsRes = await fetch(`/api/forms/${formId}/fields`)
+      const fieldsData = await fieldsRes.json()
+      
+      if (fieldsData.fields) {
+        setFields(fieldsData.fields)
+      }
+    } catch (err) {
+      setError('Failed to load form')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setSubmitting(true)
+
+    try {
+      const res = await fetch(`/api/forms/${formId}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ responses })
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.error || 'Failed to submit form')
+        setSubmitting(false)
+        return
+      }
+
+      setSubmitted(true)
+    } catch (err) {
+      setError('Failed to submit form')
+      setSubmitting(false)
+    }
+  }
+
+  const renderField = (field: Field) => {
+    const value = responses[field.id] || ''
+    const onChange = (val: string) => setResponses({ ...responses, [field.id]: val })
+
+    const baseInputClass = "w-full px-4 py-3 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-900 focus:border-transparent"
+
+    switch (field.field_type) {
+      case 'short_text':
+        return (
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={field.placeholder}
+            required={field.required}
+            className={baseInputClass}
+          />
+        )
+
+      case 'long_text':
+        return (
+          <textarea
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={field.placeholder}
+            required={field.required}
+            rows={4}
+            className={baseInputClass}
+          />
+        )
+
+      case 'email':
+        return (
+          <input
+            type="email"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={field.placeholder}
+            required={field.required}
+            className={baseInputClass}
+          />
+        )
+
+      case 'number':
+        return (
+          <input
+            type="number"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={field.placeholder}
+            required={field.required}
+            className={baseInputClass}
+          />
+        )
+
+      case 'phone':
+        return (
+          <input
+            type="tel"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={field.placeholder}
+            required={field.required}
+            className={baseInputClass}
+          />
+        )
+
+      case 'url':
+        return (
+          <input
+            type="url"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={field.placeholder}
+            required={field.required}
+            className={baseInputClass}
+          />
+        )
+
+      case 'date':
+        return (
+          <input
+            type="date"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            required={field.required}
+            className={baseInputClass}
+          />
+        )
+
+      case 'multiple_choice':
+        return (
+          <div className="space-y-3">
+            {(field.options || ['Option 1', 'Option 2', 'Option 3']).map((option, i) => (
+              <label key={i} className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="radio"
+                  name={field.id}
+                  value={option}
+                  checked={value === option}
+                  onChange={(e) => onChange(e.target.value)}
+                  required={field.required}
+                  className="w-4 h-4"
+                />
+                <span className="text-stone-700">{option}</span>
+              </label>
+            ))}
+          </div>
+        )
+
+      case 'checkboxes':
+        const selectedValues = value ? value.split(',') : []
+        return (
+          <div className="space-y-3">
+            {(field.options || ['Option 1', 'Option 2', 'Option 3']).map((option, i) => (
+              <label key={i} className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedValues.includes(option)}
+                  onChange={(e) => {
+                    const newValues = e.target.checked
+                      ? [...selectedValues, option]
+                      : selectedValues.filter(v => v !== option)
+                    onChange(newValues.join(','))
+                  }}
+                  className="w-4 h-4 rounded"
+                />
+                <span className="text-stone-700">{option}</span>
+              </label>
+            ))}
+          </div>
+        )
+
+      case 'dropdown':
+        return (
+          <select
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            required={field.required}
+            className={baseInputClass}
+          >
+            <option value="">Select an option...</option>
+            {(field.options || ['Option 1', 'Option 2', 'Option 3']).map((option, i) => (
+              <option key={i} value={option}>{option}</option>
+            ))}
+          </select>
+        )
+
+      case 'yes_no':
+        return (
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name={field.id}
+                value="Yes"
+                checked={value === 'Yes'}
+                onChange={(e) => onChange(e.target.value)}
+                required={field.required}
+              />
+              <span>Yes</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name={field.id}
+                value="No"
+                checked={value === 'No'}
+                onChange={(e) => onChange(e.target.value)}
+                required={field.required}
+              />
+              <span>No</span>
+            </label>
+          </div>
+        )
+
+      case 'rating':
+        return (
+          <div className="flex gap-2">
+            {[1, 2, 3, 4, 5].map((rating) => (
+              <button
+                key={rating}
+                type="button"
+                onClick={() => onChange(rating.toString())}
+                className={`w-10 h-10 rounded-lg border-2 transition-all ${
+                  value === rating.toString()
+                    ? 'bg-stone-900 text-white border-stone-900'
+                    : 'border-stone-300 hover:border-stone-900'
+                }`}
+              >
+                {rating}
+              </button>
+            ))}
+          </div>
+        )
+
+      default:
+        return (
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={field.placeholder}
+            required={field.required}
+            className={baseInputClass}
+          />
+        )
+    }
+  }
+
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-stone-50 to-stone-100 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+        <Loader className="w-8 h-8 animate-spin text-stone-900" />
+      </div>
+    )
+  }
+
+  if (error && !form) {
+    return (
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center p-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-stone-900 mb-4">Form Not Found</h1>
-          <p className="text-stone-600">This form does not exist or has been removed.</p>
+          <h1 className="text-2xl font-bold text-stone-900 mb-4">{error}</h1>
+          <p className="text-stone-600">This form may have been deleted or is not published yet.</p>
         </div>
       </div>
     )
   }
 
-  const currentQuestion = questions[currentStep]
-  const progress = ((currentStep + 1) / questions.length) * 100
-
-  const handleNext = () => {
-    if (currentStep < questions.length - 1) {
-      setCurrentStep(currentStep + 1)
-    } else {
-      setIsSubmitted(true)
-    }
-  }
-
-  const handleBack = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1)
-    }
-  }
-
-  if (isSubmitted) {
+  if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center p-6">
-        <style jsx global>{`
-          @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
-          * { font-family: 'DM Sans', sans-serif; }
-        `}</style>
-        <div className="max-w-2xl w-full text-center">
-          <div className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Check className="w-10 h-10 text-white" />
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 text-center">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
-          <h1 className="text-4xl font-bold text-stone-900 mb-4">
-            Thank You!
-          </h1>
-          <p className="text-xl text-stone-600 mb-8">
-            Your response has been recorded. We will get back to you soon.
-          </p>
-          <div className="bg-white rounded-lg border-2 border-green-200 p-6">
-            <p className="text-sm text-stone-600">
-              Form ID: {form.id}
-            </p>
-          </div>
+          <h1 className="text-2xl font-bold text-stone-900 mb-4">Thank you!</h1>
+          <p className="text-stone-600 mb-6">Your response has been submitted successfully.</p>
+          <Link
+            href="/"
+            className="inline-block px-6 py-3 bg-stone-900 text-white rounded-lg hover:bg-stone-800"
+          >
+            Back to Home
+          </Link>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-50 to-stone-100">
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
-        * { font-family: 'DM Sans', sans-serif; }
-      `}</style>
+    <div className="min-h-screen bg-stone-50 py-12 px-6">
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12">
+          <h1 className="text-3xl font-bold text-stone-900 mb-4">{form?.title}</h1>
+          {form?.description && (
+            <p className="text-stone-600 mb-8">{form.description}</p>
+          )}
 
-      {/* Progress Bar */}
-      {form.settings?.showProgressBar && (
-        <div className="fixed top-0 left-0 right-0 h-2 bg-stone-200 z-50">
-          <div
-            className="h-full bg-stone-900 transition-all duration-500"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      )}
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {fields.map((field) => (
+              <div key={field.id}>
+                <label className="block mb-3">
+                  <span className="text-stone-900 font-medium">
+                    {field.label}
+                    {field.required && <span className="text-red-600 ml-1">*</span>}
+                  </span>
+                </label>
+                {renderField(field)}
+              </div>
+            ))}
 
-      <div className="min-h-screen flex items-center justify-center p-6 pt-16">
-        <div className="max-w-3xl w-full">
-          {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold text-stone-900 mb-4">
-              {form.title}
-            </h1>
-            {form.description && (
-              <p className="text-xl text-stone-600">
-                {form.description}
-              </p>
+            {error && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-800 text-sm">{error}</p>
+              </div>
             )}
-          </div>
 
-          {/* Question Card */}
-          <div className="bg-white rounded-2xl shadow-xl border border-stone-200 p-8 md:p-12 mb-6">
-            {/* Question Number */}
-            <div className="text-sm font-medium text-stone-500 mb-4">
-              Question {currentStep + 1} of {questions.length}
-            </div>
-
-            {/* Question */}
-            <h2 className="text-2xl md:text-3xl font-bold text-stone-900 mb-8">
-              {currentQuestion.label}
-              {currentQuestion.required && (
-                <span className="text-red-600 ml-2">*</span>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full py-4 bg-stone-900 text-white rounded-lg hover:bg-stone-800 font-medium text-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {submitting ? (
+                <>
+                  <Loader className="w-5 h-5 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                'Submit'
               )}
-            </h2>
+            </button>
+          </form>
+        </div>
 
-            {/* Input based on type */}
-            <div className="mb-8">
-              {(currentQuestion.type === 'short_text' || currentQuestion.type === 'email') && (
-                <input
-                  type={currentQuestion.type === 'email' ? 'email' : 'text'}
-                  value={answers[currentQuestion.id] || ''}
-                  onChange={(e) => setAnswers({ ...answers, [currentQuestion.id]: e.target.value })}
-                  placeholder="Type your answer here..."
-                  className="w-full px-6 py-4 text-xl border-2 border-stone-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-stone-200 focus:border-stone-900 transition-all"
-                  autoFocus
-                />
-              )}
-
-              {currentQuestion.type === 'long_text' && (
-                <textarea
-                  value={answers[currentQuestion.id] || ''}
-                  onChange={(e) => setAnswers({ ...answers, [currentQuestion.id]: e.target.value })}
-                  placeholder="Type your answer here..."
-                  rows={6}
-                  className="w-full px-6 py-4 text-xl border-2 border-stone-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-stone-200 focus:border-stone-900 transition-all resize-none"
-                  autoFocus
-                />
-              )}
-
-              {currentQuestion.type === 'multiple_choice' && currentQuestion.choices && (
-                <div className="space-y-3">
-                  {currentQuestion.choices.map((choice, idx) => (
-                    <button
-                      key={choice.id}
-                      onClick={() => setAnswers({ ...answers, [currentQuestion.id]: choice.label })}
-                      className={`w-full text-left px-6 py-4 text-lg border-2 rounded-xl transition-all ${
-                        answers[currentQuestion.id] === choice.label
-                          ? 'border-stone-900 bg-stone-50'
-                          : 'border-stone-300 hover:border-stone-400 hover:bg-stone-50'
-                      }`}
-                    >
-                      <span className="font-medium text-stone-400 mr-3">{String.fromCharCode(65 + idx)}</span>
-                      {choice.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Navigation */}
-            <div className="flex items-center justify-between">
-              <button
-                onClick={handleBack}
-                disabled={currentStep === 0}
-                className="px-6 py-3 text-stone-600 hover:text-stone-900 font-medium disabled:opacity-0 disabled:cursor-not-allowed transition-opacity"
-              >
-                ← Back
-              </button>
-
-              <button
-                onClick={handleNext}
-                disabled={currentQuestion.required && !answers[currentQuestion.id]}
-                className="flex items-center gap-2 px-8 py-3 bg-stone-900 text-white rounded-xl hover:bg-stone-800 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all"
-              >
-                {currentStep === questions.length - 1 ? 'Submit' : 'Next'}
-                <ArrowRight className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="text-center text-sm text-stone-500">
-            Powered by <span className="font-semibold text-stone-700">Stoneforms</span>
-          </div>
+        <div className="text-center mt-8 text-sm text-stone-500">
+          <p>Powered by Stoneforms</p>
         </div>
       </div>
     </div>
