@@ -3,7 +3,9 @@
 import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Plus, Trash2, GripVertical, Save, Eye, Settings } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, GripVertical, Save, Eye, Share2 } from 'lucide-react'
+import ShareModal from '@/components/forms/share-modal'
+import FieldOptionsEditor from '@/components/forms/field-options-editor'
 
 interface Form {
   id: string
@@ -31,6 +33,8 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [publishing, setPublishing] = useState(false)
+  const [shareModalOpen, setShareModalOpen] = useState(false)
+  const [expandedFieldId, setExpandedFieldId] = useState<string | null>(null)
 
   const fieldTypes = [
     { value: 'short_text', label: 'Short Text', icon: '📝' },
@@ -46,6 +50,8 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
     { value: 'rating', label: 'Rating', icon: '⭐' },
     { value: 'yes_no', label: 'Yes/No', icon: '✓' },
   ]
+
+  const choiceFieldTypes = ['multiple_choice', 'checkboxes', 'dropdown']
 
   useEffect(() => {
     fetchFormAndFields()
@@ -104,13 +110,18 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
 
   const addField = async (fieldType: string) => {
     try {
+      const defaultOptions = choiceFieldTypes.includes(fieldType)
+        ? ['Option 1', 'Option 2', 'Option 3']
+        : null
+
       const res = await fetch(`/api/forms/${formId}/fields`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           field_type: fieldType,
           label: 'New Question',
-          required: false
+          required: false,
+          options: defaultOptions
         })
       })
 
@@ -123,6 +134,9 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
       const data = await res.json()
       if (data.field) {
         setFields([...fields, data.field])
+        if (choiceFieldTypes.includes(fieldType)) {
+          setExpandedFieldId(data.field.id)
+        }
       }
     } catch (error) {
       console.error('Failed to add field:', error)
@@ -189,7 +203,8 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
         alert(`Error publishing: ${error.error}`)
       } else {
         setForm({ ...form, status: 'published' })
-        alert('Form published! Share this link: ' + window.location.origin + '/f/' + formId)
+        alert('Form published!')
+        setShareModalOpen(true)
       }
     } catch (error) {
       console.error('Failed to publish:', error)
@@ -254,6 +269,17 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                 <Eye className="w-4 h-4" />
                 Preview
               </Link>
+
+              {form.status === 'published' && (
+                <button
+                  onClick={() => setShareModalOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 border border-stone-300 rounded-lg hover:bg-stone-50"
+                >
+                  <Share2 className="w-4 h-4" />
+                  Share
+                </button>
+              )}
+
               <button
                 onClick={saveForm}
                 disabled={saving}
@@ -262,6 +288,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                 <Save className="w-4 h-4" />
                 {saving ? 'Saving...' : 'Save'}
               </button>
+
               {form.status === 'draft' && (
                 <button
                   onClick={publishForm}
@@ -271,6 +298,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                   {publishing ? 'Publishing...' : 'Publish'}
                 </button>
               )}
+
               {form.status === 'published' && (
                 <Link
                   href={`/dashboard/forms/${formId}/responses`}
@@ -333,12 +361,12 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                 <p className="text-stone-600">Click a field type on the left to add your first question</p>
               </div>
             ) : (
-              fields.map((field, index) => (
+              fields.map((field) => (
                 <div key={field.id} className="bg-white rounded-lg border border-stone-200 p-6">
                   <div className="flex items-start gap-4">
                     <GripVertical className="w-5 h-5 text-stone-400 mt-2 cursor-move" />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-4 mb-4">
+                    <div className="flex-1 space-y-4">
+                      <div className="flex items-center gap-4">
                         <input
                           type="text"
                           value={field.label}
@@ -355,9 +383,20 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                         type="text"
                         value={field.placeholder || ''}
                         onChange={(e) => updateField(field.id, { placeholder: e.target.value })}
-                        className="w-full text-sm text-stone-600 border border-stone-200 rounded px-3 py-2 mb-4 focus:outline-none focus:border-stone-900"
+                        className="w-full text-sm text-stone-600 border border-stone-200 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
                         placeholder="Placeholder text..."
                       />
+
+                      {/* Field Options Editor for Choice Fields */}
+                      {choiceFieldTypes.includes(field.field_type) && (
+                        <div className="pt-4 border-t border-stone-200">
+                          <FieldOptionsEditor
+                            options={field.options || ['Option 1', 'Option 2', 'Option 3']}
+                            onChange={(opts) => updateField(field.id, { options: opts })}
+                            fieldType={field.field_type as any}
+                          />
+                        </div>
+                      )}
 
                       <div className="flex items-center gap-4">
                         <label className="flex items-center gap-2 cursor-pointer">
@@ -382,33 +421,31 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
               ))
             )}
 
-            {/* Share Link */}
+            {/* Share Prompt */}
             {form.status === 'published' && (
               <div className="bg-green-50 border border-green-200 rounded-lg p-6">
                 <h3 className="font-bold text-green-900 mb-2">✅ Form Published!</h3>
-                <p className="text-sm text-green-700 mb-4">Share this link with others:</p>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={`${window.location.origin}/f/${formId}`}
-                    readOnly
-                    className="flex-1 px-4 py-2 bg-white border border-green-300 rounded-lg text-sm"
-                  />
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(`${window.location.origin}/f/${formId}`)
-                      alert('Link copied!')
-                    }}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                  >
-                    Copy Link
-                  </button>
-                </div>
+                <p className="text-sm text-green-700 mb-4">Your form is live and ready to share.</p>
+                <button
+                  onClick={() => setShareModalOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                >
+                  <Share2 className="w-4 h-4" />
+                  Share Form
+                </button>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Share Modal */}
+      <ShareModal
+        formId={formId}
+        formTitle={form.title}
+        isOpen={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+      />
     </div>
   )
 }
