@@ -1,5 +1,6 @@
 'use client'
 
+import type { Question } from "@/types"
 import { use, useState } from 'react'
 import { getFormById } from '@/lib/mock-data'
 import { ArrowRight, Check } from 'lucide-react'
@@ -13,7 +14,7 @@ export default function FormPlayerPage({ params }: { params: Promise<{ id: strin
   const [isSubmitted, setIsSubmitted] = useState(false)
 
   // Default questions if form has none
-  const questions = form?.questions && form.questions.length > 0 ? form.questions : [
+  const questions: Question[] = form?.questions && form.questions.length > 0 ? form.questions : [
     { id: 'q1', type: 'email', label: 'What is your email address?', required: true },
     { id: 'q2', type: 'short_text', label: 'What is your name?', required: true },
     { id: 'q3', type: 'long_text', label: 'How can we help you?', required: false },
