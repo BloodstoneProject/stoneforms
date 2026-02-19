@@ -1,272 +1,288 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowRight, Check, Zap, Users, BarChart3, Lock, Globe, Smartphone } from 'lucide-react'
+import { ArrowRight, Sparkles, Zap, Shield, Globe, Smartphone, Lock } from 'lucide-react'
 
-export default function LandingPage() {
+export default function PremiumHomepage() {
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const [scrollY, setScrollY] = useState(0)
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY })
+    }
+
+    const handleScroll = () => {
+      setScrollY(window.scrollY)
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('scroll', handleScroll)
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('scroll', handleScroll)
+    }
+  }, [])
+
+  const stats = [
+    { value: '10,000+', label: 'Active Users' },
+    { value: '1M+', label: 'Forms Created' },
+    { value: '50M+', label: 'Responses' },
+    { value: '99.9%', label: 'Uptime' },
+  ]
+
+  const features = [
+    { icon: Sparkles, title: 'Effortless Builder', desc: 'Create stunning forms in minutes' },
+    { icon: Shield, title: 'Enterprise Security', desc: 'Bank-grade encryption & compliance' },
+    { icon: Zap, title: 'Lightning Fast', desc: 'Instant responses, zero lag' },
+    { icon: Globe, title: 'Works Everywhere', desc: 'Perfect on any device, any browser' },
+    { icon: Smartphone, title: 'Mobile First', desc: 'Designed for the mobile generation' },
+    { icon: Lock, title: 'Privacy Focused', desc: 'Your data, your control, always' },
+  ]
+
   return (
-    <div className="min-h-screen bg-white">
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
-        * { font-family: 'DM Sans', sans-serif; }
-      `}</style>
+    <div className="min-h-screen bg-[#fafaf9] text-[#0a0a0a] overflow-hidden">
+      <div
+        className="pointer-events-none fixed inset-0 z-50 transition-opacity duration-300"
+        style={{
+          background: `radial-gradient(600px at ${mousePosition.x}px ${mousePosition.y}px, rgba(142,28,28,0.03), transparent 80%)`,
+        }}
+      />
 
-      {/* Navigation */}
-      <nav className="border-b border-stone-200">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="text-2xl font-bold text-stone-900">Stoneforms</div>
-            <div className="flex items-center gap-6 ml-8">
-              <Link href="/dashboard/magazines" className="text-stone-600 hover:text-stone-900">Magazines</Link>
-              <Link href="/emoji-forms" className="text-stone-600 hover:text-stone-900">Emoji Forms</Link>
-            </div>
-            <div className="flex items-center gap-6">
-              <Link href="/features" className="text-stone-600 hover:text-stone-900">Features</Link>
-              <Link href="/pricing" className="text-stone-600 hover:text-stone-900">Pricing</Link>
-              <Link href="/templates" className="text-stone-600 hover:text-stone-900">Templates</Link>
-              <Link href="/auth/login" className="text-stone-600 hover:text-stone-900">Sign In</Link>
-              <Link href="/auth/signup" className="px-6 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800">
-                Get Started Free
-              </Link>
-            </div>
+      <nav className="fixed top-0 left-0 right-0 z-40 backdrop-blur-xl bg-[#fafaf9]/80 border-b border-[#0a0a0a]/5">
+        <div className="max-w-7xl mx-auto px-6 sm:px-12 py-5 flex items-center justify-between">
+          <Link href="/" className="text-2xl font-light tracking-tight hover:opacity-70 transition-opacity">
+            Stoneforms
+          </Link>
+          
+          <div className="hidden md:flex items-center gap-10 text-sm font-light">
+            <Link href="/features" className="hover:opacity-70 transition-opacity">Features</Link>
+            <Link href="/templates" className="hover:opacity-70 transition-opacity">Templates</Link>
+            <Link href="/pricing" className="hover:opacity-70 transition-opacity">Pricing</Link>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <Link 
+              href="/auth/login"
+              className="text-sm font-light hover:opacity-70 transition-opacity"
+            >
+              Sign in
+            </Link>
+            <Link 
+              href="/auth/signup"
+              className="px-6 py-2.5 bg-[#0a0a0a] text-[#fafaf9] rounded-full text-sm font-light hover:bg-[#8e1c1c] transition-all duration-300"
+            >
+              Get Started
+            </Link>
           </div>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="py-20 px-6">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-6xl font-bold text-stone-900 mb-6 leading-tight">
-            Create Beautiful Forms<br />That Convert
-          </h1>
-          <p className="text-xl text-stone-600 mb-8 max-w-3xl mx-auto">
-            Build professional forms, collect responses, and grow your business. 
-            No coding required. Start free, upgrade when you grow.
-          </p>
-          <div className="flex items-center justify-center gap-4">
-            <Link 
-              href="/auth/signup" 
-              className="flex items-center gap-2 px-8 py-4 bg-stone-900 text-white rounded-lg hover:bg-stone-800 text-lg font-semibold"
-            >
-              Start Free Trial
-              <ArrowRight className="w-5 h-5" />
-            </Link>
-            <Link 
-              href="/templates" 
-              className="px-8 py-4 border-2 border-stone-900 text-stone-900 rounded-lg hover:bg-stone-50 text-lg font-semibold"
-            >
-              Browse Templates
-            </Link>
-          </div>
-          <p className="text-stone-500 mt-4">Free forever. No credit card required.</p>
-        </div>
-      </section>
-
-      {/* Social Proof */}
-      <section className="py-12 px-6 bg-stone-50">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-4 gap-8 text-center">
-            <div>
-              <div className="text-4xl font-bold text-stone-900 mb-2">10,000+</div>
-              <div className="text-stone-600">Active Users</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-stone-900 mb-2">1M+</div>
-              <div className="text-stone-600">Forms Created</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-stone-900 mb-2">50M+</div>
-              <div className="text-stone-600">Responses Collected</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-stone-900 mb-2">99.9%</div>
-              <div className="text-stone-600">Uptime</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="py-20 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-stone-900 mb-4">Everything You Need</h2>
-            <p className="text-xl text-stone-600">Powerful features to help you collect better data</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: Zap,
-                title: 'Easy Form Builder',
-                description: 'Drag and drop interface. Create professional forms in minutes, not hours.',
-              },
-              {
-                icon: Users,
-                title: 'Built-in CRM',
-                description: 'Manage contacts, track deals, and grow your pipeline all in one place.',
-              },
-              {
-                icon: BarChart3,
-                title: 'Powerful Analytics',
-                description: 'Track responses, measure conversion rates, and optimize performance.',
-              },
-              {
-                icon: Globe,
-                title: 'Share Anywhere',
-                description: 'Embed forms on your website or share via link. Works everywhere.',
-              },
-              {
-                icon: Smartphone,
-                title: 'Mobile Optimized',
-                description: 'Perfect experience on every device. Desktop, tablet, and mobile.',
-              },
-              {
-                icon: Lock,
-                title: 'Secure & Reliable',
-                description: 'Enterprise-grade security. Your data is encrypted and protected.',
-              },
-            ].map((feature, i) => (
-              <div key={i} className="bg-white border border-stone-200 rounded-lg p-8 hover:shadow-lg transition-shadow">
-                <div className="w-12 h-12 bg-stone-900 text-white rounded-lg flex items-center justify-center mb-4">
-                  <feature.icon className="w-6 h-6" />
-                </div>
-                <h3 className="text-xl font-bold text-stone-900 mb-3">{feature.title}</h3>
-                <p className="text-stone-600">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Preview */}
-      <section className="py-20 px-6 bg-stone-50">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-stone-900 mb-4">Simple, Transparent Pricing</h2>
-            <p className="text-xl text-stone-600">Choose the plan that fits your needs</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {[
-              {
-                name: 'Free',
-                price: '£0',
-                features: ['1 active form', '100 responses/month', 'Basic features'],
-              },
-              {
-                name: 'Professional',
-                price: '£15',
-                features: ['Unlimited forms', '10,000 responses/month', 'All features', 'Remove branding'],
-                popular: true,
-              },
-              {
-                name: 'Business',
-                price: '£25',
-                features: ['Everything in Pro', 'Unlimited responses', 'API access', 'Priority support'],
-              },
-            ].map((plan, i) => (
-              <div 
-                key={i} 
-                className={`bg-white rounded-lg p-8 ${plan.popular ? 'border-2 border-stone-900 shadow-xl' : 'border border-stone-200'}`}
-              >
-                {plan.popular && (
-                  <div className="text-xs font-semibold text-stone-900 mb-4 uppercase tracking-wide">Most Popular</div>
-                )}
-                <h3 className="text-2xl font-bold text-stone-900 mb-2">{plan.name}</h3>
-                <div className="mb-6">
-                  <span className="text-5xl font-bold text-stone-900">{plan.price}</span>
-                  <span className="text-stone-600">/month</span>
-                </div>
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature, j) => (
-                    <li key={j} className="flex items-start gap-3">
-                      <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-stone-600">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link 
-                  href="/auth/signup" 
-                  className={`block w-full py-3 text-center rounded-lg font-semibold ${
-                    plan.popular 
-                      ? 'bg-stone-900 text-white hover:bg-stone-800' 
-                      : 'border-2 border-stone-900 text-stone-900 hover:bg-stone-50'
-                  }`}
-                >
-                  Get Started
-                </Link>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <Link href="/pricing" className="text-stone-900 font-semibold hover:underline">
-              See full pricing details →
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-5xl font-bold text-stone-900 mb-6">
-            Ready to Get Started?
-          </h2>
-          <p className="text-xl text-stone-600 mb-8">
-            Join thousands of businesses using Stoneforms to collect better data
-          </p>
-          <Link 
-            href="/auth/signup" 
-            className="inline-flex items-center gap-2 px-8 py-4 bg-stone-900 text-white rounded-lg hover:bg-stone-800 text-lg font-semibold"
+      <section className="relative pt-32 pb-24 px-6 sm:px-12">
+        <div className="max-w-5xl mx-auto text-center">
+          <div 
+            className="mb-8 opacity-0 animate-[fadeUp_0.8s_ease-out_0.2s_forwards]"
+            style={{ animationFillMode: 'forwards' }}
           >
-            Start Your Free Trial
-            <ArrowRight className="w-5 h-5" />
-          </Link>
-          <p className="text-stone-500 mt-4">No credit card required. Free forever.</p>
+            <div className="inline-block px-4 py-1.5 bg-[#8e1c1c]/10 rounded-full text-xs font-light text-[#8e1c1c] tracking-wide mb-8">
+              NOW AVAILABLE
+            </div>
+          </div>
+
+          <h1 
+            className="text-6xl sm:text-7xl lg:text-8xl font-light leading-[1.1] tracking-tight mb-6 opacity-0 animate-[fadeUp_0.8s_ease-out_0.4s_forwards]"
+            style={{ animationFillMode: 'forwards' }}
+          >
+            Forms that feel
+            <br />
+            <span className="font-normal">effortless.</span>
+          </h1>
+
+          <p 
+            className="text-xl sm:text-2xl font-light text-[#0a0a0a]/60 max-w-3xl mx-auto mb-12 opacity-0 animate-[fadeUp_0.8s_ease-out_0.6s_forwards]"
+            style={{ animationFillMode: 'forwards' }}
+          >
+            The most intuitive form builder. Designed for perfection.
+            <br />Engineered for performance.
+          </p>
+
+          <div 
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 opacity-0 animate-[fadeUp_0.8s_ease-out_0.8s_forwards]"
+            style={{ animationFillMode: 'forwards' }}
+          >
+            <Link
+              href="/auth/signup"
+              className="group px-8 py-4 bg-[#0a0a0a] text-[#fafaf9] rounded-full text-base font-light hover:bg-[#8e1c1c] transition-all duration-300 flex items-center gap-2"
+            >
+              Start free trial
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+            <Link
+              href="/templates"
+              className="px-8 py-4 border border-[#0a0a0a]/10 rounded-full text-base font-light hover:border-[#0a0a0a]/20 transition-all duration-300"
+            >
+              Explore templates
+            </Link>
+          </div>
+
+          <p className="text-xs font-light text-[#0a0a0a]/40 mt-6 opacity-0 animate-[fadeUp_0.8s_ease-out_1s_forwards]" style={{ animationFillMode: 'forwards' }}>
+            No credit card required · Free forever plan
+          </p>
+        </div>
+
+        <div className="mt-32 grid grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+          {stats.map((stat, i) => (
+            <div
+              key={stat.label}
+              className="relative p-8 bg-white/40 backdrop-blur-sm border border-[#0a0a0a]/5 rounded-3xl hover:bg-white/60 hover:scale-105 transition-all duration-500 opacity-0 animate-[fadeUp_0.8s_ease-out_forwards]"
+              style={{ 
+                animationDelay: `${1.2 + i * 0.1}s`,
+                animationFillMode: 'forwards',
+                transform: `translateY(${scrollY * 0.05}px)`
+              }}
+            >
+              <div className="text-4xl font-light tracking-tight mb-2">{stat.value}</div>
+              <div className="text-sm font-light text-[#0a0a0a]/50">{stat.label}</div>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-stone-200 py-12 px-6">
+      <section className="py-32 px-6 sm:px-12 relative">
         <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8">
+          <h2 className="text-5xl sm:text-6xl font-light tracking-tight text-center mb-4">
+            Everything you need.
+          </h2>
+          <p className="text-xl font-light text-[#0a0a0a]/60 text-center mb-20">
+            Nothing you don't.
+          </p>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {features.map((feature, i) => {
+              const Icon = feature.icon
+              return (
+                <div
+                  key={feature.title}
+                  className="group relative p-10 bg-white/40 backdrop-blur-sm border border-[#0a0a0a]/5 rounded-3xl hover:bg-white/80 hover:scale-105 transition-all duration-500 cursor-pointer"
+                  style={{
+                    transform: `translateY(${Math.sin((scrollY + i * 100) * 0.003) * 10}px)`,
+                  }}
+                >
+                  <div className="mb-6 inline-flex p-4 bg-[#8e1c1c]/10 rounded-2xl group-hover:bg-[#8e1c1c]/20 transition-colors duration-300">
+                    <Icon className="w-6 h-6 text-[#8e1c1c]" />
+                  </div>
+                  <h3 className="text-2xl font-light mb-3">{feature.title}</h3>
+                  <p className="text-base font-light text-[#0a0a0a]/60">{feature.desc}</p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-32 px-6 sm:px-12 relative">
+        <div className="max-w-5xl mx-auto text-center relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#8e1c1c]/5 to-transparent rounded-[4rem] -z-10" />
+          
+          <h2 className="text-5xl sm:text-6xl lg:text-7xl font-light tracking-tight mb-8">
+            Ready to transform
+            <br />
+            <span className="font-normal">your forms?</span>
+          </h2>
+          
+          <p className="text-xl font-light text-[#0a0a0a]/60 mb-12 max-w-2xl mx-auto">
+            Join thousands of businesses using Stoneforms
+            to collect better data, faster.
+          </p>
+
+          <Link
+            href="/auth/signup"
+            className="inline-flex items-center gap-3 px-10 py-5 bg-[#0a0a0a] text-[#fafaf9] rounded-full text-lg font-light hover:bg-[#8e1c1c] transition-all duration-300 group"
+          >
+            Start your free trial
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          </Link>
+
+          <p className="text-sm font-light text-[#0a0a0a]/40 mt-6">
+            No credit card required · Cancel anytime
+          </p>
+        </div>
+      </section>
+
+      <footer className="border-t border-[#0a0a0a]/5 py-16 px-6 sm:px-12">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-12 mb-16">
             <div>
-              <div className="text-xl font-bold text-stone-900 mb-4">Stoneforms</div>
-              <p className="text-stone-600 text-sm">
-                Professional form builder for modern businesses
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold text-stone-900 mb-4">Product</h4>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="/features" className="text-stone-600 hover:text-stone-900">Features</Link></li>
-                <li><Link href="/pricing" className="text-stone-600 hover:text-stone-900">Pricing</Link></li>
-                <li><Link href="/templates" className="text-stone-600 hover:text-stone-900">Templates</Link></li>
+              <h4 className="text-sm font-light mb-4">Product</h4>
+              <ul className="space-y-3 text-sm font-light text-[#0a0a0a]/60">
+                <li><Link href="/features" className="hover:opacity-70 transition-opacity">Features</Link></li>
+                <li><Link href="/pricing" className="hover:opacity-70 transition-opacity">Pricing</Link></li>
+                <li><Link href="/templates" className="hover:opacity-70 transition-opacity">Templates</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-stone-900 mb-4">Company</h4>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="/about" className="text-stone-600 hover:text-stone-900">About</Link></li>
-                <li><Link href="/blog" className="text-stone-600 hover:text-stone-900">Blog</Link></li>
-                <li><Link href="/contact" className="text-stone-600 hover:text-stone-900">Contact</Link></li>
+              <h4 className="text-sm font-light mb-4">Company</h4>
+              <ul className="space-y-3 text-sm font-light text-[#0a0a0a]/60">
+                <li><Link href="/about" className="hover:opacity-70 transition-opacity">About</Link></li>
+                <li><Link href="/blog" className="hover:opacity-70 transition-opacity">Blog</Link></li>
+                <li><Link href="/contact" className="hover:opacity-70 transition-opacity">Contact</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-stone-900 mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="/privacy" className="text-stone-600 hover:text-stone-900">Privacy</Link></li>
-                <li><Link href="/terms" className="text-stone-600 hover:text-stone-900">Terms</Link></li>
+              <h4 className="text-sm font-light mb-4">Resources</h4>
+              <ul className="space-y-3 text-sm font-light text-[#0a0a0a]/60">
+                <li><Link href="/docs" className="hover:opacity-70 transition-opacity">Documentation</Link></li>
+                <li><Link href="/help" className="hover:opacity-70 transition-opacity">Help Center</Link></li>
+                <li><Link href="/api" className="hover:opacity-70 transition-opacity">API</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-sm font-light mb-4">Legal</h4>
+              <ul className="space-y-3 text-sm font-light text-[#0a0a0a]/60">
+                <li><Link href="/privacy" className="hover:opacity-70 transition-opacity">Privacy</Link></li>
+                <li><Link href="/terms" className="hover:opacity-70 transition-opacity">Terms</Link></li>
+                <li><Link href="/security" className="hover:opacity-70 transition-opacity">Security</Link></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-stone-200 mt-12 pt-8 text-center text-stone-600 text-sm">
-            © 2024 Stoneforms. All rights reserved.
+
+          <div className="pt-8 border-t border-[#0a0a0a]/5 flex flex-col md:flex-row justify-between items-center gap-4 text-sm font-light text-[#0a0a0a]/40">
+            <div>© 2024 Stoneforms. All rights reserved.</div>
+            <div className="flex items-center gap-8">
+              <Link href="https://twitter.com" className="hover:opacity-70 transition-opacity">Twitter</Link>
+              <Link href="https://github.com" className="hover:opacity-70 transition-opacity">GitHub</Link>
+              <Link href="https://linkedin.com" className="hover:opacity-70 transition-opacity">LinkedIn</Link>
+            </div>
           </div>
         </div>
       </footer>
+
+      <style jsx global>{`
+        @keyframes fadeUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap');
+
+        * {
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+
+        html {
+          scroll-behavior: smooth;
+        }
+      `}</style>
     </div>
   )
 }
