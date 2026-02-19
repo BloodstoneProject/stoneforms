@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 // GET /api/forms/[formId]/fields - Get all fields for a form
 export async function GET(
   request: Request,
-  { params }: { params: { formId: string } }
+  { params }: { params: { id: string } }
 ) {
   const supabase = createClient()
   
@@ -18,7 +18,7 @@ export async function GET(
   const { data: form } = await supabase
     .from('forms')
     .select('id')
-    .eq('id', params.formId)
+    .eq('id', params.id)
     .eq('user_id', user.id)
     .single()
 
@@ -30,7 +30,7 @@ export async function GET(
   const { data: fields, error } = await supabase
     .from('form_fields')
     .select('*')
-    .eq('form_id', params.formId)
+    .eq('form_id', params.id)
     .order('position', { ascending: true })
 
   if (error) {
@@ -43,7 +43,7 @@ export async function GET(
 // POST /api/forms/[formId]/fields - Add new field
 export async function POST(
   request: Request,
-  { params }: { params: { formId: string } }
+  { params }: { params: { id: string } }
 ) {
   const supabase = createClient()
   
@@ -57,7 +57,7 @@ export async function POST(
   const { data: form } = await supabase
     .from('forms')
     .select('id')
-    .eq('id', params.formId)
+    .eq('id', params.id)
     .eq('user_id', user.id)
     .single()
 
@@ -71,7 +71,7 @@ export async function POST(
   const { data: maxField } = await supabase
     .from('form_fields')
     .select('position')
-    .eq('form_id', params.formId)
+    .eq('form_id', params.id)
     .order('position', { ascending: false })
     .limit(1)
     .single()
@@ -82,7 +82,7 @@ export async function POST(
   const { data: field, error } = await supabase
     .from('form_fields')
     .insert({
-      form_id: params.formId,
+      form_id: params.id,
       field_type: body.field_type || 'short_text',
       label: body.label || 'New Question',
       placeholder: body.placeholder || '',

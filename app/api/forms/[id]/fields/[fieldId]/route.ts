@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 // PATCH /api/forms/[formId]/fields/[fieldId] - Update field
 export async function PATCH(
   request: Request,
-  { params }: { params: { formId: string; fieldId: string } }
+  { params }: { params: { id: string; fieldId: string } }
 ) {
   const supabase = createClient()
   
@@ -18,7 +18,7 @@ export async function PATCH(
   const { data: form } = await supabase
     .from('forms')
     .select('id')
-    .eq('id', params.formId)
+    .eq('id', params.id)
     .eq('user_id', user.id)
     .single()
 
@@ -32,7 +32,7 @@ export async function PATCH(
     .from('form_fields')
     .update(body)
     .eq('id', params.fieldId)
-    .eq('form_id', params.formId)
+    .eq('form_id', params.id)
     .select()
     .single()
 
@@ -46,7 +46,7 @@ export async function PATCH(
 // DELETE /api/forms/[formId]/fields/[fieldId] - Delete field
 export async function DELETE(
   request: Request,
-  { params }: { params: { formId: string; fieldId: string } }
+  { params }: { params: { id: string; fieldId: string } }
 ) {
   const supabase = createClient()
   
@@ -60,7 +60,7 @@ export async function DELETE(
   const { data: form } = await supabase
     .from('forms')
     .select('id')
-    .eq('id', params.formId)
+    .eq('id', params.id)
     .eq('user_id', user.id)
     .single()
 
@@ -72,7 +72,7 @@ export async function DELETE(
     .from('form_fields')
     .delete()
     .eq('id', params.fieldId)
-    .eq('form_id', params.formId)
+    .eq('form_id', params.id)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
