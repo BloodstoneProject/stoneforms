@@ -1,16 +1,54 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Sidebar } from '@/components/dashboard/Sidebar'
 import { TopBar } from '@/components/dashboard/TopBar'
+import { createClient } from '@/lib/supabase-client'
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  // Mock user for demo (no authentication required)
-  const user = {
-    email: 'demo@stoneforms.com',
-    firstName: 'Demo',
-    lastName: 'User',
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
+  const supabase = createClient()
+
+  useEffect(() => {
+    checkUser()
+  }, [])
+
+  async function checkUser() {
+    const { data: { user }, error } = await supabase.auth.getUser()
+    
+    if (error || !user) {
+      router.push('/auth/login')
+      return
+    }
+
+    setUser({
+      email: user.email,
+      firstName: user.user_metadata?.full_name?.split(' ')[0] || 'User',
+      lastName: user.user_metadata?.full_name?.split(' ')[1] || '',
+    })
+    setLoading(false)
+  }
+
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stone-900 mx-auto"></div>
+          <p className="mt-4 text-stone-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return null // Will redirect to login
   }
 
   return (
