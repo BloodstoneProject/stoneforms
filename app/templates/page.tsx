@@ -36,12 +36,8 @@ export default function TemplatesPage() {
       <section className="pt-32 pb-20 px-6 sm:px-12">
         <div className="max-w-5xl mx-auto text-center">
           <div className="inline-block px-4 py-1.5 bg-[#8e1c1c]/10 rounded-full text-xs font-light text-[#8e1c1c] tracking-wide mb-8">TEMPLATES</div>
-          <h1 className="text-6xl sm:text-7xl lg:text-8xl font-light leading-[1.1] tracking-tight mb-6">
-            Start faster with<br /><span className="font-normal">templates.</span>
-          </h1>
-          <p className="text-xl sm:text-2xl font-light text-[#0a0a0a]/60 max-w-3xl mx-auto">
-            100+ professionally designed templates. Customize and launch in minutes.
-          </p>
+          <h1 className="text-6xl sm:text-7xl lg:text-8xl font-light leading-[1.1] tracking-tight mb-6">Start faster with<br /><span className="font-normal">templates.</span></h1>
+          <p className="text-xl sm:text-2xl font-light text-[#0a0a0a]/60 max-w-3xl mx-auto">100+ professionally designed templates. Customize and launch in minutes.</p>
         </div>
       </section>
 
@@ -70,12 +66,10 @@ export default function TemplatesPage() {
       </section>
 
       <footer className="border-t border-[#0a0a0a]/5 py-16 px-6 sm:px-12">
-        <div className="max-w-7xl mx-auto text-center text-sm font-light text-[#0a0a0a]/40">
-          © 2024 Stoneforms. All rights reserved.
-        </div>
+        <div className="max-w-7xl mx-auto text-center text-sm font-light text-[#0a0a0a]/40">© 2024 Stoneforms. All rights reserved.</div>
       </footer>
 
-      <style jsx global>{\`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap');*{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;}\`}</style>
+      <style jsx global>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap');*{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;}`}</style>
     </div>
   )
 }

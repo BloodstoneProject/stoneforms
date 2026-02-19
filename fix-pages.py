@@ -1,4 +1,9 @@
-'use client'
+#!/usr/bin/env python3
+
+# This will create properly formatted files without heredoc issues
+
+files = {
+    'app/contact/page.tsx': ''''use client'
 
 import Link from 'next/link'
 import { Mail, MessageSquare, HelpCircle } from 'lucide-react'
@@ -77,3 +82,12 @@ export default function ContactPage() {
     </div>
   )
 }
+'''
+}
+
+for filepath, content in files.items():
+    with open(filepath, 'w') as f:
+        f.write(content)
+    print(f"✅ Fixed {filepath}")
+
+print("\nAll files fixed!")
