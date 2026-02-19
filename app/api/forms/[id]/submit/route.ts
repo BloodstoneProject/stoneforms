@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase-client'
 import { NextResponse } from 'next/server'
+import { checkCanAcceptResponse } from '@/lib/plan-enforcement'
 
 // POST /api/forms/[id]/submit - Submit form response
 export async function POST(
@@ -25,6 +26,17 @@ export async function POST(
 
     if (form.status !== 'published') {
       return NextResponse.json({ error: 'Form is not published' }, { status: 400 })
+    }
+
+    // Check plan limits BEFORE accepting response
+    const limitCheck = await checkCanAcceptResponse(params.id)
+    
+    if (!limitCheck.allowed) {
+      return NextResponse.json({ 
+        error: 'This form has reached its response limit for this month. Please contact the form owner.',
+        plan: limitCheck.plan,
+        limit: limitCheck.limit
+      }, { status: 403 })
     }
 
     // Get form fields to validate

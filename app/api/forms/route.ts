@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase-client'
 import { NextResponse } from 'next/server'
+import { checkCanCreateForm } from '@/lib/plan-enforcement'
 
 // GET /api/forms - List all forms for authenticated user
 export async function GET() {
@@ -35,6 +36,19 @@ export async function POST(request: Request) {
   
   if (authError || !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Check plan limits
+  const limitCheck = await checkCanCreateForm(user.id)
+  
+  if (!limitCheck.allowed) {
+    return NextResponse.json({ 
+      error: limitCheck.message,
+      limit: limitCheck.limit,
+      current: limitCheck.current,
+      plan: limitCheck.plan,
+      upgrade: true
+    }, { status: 403 })
   }
 
   const body = await request.json()
