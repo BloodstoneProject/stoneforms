@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase-client'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 
 // GET /api/forms/[formId]/fields - Get all fields for a form
@@ -6,7 +6,7 @@ export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const supabase = createClient()
+  const supabase = createServerSupabaseClient()
   
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   
@@ -45,7 +45,7 @@ export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const supabase = createClient()
+  const supabase = createServerSupabaseClient()
   
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   

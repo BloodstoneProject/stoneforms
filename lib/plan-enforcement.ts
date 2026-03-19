@@ -1,6 +1,6 @@
 // Plan enforcement utilities to check limits before actions
 
-import { createClient } from '@/lib/supabase-client'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { PLAN_LIMITS, PlanId } from './plan-limits'
 
 interface LimitCheck {
@@ -12,7 +12,7 @@ interface LimitCheck {
 }
 
 export async function getUserPlan(userId: string): Promise<PlanId> {
-  const supabase = createClient()
+  const supabase = createServerSupabaseClient()
   
   const { data: subscription } = await supabase
     .from('subscriptions')
@@ -25,7 +25,7 @@ export async function getUserPlan(userId: string): Promise<PlanId> {
 }
 
 export async function checkCanCreateForm(userId: string): Promise<LimitCheck> {
-  const supabase = createClient()
+  const supabase = createServerSupabaseClient()
   
   // Get user's plan
   const plan = await getUserPlan(userId)
@@ -50,7 +50,7 @@ export async function checkCanCreateForm(userId: string): Promise<LimitCheck> {
 }
 
 export async function checkCanAcceptResponse(formId: string): Promise<LimitCheck> {
-  const supabase = createClient()
+  const supabase = createServerSupabaseClient()
   
   // Get form owner
   const { data: form } = await supabase
@@ -83,7 +83,7 @@ export async function checkCanAcceptResponse(formId: string): Promise<LimitCheck
     .from('submissions')
     .select('*', { count: 'exact', head: true })
     .in('form_id', formIds)
-    .gte('submitted_at', startOfMonth.toISOString())
+    .gte('created_at', startOfMonth.toISOString())
   
   const current = count || 0
   const allowed = current < limit
@@ -98,7 +98,7 @@ export async function checkCanAcceptResponse(formId: string): Promise<LimitCheck
 }
 
 export async function checkStorageLimit(userId: string, additionalMB: number = 0): Promise<LimitCheck> {
-  const supabase = createClient()
+  const supabase = createServerSupabaseClient()
   
   // Get plan
   const plan = await getUserPlan(userId)

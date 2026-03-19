@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase-client'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 
 // DELETE /api/forms/[id]/responses/[responseId] - Delete single response
@@ -6,7 +6,7 @@ export async function DELETE(
   request: Request,
   { params }: { params: { id: string; responseId: string } }
 ) {
-  const supabase = createClient()
+  const supabase = createServerSupabaseClient()
   
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   

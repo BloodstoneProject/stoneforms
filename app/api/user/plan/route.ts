@@ -1,10 +1,10 @@
-import { createClient } from '@/lib/supabase-client'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 import { PLAN_LIMITS, PlanId } from '@/lib/plan-limits'
 
 // GET /api/user/plan - Get current user's plan and usage
 export async function GET() {
-  const supabase = createClient()
+  const supabase = createServerSupabaseClient()
   
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   
@@ -45,7 +45,7 @@ export async function GET() {
     .from('submissions')
     .select('*', { count: 'exact', head: true })
     .in('form_id', formIds)
-    .gte('submitted_at', startOfMonth.toISOString())
+    .gte('created_at', startOfMonth.toISOString())
 
   // Get storage usage (for when file uploads added)
   const { data: submissions } = await supabase

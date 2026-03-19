@@ -1,15 +1,78 @@
 'use client'
 
-import { use, useState } from 'react'
+import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Mail, Phone, Building, Edit, Trash2, DollarSign, FileText } from 'lucide-react'
-import { getContactById, getContactDeals } from '@/lib/mock-data'
+import { ArrowLeft, Mail, Phone, Building, Edit, Trash2, DollarSign } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+
+interface Contact {
+  id: string
+  email: string
+  first_name: string | null
+  last_name: string | null
+  phone: string | null
+  company: string | null
+  tags: string[]
+  properties: Record<string, string>
+  created_at: string
+}
+
+interface Deal {
+  id: string
+  title: string
+  value: number
+  stage: string
+  probability: number
+  status: string
+  created_at: string
+}
 
 export default function ContactDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const contact = getContactById(id)
-  const deals = getContactDeals(id)
+  const router = useRouter()
+  const [contact, setContact] = useState<Contact | null>(null)
+  const [deals, setDeals] = useState<Deal[]>([])
+  const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
+
+  useEffect(() => {
+    fetchContact()
+  }, [id])
+
+  const fetchContact = async () => {
+    try {
+      const res = await fetch(`/api/contacts/${id}`)
+      if (!res.ok) {
+        setLoading(false)
+        return
+      }
+      const data = await res.json()
+      setContact(data.contact)
+      setDeals(data.deals || [])
+    } catch (error) {
+      console.error('Failed to fetch contact:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const deleteContact = async () => {
+    if (!confirm('Delete this contact? This cannot be undone.')) return
+    try {
+      await fetch(`/api/contacts/${id}`, { method: 'DELETE' })
+      router.push('/dashboard/contacts')
+    } catch (error) {
+      console.error('Failed to delete:', error)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stone-900 mx-auto"></div>
+      </div>
+    )
+  }
 
   if (!contact) {
     return (
@@ -17,29 +80,18 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
         <div className="text-center">
           <h1 className="text-2xl font-bold text-stone-900 mb-4">Contact Not Found</h1>
           <Link href="/dashboard/contacts" className="text-stone-600 hover:text-stone-900">
-            ← Back to Contacts
+            Back to Contacts
           </Link>
         </div>
       </div>
     )
   }
 
-  const totalDealValue = deals.reduce((sum, d) => sum + d.value, 0)
+  const totalDealValue = deals.reduce((sum, d) => sum + (d.value || 0), 0)
   const wonDeals = deals.filter(d => d.status === 'won')
-
-  const activities = [
-    { type: 'deal', text: 'Deal created', date: new Date(2024, 1, 15), deal: deals[0] },
-    { type: 'note', text: 'Added note', date: new Date(2024, 1, 10) },
-    { type: 'contact', text: 'Contact created', date: new Date(contact.createdAt) },
-  ].sort((a, b) => b.date.getTime() - a.date.getTime())
 
   return (
     <div className="min-h-screen bg-stone-50">
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
-        * { font-family: 'DM Sans', sans-serif; }
-      `}</style>
-
       <div className="bg-white border-b border-stone-200">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between mb-6">
@@ -49,22 +101,19 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
               </Link>
               <div>
                 <h1 className="text-3xl font-bold text-stone-900">
-                  {contact.firstName} {contact.lastName}
+                  {contact.first_name || ''} {contact.last_name || ''}
+                  {!contact.first_name && !contact.last_name && contact.email}
                 </h1>
-                {contact.position && contact.company && (
-                  <p className="text-stone-600 mt-1">
-                    {contact.position} at {contact.company}
-                  </p>
+                {contact.company && (
+                  <p className="text-stone-600 mt-1">{contact.company}</p>
                 )}
               </div>
             </div>
-
             <div className="flex items-center gap-3">
-              <button className="flex items-center gap-2 px-4 py-2 border border-stone-300 rounded-lg hover:bg-stone-50 font-medium">
-                <Edit className="w-4 h-4" />
-                Edit
-              </button>
-              <button className="flex items-center gap-2 px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 font-medium">
+              <button
+                onClick={deleteContact}
+                className="flex items-center gap-2 px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 font-medium"
+              >
                 <Trash2 className="w-4 h-4" />
                 Delete
               </button>
@@ -82,12 +131,14 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
             </div>
             <div className="bg-blue-50 rounded-lg p-4">
               <div className="text-blue-700 text-sm mb-1">Total Value</div>
-              <div className="text-2xl font-bold text-blue-900">£{(totalDealValue / 1000).toFixed(0)}k</div>
+              <div className="text-2xl font-bold text-blue-900">
+                {totalDealValue > 0 ? `£${(totalDealValue / 1000).toFixed(0)}k` : '£0'}
+              </div>
             </div>
             <div className="bg-purple-50 rounded-lg p-4">
               <div className="text-purple-700 text-sm mb-1">Customer Since</div>
               <div className="text-lg font-bold text-purple-900">
-                {new Date(contact.createdAt).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
+                {new Date(contact.created_at).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
               </div>
             </div>
           </div>
@@ -100,18 +151,15 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
             <div className="bg-white rounded-lg border border-stone-200 p-6">
               <h2 className="font-bold text-stone-900 mb-4">Contact Information</h2>
               <div className="space-y-4">
-                {contact.email && (
-                  <div className="flex items-center gap-3">
-                    <Mail className="w-5 h-5 text-stone-400" />
-                    <div>
-                      <div className="text-xs text-stone-500">Email</div>
-                      <a href={`mailto:${contact.email}`} className="text-stone-900 hover:underline">
-                        {contact.email}
-                      </a>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <Mail className="w-5 h-5 text-stone-400" />
+                  <div>
+                    <div className="text-xs text-stone-500">Email</div>
+                    <a href={`mailto:${contact.email}`} className="text-stone-900 hover:underline">
+                      {contact.email}
+                    </a>
                   </div>
-                )}
-
+                </div>
                 {contact.phone && (
                   <div className="flex items-center gap-3">
                     <Phone className="w-5 h-5 text-stone-400" />
@@ -123,7 +171,6 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                     </div>
                   </div>
                 )}
-
                 {contact.company && (
                   <div className="flex items-center gap-3">
                     <Building className="w-5 h-5 text-stone-400" />
@@ -136,32 +183,26 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-stone-200 p-6">
-              <h2 className="font-bold text-stone-900 mb-4">Tags</h2>
-              <div className="flex flex-wrap gap-2">
-                {contact.tags.map(tag => (
-                  <span key={tag} className="px-3 py-1 bg-stone-100 text-stone-700 rounded-full text-sm">
-                    {tag}
-                  </span>
-                ))}
+            {(contact.tags || []).length > 0 && (
+              <div className="bg-white rounded-lg border border-stone-200 p-6">
+                <h2 className="font-bold text-stone-900 mb-4">Tags</h2>
+                <div className="flex flex-wrap gap-2">
+                  {contact.tags.map(tag => (
+                    <span key={tag} className="px-3 py-1 bg-stone-100 text-stone-700 rounded-full text-sm">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
-          <div className="md:col-span-2 space-y-6">
+          <div className="md:col-span-2">
             <div className="bg-white rounded-lg border border-stone-200">
-              <div className="border-b border-stone-200 flex gap-6 px-6">
-                <button
-                  onClick={() => setActiveTab('overview')}
-                  className={`py-4 border-b-2 font-medium ${
-                    activeTab === 'overview' ? 'border-stone-900 text-stone-900' : 'border-transparent text-stone-600'
-                  }`}
-                >
-                  Overview
-                </button>
+              <div className="border-b border-stone-200 px-6">
                 <button
                   onClick={() => setActiveTab('deals')}
-                  className={`py-4 border-b-2 font-medium ${
+                  className={`py-4 border-b-2 font-medium mr-6 ${
                     activeTab === 'deals' ? 'border-stone-900 text-stone-900' : 'border-transparent text-stone-600'
                   }`}
                 >
@@ -170,53 +211,34 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
               </div>
 
               <div className="p-6">
-                {activeTab === 'overview' && (
-                  <div className="space-y-6">
-                    <h3 className="font-semibold text-stone-900 mb-3">Recent Deals</h3>
-                    <div className="space-y-3">
-                      {deals.slice(0, 3).map(deal => (
-                        <Link
-                          key={deal.id}
-                          href={`/dashboard/deals/${deal.id}`}
-                          className="block p-4 border border-stone-200 rounded-lg hover:shadow-md transition-shadow"
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-medium text-stone-900">{deal.title}</h4>
-                            <span className="text-sm font-semibold text-stone-900">
-                              £{(deal.value / 1000).toFixed(0)}k
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-4 text-sm text-stone-600">
-                            <span className="capitalize">{deal.stage}</span>
-                            <span>•</span>
-                            <span>{deal.probability}% probability</span>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === 'deals' && (
+                {deals.length === 0 ? (
+                  <p className="text-stone-500 text-center py-8">No deals associated with this contact.</p>
+                ) : (
                   <div className="space-y-3">
                     {deals.map(deal => (
-                      <Link
+                      <div
                         key={deal.id}
-                        href={`/dashboard/deals/${deal.id}`}
-                        className="block p-4 border border-stone-200 rounded-lg hover:shadow-md transition-shadow"
+                        className="p-4 border border-stone-200 rounded-lg"
                       >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h4 className="font-medium text-stone-900">{deal.title}</h4>
-                            <div className="flex items-center gap-4 text-sm text-stone-600 mt-1">
-                              <span className="capitalize">{deal.stage}</span>
-                            </div>
-                          </div>
-                          <div className="text-lg font-semibold text-stone-900">
-                            £{(deal.value / 1000).toFixed(0)}k
-                          </div>
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium text-stone-900">{deal.title}</h4>
+                          <span className="text-sm font-semibold text-stone-900">
+                            £{deal.value > 0 ? (deal.value / 1000).toFixed(0) + 'k' : '0'}
+                          </span>
                         </div>
-                      </Link>
+                        <div className="flex items-center gap-4 text-sm text-stone-600">
+                          <span className="capitalize">{deal.stage}</span>
+                          <span>-</span>
+                          <span>{deal.probability}% probability</span>
+                          <span className={`px-2 py-0.5 rounded text-xs ${
+                            deal.status === 'won' ? 'bg-green-100 text-green-800' :
+                            deal.status === 'lost' ? 'bg-red-100 text-red-800' :
+                            'bg-blue-100 text-blue-800'
+                          }`}>
+                            {deal.status}
+                          </span>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 )}

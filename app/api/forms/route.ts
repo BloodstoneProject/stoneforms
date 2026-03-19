@@ -1,14 +1,14 @@
-import { createClient } from '@/lib/supabase-client'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 import { checkCanCreateForm } from '@/lib/plan-enforcement'
 
 // GET /api/forms - List all forms for authenticated user
 export async function GET() {
-  const supabase = createClient()
-  
+  const supabase = createServerSupabaseClient()
+
   // Get current user
   const { data: { user }, error: authError } = await supabase.auth.getUser()
-  
+
   if (authError || !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -29,20 +29,20 @@ export async function GET() {
 
 // POST /api/forms - Create new form
 export async function POST(request: Request) {
-  const supabase = createClient()
-  
+  const supabase = createServerSupabaseClient()
+
   // Get current user
   const { data: { user }, error: authError } = await supabase.auth.getUser()
-  
+
   if (authError || !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   // Check plan limits
   const limitCheck = await checkCanCreateForm(user.id)
-  
+
   if (!limitCheck.allowed) {
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: limitCheck.message,
       limit: limitCheck.limit,
       current: limitCheck.current,

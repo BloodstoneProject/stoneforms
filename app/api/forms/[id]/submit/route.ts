@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase-client'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 import { checkCanAcceptResponse } from '@/lib/plan-enforcement'
 import { sendSubmissionNotification } from '@/lib/email-utils'
@@ -8,8 +8,8 @@ export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const supabase = createClient()
-  
+  const supabase = createServerSupabaseClient()
+
   try {
     const body = await request.json()
     const { responses } = body
@@ -31,9 +31,9 @@ export async function POST(
 
     // Check plan limits
     const limitCheck = await checkCanAcceptResponse(params.id)
-    
+
     if (!limitCheck.allowed) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'This form has reached its response limit for this month. Please contact the form owner.',
         plan: limitCheck.plan,
         limit: limitCheck.limit
@@ -51,19 +51,19 @@ export async function POST(
     const requiredFields = fields?.filter(f => f.required) || []
     for (const field of requiredFields) {
       if (!responses[field.id] || responses[field.id].trim() === '') {
-        return NextResponse.json({ 
-          error: `${field.label} is required` 
+        return NextResponse.json({
+          error: `${field.label} is required`
         }, { status: 400 })
       }
     }
 
-    // Create submission
+    // Create submission - use correct column names (answers, not response_data)
     const { data: submission, error: submissionError } = await supabase
       .from('submissions')
       .insert({
         form_id: params.id,
-        response_data: responses,
-        submitted_at: new Date().toISOString()
+        answers: responses,
+        status: 'completed'
       })
       .select()
       .single()
@@ -82,7 +82,6 @@ export async function POST(
         .single()
 
       if (notificationSettings?.notify_on_submission && notificationSettings.notification_emails?.length > 0) {
-        // Send email in background (don't await)
         sendSubmissionNotification({
           formTitle: form.title,
           formId: params.id,
@@ -93,13 +92,12 @@ export async function POST(
         }).catch(err => console.error('Email notification error:', err))
       }
     } catch (emailError) {
-      // Don't fail submission if email fails
       console.error('Email notification error:', emailError)
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
-      submission_id: submission.id 
+      submission_id: submission.id
     })
   } catch (error) {
     console.error('Submit error:', error)

@@ -1,48 +1,88 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { TrendingUp, TrendingDown, Users, Eye, FileText, DollarSign } from 'lucide-react'
-import { mockForms, mockContacts, mockDeals } from '@/lib/mock-data'
+import { TrendingUp, Users, Eye, FileText, DollarSign } from 'lucide-react'
+
+interface Form {
+  id: string
+  title: string
+  status: string
+  created_at: string
+}
+
+interface Stats {
+  totalForms: number
+  publishedForms: number
+  totalContacts: number
+  totalDeals: number
+  openDeals: number
+  wonDeals: number
+  pipelineValue: number
+  totalResponses: number
+}
 
 export default function AnalyticsPage() {
-  const totalForms = mockForms.length
-  const publishedForms = mockForms.filter(f => f.status === 'published').length
-  const totalResponses = mockForms.reduce((sum, f) => sum + (f.responseCount || 0), 0)
-  const totalViews = mockForms.reduce((sum, f) => sum + (f.viewCount || 0), 0)
-  const avgCompletionRate = mockForms.reduce((sum, f) => sum + (f.completionRate || 0), 0) / mockForms.length
-  const conversionRate = (totalResponses / totalViews) * 100
-
-  const totalContacts = mockContacts.length
-  const newContactsThisMonth = mockContacts.filter(c => {
-    const created = new Date(c.createdAt)
-    const thisMonth = new Date()
-    return created.getMonth() === thisMonth.getMonth()
-  }).length
-
-  const openDeals = mockDeals.filter(d => d.status === 'open').length
-  const wonDeals = mockDeals.filter(d => d.status === 'won').length
-  const totalDealValue = mockDeals.filter(d => d.status === 'open').reduce((sum, d) => sum + d.value, 0)
-
-  const topForms = mockForms
-    .sort((a, b) => (b.responseCount || 0) - (a.responseCount || 0))
-    .slice(0, 5)
-
-  const last7Days = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date()
-    date.setDate(date.getDate() - (6 - i))
-    return {
-      date: date.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' }),
-      responses: Math.floor(Math.random() * 100) + 50,
-    }
+  const [stats, setStats] = useState<Stats>({
+    totalForms: 0, publishedForms: 0, totalContacts: 0,
+    totalDeals: 0, openDeals: 0, wonDeals: 0, pipelineValue: 0, totalResponses: 0,
   })
+  const [forms, setForms] = useState<Form[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchAnalytics()
+  }, [])
+
+  const fetchAnalytics = async () => {
+    try {
+      const [formsRes, contactsRes, dealsRes] = await Promise.all([
+        fetch('/api/forms'),
+        fetch('/api/contacts'),
+        fetch('/api/deals'),
+      ])
+
+      const formsData = await formsRes.json()
+      const contactsData = await contactsRes.json()
+      const dealsData = await dealsRes.json()
+
+      const allForms = formsData.forms || []
+      const allContacts = contactsData.contacts || []
+      const allDeals = dealsData.deals || []
+
+      const openDeals = allDeals.filter((d: any) => d.status === 'open')
+
+      setForms(allForms)
+      setStats({
+        totalForms: allForms.length,
+        publishedForms: allForms.filter((f: any) => f.status === 'published').length,
+        totalContacts: allContacts.length,
+        totalDeals: allDeals.length,
+        openDeals: openDeals.length,
+        wonDeals: allDeals.filter((d: any) => d.status === 'won').length,
+        pipelineValue: openDeals.reduce((sum: number, d: any) => sum + (d.value || 0), 0),
+        totalResponses: 0,
+      })
+    } catch (error) {
+      console.error('Failed to fetch analytics:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stone-900 mx-auto"></div>
+          <p className="mt-4 text-stone-600">Loading analytics...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-stone-50">
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
-        * { font-family: 'DM Sans', sans-serif; }
-      `}</style>
-
       <div className="bg-white border-b border-stone-200">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <h1 className="text-3xl font-bold text-stone-900">Analytics</h1>
@@ -55,165 +95,131 @@ export default function AnalyticsPage() {
           <div className="bg-white rounded-lg border border-stone-200 p-6">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <p className="text-stone-600 text-sm mb-1">Total Views</p>
-                <p className="text-3xl font-bold text-stone-900">{totalViews.toLocaleString()}</p>
+                <p className="text-stone-600 text-sm mb-1">Total Forms</p>
+                <p className="text-3xl font-bold text-stone-900">{stats.totalForms}</p>
               </div>
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <Eye className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-green-600">
-              <TrendingUp className="w-4 h-4" />
-              <span>+12.5%</span>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-stone-200 p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <p className="text-stone-600 text-sm mb-1">Total Responses</p>
-                <p className="text-3xl font-bold text-stone-900">{totalResponses.toLocaleString()}</p>
-              </div>
-              <div className="bg-green-100 p-3 rounded-lg">
-                <Users className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-green-600">
-              <TrendingUp className="w-4 h-4" />
-              <span>+8.3%</span>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-stone-200 p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <p className="text-stone-600 text-sm mb-1">Conversion Rate</p>
-                <p className="text-3xl font-bold text-stone-900">{conversionRate.toFixed(1)}%</p>
-              </div>
-              <div className="bg-purple-100 p-3 rounded-lg">
-                <TrendingUp className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-green-600">
-              <TrendingUp className="w-4 h-4" />
-              <span>+2.1%</span>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-stone-200 p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <p className="text-stone-600 text-sm mb-1">Avg Completion</p>
-                <p className="text-3xl font-bold text-stone-900">{avgCompletionRate.toFixed(1)}%</p>
-              </div>
-              <div className="bg-amber-100 p-3 rounded-lg">
-                <FileText className="w-6 h-6 text-amber-600" />
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-red-600">
-              <TrendingDown className="w-4 h-4" />
-              <span>-1.2%</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white rounded-lg border border-stone-200 p-6">
-            <h2 className="text-lg font-bold text-stone-900 mb-6">Response Trend</h2>
-            <div className="space-y-3">
-              {last7Days.map((day, idx) => (
-                <div key={idx} className="flex items-center gap-4">
-                  <div className="w-16 text-sm text-stone-600">{day.date}</div>
-                  <div className="flex-1">
-                    <div className="bg-stone-100 rounded-full h-8 relative overflow-hidden">
-                      <div
-                        className="bg-gradient-to-r from-blue-500 to-blue-600 h-full rounded-full flex items-center justify-end pr-3"
-                        style={{ width: `${(day.responses / 150) * 100}%` }}
-                      >
-                        <span className="text-white text-sm font-medium">{day.responses}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-stone-200 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-stone-900">Top Forms</h2>
-              <Link href="/dashboard/forms" className="text-sm text-stone-600 hover:text-stone-900">
-                View all →
-              </Link>
-            </div>
-            <div className="space-y-4">
-              {topForms.map((form, idx) => (
-                <Link
-                  key={form.id}
-                  href={`/dashboard/forms/${form.id}`}
-                  className="block p-4 rounded-lg hover:bg-stone-50 border border-stone-100"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-stone-900 text-white rounded-lg flex items-center justify-center font-bold text-sm">
-                      {idx + 1}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-stone-900">{form.title}</h3>
-                      <p className="text-sm text-stone-600">
-                        {form.responseCount} responses
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-lg border border-stone-200 p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="bg-green-100 p-3 rounded-lg">
-                <Users className="w-6 h-6 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-stone-600">Total Contacts</p>
-                <p className="text-2xl font-bold text-stone-900">{totalContacts}</p>
-              </div>
-            </div>
-            <p className="text-sm text-stone-600">
-              +{newContactsThisMonth} new this month
-            </p>
-          </div>
-
-          <div className="bg-white rounded-lg border border-stone-200 p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="bg-purple-100 p-3 rounded-lg">
-                <DollarSign className="w-6 h-6 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm text-stone-600">Pipeline Value</p>
-                <p className="text-2xl font-bold text-stone-900">£{(totalDealValue / 1000).toFixed(0)}k</p>
-              </div>
-            </div>
-            <p className="text-sm text-stone-600">
-              {openDeals} open · {wonDeals} won
-            </p>
-          </div>
-
-          <div className="bg-white rounded-lg border border-stone-200 p-6">
-            <div className="flex items-center gap-3 mb-4">
               <div className="bg-blue-100 p-3 rounded-lg">
                 <FileText className="w-6 h-6 text-blue-600" />
               </div>
+            </div>
+            <p className="text-sm text-stone-500">{stats.publishedForms} published</p>
+          </div>
+
+          <div className="bg-white rounded-lg border border-stone-200 p-6">
+            <div className="flex items-start justify-between mb-4">
               <div>
-                <p className="text-sm text-stone-600">Published Forms</p>
-                <p className="text-2xl font-bold text-stone-900">{publishedForms}</p>
+                <p className="text-stone-600 text-sm mb-1">Total Contacts</p>
+                <p className="text-3xl font-bold text-stone-900">{stats.totalContacts}</p>
+              </div>
+              <div className="bg-green-100 p-3 rounded-lg">
+                <Users className="w-6 h-6 text-green-600" />
               </div>
             </div>
-            <p className="text-sm text-stone-600">
-              {totalForms} total forms
-            </p>
+            <p className="text-sm text-stone-500">In your CRM</p>
+          </div>
+
+          <div className="bg-white rounded-lg border border-stone-200 p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <p className="text-stone-600 text-sm mb-1">Pipeline Value</p>
+                <p className="text-3xl font-bold text-stone-900">
+                  {stats.pipelineValue > 0 ? `£${(stats.pipelineValue / 1000).toFixed(0)}k` : '£0'}
+                </p>
+              </div>
+              <div className="bg-purple-100 p-3 rounded-lg">
+                <DollarSign className="w-6 h-6 text-purple-600" />
+              </div>
+            </div>
+            <p className="text-sm text-stone-500">{stats.openDeals} open, {stats.wonDeals} won</p>
+          </div>
+
+          <div className="bg-white rounded-lg border border-stone-200 p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <p className="text-stone-600 text-sm mb-1">Total Deals</p>
+                <p className="text-3xl font-bold text-stone-900">{stats.totalDeals}</p>
+              </div>
+              <div className="bg-amber-100 p-3 rounded-lg">
+                <TrendingUp className="w-6 h-6 text-amber-600" />
+              </div>
+            </div>
+            <p className="text-sm text-stone-500">Across all stages</p>
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="bg-white rounded-lg border border-stone-200 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold text-stone-900">Your Forms</h2>
+              <Link href="/dashboard/forms" className="text-sm text-stone-600 hover:text-stone-900">
+                View all
+              </Link>
+            </div>
+            {forms.length === 0 ? (
+              <p className="text-stone-500 text-center py-8">No forms yet. Create your first form to see data here.</p>
+            ) : (
+              <div className="space-y-4">
+                {forms.slice(0, 5).map((form, idx) => (
+                  <Link
+                    key={form.id}
+                    href={`/dashboard/forms/${form.id}`}
+                    className="block p-4 rounded-lg hover:bg-stone-50 border border-stone-100"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-stone-900 text-white rounded-lg flex items-center justify-center font-bold text-sm">
+                        {idx + 1}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-stone-900">{form.title}</h3>
+                        <p className="text-sm text-stone-600 capitalize">{form.status}</p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white rounded-lg border border-stone-200 p-6">
+            <h2 className="text-lg font-bold text-stone-900 mb-6">Quick Actions</h2>
+            <div className="space-y-3">
+              <Link
+                href="/dashboard/forms"
+                className="block p-4 rounded-lg border border-stone-200 hover:bg-stone-50"
+              >
+                <div className="flex items-center gap-3">
+                  <FileText className="w-5 h-5 text-stone-600" />
+                  <div>
+                    <h3 className="font-medium text-stone-900">Create a Form</h3>
+                    <p className="text-sm text-stone-500">Build a new form or survey</p>
+                  </div>
+                </div>
+              </Link>
+              <Link
+                href="/dashboard/contacts"
+                className="block p-4 rounded-lg border border-stone-200 hover:bg-stone-50"
+              >
+                <div className="flex items-center gap-3">
+                  <Users className="w-5 h-5 text-stone-600" />
+                  <div>
+                    <h3 className="font-medium text-stone-900">Manage Contacts</h3>
+                    <p className="text-sm text-stone-500">View and add contacts</p>
+                  </div>
+                </div>
+              </Link>
+              <Link
+                href="/dashboard/deals"
+                className="block p-4 rounded-lg border border-stone-200 hover:bg-stone-50"
+              >
+                <div className="flex items-center gap-3">
+                  <DollarSign className="w-5 h-5 text-stone-600" />
+                  <div>
+                    <h3 className="font-medium text-stone-900">Deal Pipeline</h3>
+                    <p className="text-sm text-stone-500">Track your sales pipeline</p>
+                  </div>
+                </div>
+              </Link>
+            </div>
           </div>
         </div>
       </div>

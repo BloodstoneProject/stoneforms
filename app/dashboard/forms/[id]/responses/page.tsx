@@ -6,8 +6,8 @@ import { ArrowLeft, Download, Upload, Trash2, Eye, Search, Calendar, TrendingUp 
 
 interface Response {
   id: string
-  response_data: Record<string, string>
-  submitted_at: string
+  answers: Record<string, string>
+  created_at: string
 }
 
 interface Field {
@@ -59,8 +59,8 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
     // Create CSV rows
     const rows = responses.map(response => {
       return [
-        new Date(response.submitted_at).toLocaleString(),
-        ...fields.map(field => response.response_data[field.id] || '')
+        new Date(response.created_at).toLocaleString(),
+        ...fields.map(field => response.answers[field.id] || '')
       ]
     })
 
@@ -124,8 +124,8 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
           
           newResponses.push({
             id: `temp-${i}`,
-            response_data: responseData,
-            submitted_at: new Date().toISOString()
+            answers: responseData,
+            created_at: new Date().toISOString()
           })
         }
       }
@@ -168,7 +168,7 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
     if (!searchTerm) return true
     
     return fields.some(field => {
-      const value = response.response_data[field.id] || ''
+      const value = response.answers[field.id] || ''
       return value.toLowerCase().includes(searchTerm.toLowerCase())
     })
   })
@@ -177,19 +177,19 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
   const stats = {
     total: responses.length,
     today: responses.filter(r => {
-      const date = new Date(r.submitted_at)
+      const date = new Date(r.created_at)
       const today = new Date()
       return date.toDateString() === today.toDateString()
     }).length,
     thisWeek: responses.filter(r => {
-      const date = new Date(r.submitted_at)
+      const date = new Date(r.created_at)
       const weekAgo = new Date()
       weekAgo.setDate(weekAgo.getDate() - 7)
       return date > weekAgo
     }).length,
     completionRate: fields.length > 0 
       ? Math.round((responses.filter(r => {
-          return fields.every(f => r.response_data[f.id])
+          return fields.every(f => r.answers[f.id])
         }).length / responses.length) * 100) || 0
       : 0
   }
@@ -332,12 +332,12 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
                   {filteredResponses.map((response) => (
                     <tr key={response.id} className="border-b border-stone-100 hover:bg-stone-50">
                       <td className="px-6 py-4 text-sm text-stone-600">
-                        {new Date(response.submitted_at).toLocaleString()}
+                        {new Date(response.created_at).toLocaleString()}
                       </td>
                       {fields.slice(0, 3).map(field => (
                         <td key={field.id} className="px-6 py-4 text-sm text-stone-900">
-                          {response.response_data[field.id]?.substring(0, 50) || '-'}
-                          {response.response_data[field.id]?.length > 50 && '...'}
+                          {response.answers[field.id]?.substring(0, 50) || '-'}
+                          {response.answers[field.id]?.length > 50 && '...'}
                         </td>
                       ))}
                       <td className="px-6 py-4 text-right">
@@ -374,14 +374,14 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
               </button>
             </div>
             <p className="text-sm text-stone-600 mb-6">
-              Submitted: {new Date(selectedResponse.submitted_at).toLocaleString()}
+              Submitted: {new Date(selectedResponse.created_at).toLocaleString()}
             </p>
             <div className="space-y-6">
               {fields.map(field => (
                 <div key={field.id}>
                   <label className="block text-sm font-medium text-stone-900 mb-2">{field.label}</label>
                   <div className="p-4 bg-stone-50 rounded-lg text-stone-900">
-                    {selectedResponse.response_data[field.id] || '(No answer)'}
+                    {selectedResponse.answers[field.id] || '(No answer)'}
                   </div>
                 </div>
               ))}

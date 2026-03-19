@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase-client'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 
 // GET /api/forms/[id]/notifications - Get notification settings
@@ -6,7 +6,7 @@ export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const supabase = createClient()
+  const supabase = createServerSupabaseClient()
   
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   
@@ -53,7 +53,7 @@ export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const supabase = createClient()
+  const supabase = createServerSupabaseClient()
   
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   

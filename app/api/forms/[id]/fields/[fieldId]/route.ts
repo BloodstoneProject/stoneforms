@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase-client'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 
 // PATCH /api/forms/[formId]/fields/[fieldId] - Update field
@@ -6,7 +6,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: { id: string; fieldId: string } }
 ) {
-  const supabase = createClient()
+  const supabase = createServerSupabaseClient()
   
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   
@@ -48,7 +48,7 @@ export async function DELETE(
   request: Request,
   { params }: { params: { id: string; fieldId: string } }
 ) {
-  const supabase = createClient()
+  const supabase = createServerSupabaseClient()
   
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   

@@ -1,74 +1,53 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 
-// GET /api/forms/[id]/responses - Get all responses for a form
-export async function GET(
+// PATCH /api/deals/[id] - Update deal (stage, value, etc.)
+export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   const supabase = createServerSupabaseClient()
-  
+
   const { data: { user }, error: authError } = await supabase.auth.getUser()
-  
   if (authError || !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Verify user owns this form
-  const { data: form } = await supabase
-    .from('forms')
-    .select('id')
+  const body = await request.json()
+
+  const { data: deal, error } = await supabase
+    .from('deals')
+    .update(body)
     .eq('id', params.id)
-    .eq('user_id', user.id)
+    .select(`
+      *,
+      contact:contacts(id, first_name, last_name, email, company)
+    `)
     .single()
-
-  if (!form) {
-    return NextResponse.json({ error: 'Form not found' }, { status: 404 })
-  }
-
-  // Get all responses
-  const { data: responses, error } = await supabase
-    .from('submissions')
-    .select('*')
-    .eq('form_id', params.id)
-    .order('created_at', { ascending: false })
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ responses: responses || [] })
+  return NextResponse.json({ deal })
 }
 
-// DELETE /api/forms/[id]/responses - Delete all responses (with confirmation)
+// DELETE /api/deals/[id]
 export async function DELETE(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   const supabase = createServerSupabaseClient()
-  
+
   const { data: { user }, error: authError } = await supabase.auth.getUser()
-  
   if (authError || !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Verify user owns this form
-  const { data: form } = await supabase
-    .from('forms')
-    .select('id')
-    .eq('id', params.id)
-    .eq('user_id', user.id)
-    .single()
-
-  if (!form) {
-    return NextResponse.json({ error: 'Form not found' }, { status: 404 })
-  }
-
   const { error } = await supabase
-    .from('submissions')
+    .from('deals')
     .delete()
-    .eq('form_id', params.id)
+    .eq('id', params.id)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

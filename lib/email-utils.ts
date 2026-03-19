@@ -2,8 +2,13 @@
 
 import { Resend } from 'resend'
 
-// Initialize Resend (API key from env)
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Lazy-initialize Resend to avoid build-time crash when API key is missing
+let _resend: Resend | null = null
+function getResend(): Resend | null {
+  if (!process.env.RESEND_API_KEY) return null
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY)
+  return _resend
+}
 
 interface SendEmailParams {
   to: string | string[]
@@ -14,6 +19,11 @@ interface SendEmailParams {
 
 export async function sendEmail({ to, subject, html, from }: SendEmailParams) {
   try {
+    const resend = getResend()
+    if (!resend) {
+      console.warn('RESEND_API_KEY not configured - skipping email send')
+      return { success: false, error: 'Email not configured' }
+    }
     const result = await resend.emails.send({
       from: from || 'Stoneforms <notifications@stoneforms.com>',
       to: Array.isArray(to) ? to : [to],
