@@ -1,4 +1,4 @@
-# FormFlow - Beautiful Forms with Powerful CRM
+# Stoneforms - Beautiful Forms with Powerful CRM
 
 A modern form builder with built-in CRM capabilities, built with Next.js 14, TypeScript, Tailwind CSS, and Supabase.
 
@@ -50,7 +50,7 @@ Before you begin, ensure you have:
 ### 1. Clone and Install
 
 ```bash
-cd formflow
+cd stoneforms
 npm install
 ```
 
@@ -98,7 +98,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## 📁 Project Structure
 
 ```
-formflow/
+stoneforms/
 ├── app/                    # Next.js app directory
 │   ├── page.tsx           # Landing page
 │   ├── layout.tsx         # Root layout

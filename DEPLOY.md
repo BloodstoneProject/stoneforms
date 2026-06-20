@@ -6,7 +6,7 @@
 
 ```bash
 # 1. Initialize git (if not already done)
-cd formflow
+cd stoneforms
 git init
 
 # 2. Create .gitignore

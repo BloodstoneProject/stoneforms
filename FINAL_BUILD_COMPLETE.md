@@ -263,7 +263,7 @@ Status: PRODUCTION-READY ✅
 ## 📁 **COMPLETE FILE STRUCTURE**
 
 ```
-formflow/
+stoneforms/
 ├── app/
 │   ├── auth/                        # Authentication
 │   │   ├── login/

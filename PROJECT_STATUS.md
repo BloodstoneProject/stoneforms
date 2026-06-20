@@ -1,4 +1,4 @@
-# 🎉 FORMFLOW - PROJECT STATUS
+# 🎉 STONEFORMS - PROJECT STATUS
 
 ## ✅ COMPLETED (Day 1 - Foundation)
 
@@ -194,7 +194,7 @@ npm run db:migrate
 
 ### Step 2: Install Dependencies
 ```bash
-cd /home/claude/formflow
+cd /home/claude/stoneforms
 npm install
 ```
 

@@ -8,7 +8,7 @@ Just deploy the existing code to Vercel:
 
 ```bash
 # 1. Initialize and push to GitHub
-cd formflow
+cd stoneforms
 git init
 git add .
 git commit -m "Initial commit"
@@ -33,7 +33,7 @@ git push -u origin main
 ### Step 1: Install Dependencies
 
 ```bash
-cd formflow
+cd stoneforms
 npm install
 ```
 

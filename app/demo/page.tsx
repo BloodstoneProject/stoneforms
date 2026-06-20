@@ -74,7 +74,7 @@ export default function DemoPage() {
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="flex items-center">
               <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                FormFlow
+                Stoneforms
               </span>
               <span className="ml-3 px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-700 rounded">
                 DEMO
@@ -97,7 +97,7 @@ export default function DemoPage() {
         <div className="mb-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white">
           <h1 className="text-3xl font-bold mb-2">Dashboard Demo</h1>
           <p className="text-blue-100 mb-4">
-            This is a preview of what your FormFlow dashboard will look like. Sign up to start creating forms!
+            This is a preview of what your Stoneforms dashboard will look like. Sign up to start creating forms!
           </p>
           <Link href="/auth/signup">
             <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100">

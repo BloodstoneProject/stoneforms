@@ -5,7 +5,7 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'FormFlow - Beautiful Forms with Powerful CRM',
+  title: 'Stoneforms - Beautiful Forms with Powerful CRM',
   description: 'Create stunning conversational forms with built-in CRM capabilities',
 }
 

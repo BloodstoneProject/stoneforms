@@ -1,6 +1,6 @@
 # 🚀 STONEFORMS - FRESH START SETUP GUIDE
 
-## ✅ YOU HAVE THE FORMFLOW FOLDER!
+## ✅ YOU HAVE THE STONEFORMS FOLDER!
 
 **Location:** Look for the download link at the top of this conversation - it's the folder I shared.
 
@@ -12,7 +12,7 @@
 
 **No terminal, no Git, no setup needed!**
 
-1. **Download the formflow folder** (from the link I shared above)
+1. **Download the stoneforms folder** (from the link I shared above)
 
 2. **Save it to your Desktop** (so it's easy to find)
 
@@ -20,7 +20,7 @@
 
 4. **Create a Netlify account** (free, use GitHub/email)
 
-5. **Drag the formflow folder** onto the page
+5. **Drag the stoneforms folder** onto the page
 
 6. **✅ DONE!** You're live in 30 seconds!
 
@@ -33,7 +33,7 @@
 ### **METHOD 2: VERCEL (Recommended for Long-Term)**
 
 **Step 1: Get the Files**
-1. Download formflow folder (link above)
+1. Download stoneforms folder (link above)
 2. Save to Desktop
 3. Unzip if it's a .zip file
 
@@ -44,7 +44,7 @@
 
 **Step 3: Navigate to Folder**
 ```bash
-cd ~/Desktop/formflow
+cd ~/Desktop/stoneforms
 ```
 
 **Step 4: Install Vercel CLI**
@@ -125,7 +125,7 @@ Follow the prompts (just press Enter for defaults)
 
 ## 🎊 SUCCESS CHECKLIST:
 
-- [ ] Downloaded formflow folder
+- [ ] Downloaded stoneforms folder
 - [ ] Saved to Desktop
 - [ ] Deployed to Netlify OR Vercel
 - [ ] Got live URL
@@ -178,7 +178,7 @@ Follow the prompts (just press Enter for defaults)
 
 ## ⚡ FASTEST PATH RIGHT NOW:
 
-1. **Look at the TOP of this chat** for the formflow download
+1. **Look at the TOP of this chat** for the stoneforms download
 2. **Download it** to Desktop
 3. **Go to:** https://app.netlify.com/drop
 4. **Drag the folder** onto the page
