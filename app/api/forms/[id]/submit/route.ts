@@ -1,7 +1,8 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 import { checkCanAcceptResponse } from '@/lib/plan-enforcement'
-import { sendSubmissionNotification } from '@/lib/email-utils'
+import { sendSubmissionNotification, sendAutoResponder } from '@/lib/email-utils'
+import { deliverWebhooks } from '@/lib/webhooks'
 
 // POST /api/forms/[id]/submit - Submit form response
 export async function POST(
@@ -17,7 +18,7 @@ export async function POST(
     // Get form to verify it exists and is published
     const { data: form, error: formError } = await supabase
       .from('forms')
-      .select('id, status, title, user_id')
+      .select('id, status, title, user_id, settings')
       .eq('id', params.id)
       .single()
 
@@ -91,7 +92,19 @@ export async function POST(
       console.error('Analytics event error:', eventError)
     }
 
-    // Send email notification (async, don't wait)
+    // Deliver signed webhooks (logs delivery status). Best-effort; never fails the submit.
+    try {
+      await deliverWebhooks({
+        formId: params.id,
+        submissionId: submission.id,
+        event: 'submission.created',
+        data: responses,
+      })
+    } catch (webhookError) {
+      console.error('Webhook delivery error:', webhookError)
+    }
+
+    // Owner notification email.
     try {
       const { data: notificationSettings } = await supabase
         .from('notification_settings')
@@ -111,6 +124,25 @@ export async function POST(
       }
     } catch (emailError) {
       console.error('Email notification error:', emailError)
+    }
+
+    // Auto-responder to the respondent (if enabled and we captured their email).
+    try {
+      const autoResponder = (form.settings as any)?.autoResponder
+      if (autoResponder?.enabled) {
+        const emailField = (fields || []).find((f) => f.field_type === 'email')
+        const respondentEmail = emailField ? responses?.[emailField.id] : null
+        if (typeof respondentEmail === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(respondentEmail)) {
+          sendAutoResponder({
+            to: respondentEmail,
+            formTitle: form.title,
+            subject: autoResponder.subject,
+            message: autoResponder.message,
+          }).catch((err) => console.error('Auto-responder error:', err))
+        }
+      }
+    } catch (autoErr) {
+      console.error('Auto-responder error:', autoErr)
     }
 
     return NextResponse.json({

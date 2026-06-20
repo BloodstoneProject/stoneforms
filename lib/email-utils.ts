@@ -1,6 +1,7 @@
 // Email utilities using Resend
 
 import { Resend } from 'resend'
+import { getSiteUrl } from '@/lib/site'
 
 // Lazy-initialize Resend to avoid build-time crash when API key is missing
 let _resend: Resend | null = null
@@ -9,6 +10,10 @@ function getResend(): Resend | null {
   if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY)
   return _resend
 }
+
+// Verified sending identity. Env-driven so it can point at whichever domain is
+// verified in Resend (Bloodstone for now). Never hardcode an unverified domain.
+const DEFAULT_FROM = process.env.EMAIL_FROM || 'Stoneforms <notifications@bloodstone.co.uk>'
 
 interface SendEmailParams {
   to: string | string[]
@@ -25,7 +30,7 @@ export async function sendEmail({ to, subject, html, from }: SendEmailParams) {
       return { success: false, error: 'Email not configured' }
     }
     const result = await resend.emails.send({
-      from: from || 'Stoneforms <notifications@stoneforms.com>',
+      from: from || DEFAULT_FROM,
       to: Array.isArray(to) ? to : [to],
       subject,
       html,
@@ -87,14 +92,14 @@ export async function sendSubmissionNotification(params: {
             <h2 style="font-size: 18px; margin-top: 0;">Response Details</h2>
             ${responseSummary}
             
-            <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/forms/${formId}/responses" class="button">
+            <a href="${getSiteUrl()}/dashboard/forms/${formId}/responses" class="button">
               View Full Response
             </a>
           </div>
           
           <div class="footer">
             <p>This email was sent by Stoneforms because you enabled notifications for this form.</p>
-            <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/forms/${formId}" style="color: #0a0a0a;">Manage notification settings</a></p>
+            <p><a href="${getSiteUrl()}/dashboard/forms/${formId}" style="color: #0a0a0a;">Manage notification settings</a></p>
           </div>
         </div>
       </body>
@@ -104,6 +109,40 @@ export async function sendSubmissionNotification(params: {
   return sendEmail({
     to: notificationEmails,
     subject: `New response to ${formTitle}`,
+    html,
+  })
+}
+
+// Auto-responder sent to the person who submitted the form.
+export async function sendAutoResponder(params: {
+  to: string
+  formTitle: string
+  subject?: string
+  message?: string
+}) {
+  const { to, formTitle, subject, message } = params
+  const safeMessage = (message || 'Thanks for your submission. We have received your response and will be in touch shortly.')
+    .replace(/\n/g, '<br/>')
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head><meta charset="utf-8" /></head>
+      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; line-height: 1.6; color: #0a0a0a;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 24px;">
+          <div style="background: white; padding: 24px; border: 1px solid #e5e5e5; border-radius: 12px;">
+            <h1 style="font-size: 20px; margin-top: 0;">${formTitle}</h1>
+            <p style="color: #444;">${safeMessage}</p>
+          </div>
+          <p style="margin-top: 16px; text-align: center; color: #999; font-size: 12px;">Powered by Stoneforms</p>
+        </div>
+      </body>
+    </html>
+  `
+
+  return sendEmail({
+    to,
+    subject: subject || `Thanks for your response to ${formTitle}`,
     html,
   })
 }
@@ -161,7 +200,7 @@ export async function sendWelcomeEmail(params: {
             
             <p>Ready to create your first form?</p>
             
-            <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/forms" class="button">
+            <a href="${getSiteUrl()}/dashboard/forms" class="button">
               Create Your First Form
             </a>
             
@@ -225,7 +264,7 @@ export async function sendQuotaWarningEmail(params: {
             <li><strong>Business Plan (£25/month)</strong>: Unlimited everything</li>
           </ul>
           
-          <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing" class="button">
+          <a href="${getSiteUrl()}/dashboard/billing" class="button">
             Upgrade Your Plan
           </a>
           
@@ -297,13 +336,13 @@ export async function sendUpgradeConfirmationEmail(params: {
             `}
           </ul>
           
-          <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/forms" class="button">
+          <a href="${getSiteUrl()}/dashboard/forms" class="button">
             Start Using New Features
           </a>
           
           <p style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e5e5e5; color: #666; font-size: 14px;">
             Your next billing date: ${new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString()}<br/>
-            Manage your subscription anytime in <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing">Billing Settings</a>.
+            Manage your subscription anytime in <a href="${getSiteUrl()}/dashboard/billing">Billing Settings</a>.
           </p>
         </div>
       </body>
