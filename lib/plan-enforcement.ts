@@ -1,6 +1,6 @@
 // Plan enforcement utilities to check limits before actions
 
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { createAdminClient } from '@/lib/supabase-server'
 import { PLAN_LIMITS, PlanId } from './plan-limits'
 
 interface LimitCheck {
@@ -12,7 +12,7 @@ interface LimitCheck {
 }
 
 export async function getUserPlan(userId: string): Promise<PlanId> {
-  const supabase = createServerSupabaseClient()
+  const supabase = createAdminClient()
   
   const { data: subscription } = await supabase
     .from('subscriptions')
@@ -25,7 +25,7 @@ export async function getUserPlan(userId: string): Promise<PlanId> {
 }
 
 export async function checkCanCreateForm(userId: string): Promise<LimitCheck> {
-  const supabase = createServerSupabaseClient()
+  const supabase = createAdminClient()
   
   // Get user's plan
   const plan = await getUserPlan(userId)
@@ -50,7 +50,7 @@ export async function checkCanCreateForm(userId: string): Promise<LimitCheck> {
 }
 
 export async function checkCanAcceptResponse(formId: string): Promise<LimitCheck> {
-  const supabase = createServerSupabaseClient()
+  const supabase = createAdminClient()
   
   // Get form owner
   const { data: form } = await supabase
@@ -98,7 +98,7 @@ export async function checkCanAcceptResponse(formId: string): Promise<LimitCheck
 }
 
 export async function checkStorageLimit(userId: string, additionalMB: number = 0): Promise<LimitCheck> {
-  const supabase = createServerSupabaseClient()
+  const supabase = createAdminClient()
   
   // Get plan
   const plan = await getUserPlan(userId)
