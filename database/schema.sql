@@ -256,12 +256,16 @@ CREATE TABLE usage_tracking (
 -- =====================================================================
 -- ROW LEVEL SECURITY (live policy summary)
 -- =====================================================================
--- forms:        owner CRUD via (auth.uid() = user_id); public SELECT when status='published'
--- form_fields:  owner CRUD via parent form ownership; public SELECT for published forms
+-- forms:        owner CRUD; consolidated SELECT = (status='published' OR own)
+-- form_fields:  owner CRUD; consolidated SELECT covers published-or-own parent form
 -- submissions:  anyone may INSERT to a published form; owner may SELECT/DELETE
+-- form_events:  anon INSERT for published forms only; owner SELECT/DELETE; no UPDATE
 -- file_uploads / notification_settings / webhooks / webhook_deliveries: owner via parent form
--- subscriptions / usage_tracking: user via (auth.uid() = user_id)
+-- subscriptions / usage_tracking: user via (user_id = auth.uid())
 -- contacts / deals / pipelines: owner via workspaces.owner_id = auth.uid()
+-- workflows / workspace_members: RLS enabled, NO policies = deny-all (reserved)
+-- NOTE: all policies use (select auth.uid()) so it is evaluated once per query,
+--       not once per row (Supabase auth_rls_initplan optimization).
 -- All tables have RLS ENABLED. See migrations for exact policy definitions.
 
 -- updated_at trigger helper
