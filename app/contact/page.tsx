@@ -39,7 +39,7 @@ export default function ContactPage() {
             <div className="p-8 bg-white/40 backdrop-blur-sm border border-[#0a0a0a]/5 rounded-3xl text-center">
               <Mail className="w-8 h-8 text-[#8e1c1c] mx-auto mb-4" />
               <h3 className="text-lg font-light mb-2">Email</h3>
-              <a href="mailto:hello@stoneforms.com" className="text-sm font-light text-[#0a0a0a]/60 hover:text-[#8e1c1c] transition-colors">hello@stoneforms.com</a>
+              <a href="mailto:hello@bloodstone.co.uk" className="text-sm font-light text-[#0a0a0a]/60 hover:text-[#8e1c1c] transition-colors">hello@bloodstone.co.uk</a>
             </div>
             <div className="p-8 bg-white/40 backdrop-blur-sm border border-[#0a0a0a]/5 rounded-3xl text-center">
               <MessageSquare className="w-8 h-8 text-[#8e1c1c] mx-auto mb-4" />
