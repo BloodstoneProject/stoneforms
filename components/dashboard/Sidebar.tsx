@@ -6,7 +6,10 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard,
   FileText,
+  LayoutTemplate,
   BarChart3,
+  Users,
+  TrendingUp,
   Settings,
   LogOut,
 } from 'lucide-react'
@@ -19,7 +22,10 @@ import { useRouter } from 'next/navigation'
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Forms', href: '/dashboard/forms', icon: FileText },
+  { name: 'Templates', href: '/dashboard/templates', icon: LayoutTemplate },
   { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+  { name: 'Contacts', href: '/dashboard/contacts', icon: Users },
+  { name: 'Deals', href: '/dashboard/deals', icon: TrendingUp },
 ]
 
 export function Sidebar() {

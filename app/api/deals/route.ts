@@ -41,15 +41,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Title is required' }, { status: 400 })
   }
 
-  // Get workspace
-  const { data: workspace } = await supabase
+  // Get or lazily create the user's workspace (a default pipeline is created
+  // automatically by the create_default_pipeline trigger on workspace insert).
+  let workspace: { id: string } | null = null
+  const { data: existing } = await supabase
     .from('workspaces')
     .select('id')
     .eq('owner_id', user.id)
-    .single()
+    .maybeSingle()
 
-  if (!workspace) {
-    return NextResponse.json({ error: 'No workspace found' }, { status: 400 })
+  if (existing) {
+    workspace = existing
+  } else {
+    const { data: created, error: wsError } = await supabase
+      .from('workspaces')
+      .insert({ name: 'My Workspace', owner_id: user.id })
+      .select('id')
+      .single()
+    if (wsError || !created) {
+      return NextResponse.json({ error: 'Failed to create workspace' }, { status: 500 })
+    }
+    workspace = created
   }
 
   // Get default pipeline
@@ -57,7 +69,9 @@ export async function POST(request: Request) {
     .from('pipelines')
     .select('id')
     .eq('workspace_id', workspace.id)
-    .single()
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
 
   const { data: deal, error } = await supabase
     .from('deals')
