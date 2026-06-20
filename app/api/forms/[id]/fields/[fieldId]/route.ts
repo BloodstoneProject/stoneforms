@@ -28,9 +28,20 @@ export async function PATCH(
 
   const body = await request.json()
 
+  // Whitelist updatable columns (prevents mass-assignment of id/form_id/timestamps).
+  const ALLOWED = ['field_type', 'label', 'placeholder', 'required', 'options', 'position', 'settings'] as const
+  const updates: Record<string, any> = {}
+  for (const key of ALLOWED) {
+    if (key in body) updates[key] = body[key]
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
+  }
+
   const { data: field, error } = await supabase
     .from('form_fields')
-    .update(body)
+    .update(updates)
     .eq('id', params.fieldId)
     .eq('form_id', params.id)
     .select()

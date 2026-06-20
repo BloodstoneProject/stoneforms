@@ -12,7 +12,7 @@ export async function POST(
 
   try {
     const body = await request.json()
-    const { responses } = body
+    const { responses, session_id } = body
 
     // Get form to verify it exists and is published
     const { data: form, error: formError } = await supabase
@@ -77,6 +77,18 @@ export async function POST(
     if (submissionError) {
       console.error('Submission error:', submissionError)
       return NextResponse.json({ error: 'Failed to submit form' }, { status: 500 })
+    }
+
+    // Record an authoritative completion event for analytics (best-effort).
+    try {
+      await supabase.from('form_events').insert({
+        form_id: params.id,
+        event_type: 'submit',
+        submission_id: submission.id,
+        session_id: typeof session_id === 'string' ? session_id.slice(0, 64) : null,
+      })
+    } catch (eventError) {
+      console.error('Analytics event error:', eventError)
     }
 
     // Send email notification (async, don't wait)

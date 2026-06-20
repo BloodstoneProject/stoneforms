@@ -122,6 +122,25 @@ CREATE TABLE notification_settings (
 );
 
 -- =====================================================================
+-- ANALYTICS  (append-only event log; no UPDATE policy => immutable)
+-- =====================================================================
+CREATE TABLE form_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  form_id UUID NOT NULL REFERENCES forms(id) ON DELETE CASCADE,
+  event_type TEXT NOT NULL CHECK (event_type IN ('view','start','step','submit')),
+  submission_id UUID REFERENCES submissions(id) ON DELETE SET NULL,
+  session_id TEXT,
+  question_id UUID,
+  position INTEGER,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_form_events_form ON form_events(form_id);
+CREATE INDEX idx_form_events_form_type ON form_events(form_id, event_type);
+CREATE INDEX idx_form_events_created ON form_events(created_at DESC);
+-- RLS: anon INSERT only for published forms; owner SELECT/DELETE only; no UPDATE.
+
+-- =====================================================================
 -- CRM (workspace-scoped)
 -- =====================================================================
 CREATE TABLE contacts (

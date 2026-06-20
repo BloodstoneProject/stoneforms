@@ -6,7 +6,7 @@ import { ArrowLeft, Download, Upload, Trash2, Eye, Search, Calendar, TrendingUp 
 
 interface Response {
   id: string
-  answers: Record<string, string>
+  answers: Record<string, any>
   created_at: string
 }
 
@@ -14,6 +14,19 @@ interface Field {
   id: string
   label: string
   field_type: string
+}
+
+// Safely turn any answer value (string, number, boolean, string[]) into display text.
+function formatAnswer(value: any): string {
+  if (value === null || value === undefined) return ''
+  if (Array.isArray(value)) return value.join(', ')
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No'
+  return String(value)
+}
+
+// Escape a value for safe CSV output (RFC 4180): wrap in quotes, double inner quotes.
+function csvCell(value: any): string {
+  return `"${formatAnswer(value).replace(/"/g, '""')}"`
 }
 
 export default function ResponsesPage({ params }: { params: Promise<{ id: string }> }) {
@@ -55,20 +68,18 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
 
     // Create CSV headers
     const headers = ['Submitted At', ...fields.map(f => f.label)]
-    
-    // Create CSV rows
-    const rows = responses.map(response => {
-      return [
-        new Date(response.created_at).toLocaleString(),
-        ...fields.map(field => response.answers[field.id] || '')
-      ]
-    })
+
+    // Create CSV rows (every cell escaped; arrays/booleans/numbers handled)
+    const rows = responses.map(response => [
+      new Date(response.created_at).toLocaleString(),
+      ...fields.map(field => response.answers[field.id]),
+    ])
 
     // Combine into CSV string
     const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-    ].join('\n')
+      headers.map(csvCell).join(','),
+      ...rows.map(row => row.map(csvCell).join(',')),
+    ].join('\r\n')
 
     // Download
     const blob = new Blob([csvContent], { type: 'text/csv' })
@@ -168,7 +179,7 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
     if (!searchTerm) return true
     
     return fields.some(field => {
-      const value = response.answers[field.id] || ''
+      const value = formatAnswer(response.answers[field.id])
       return value.toLowerCase().includes(searchTerm.toLowerCase())
     })
   })
@@ -221,6 +232,13 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <Link
+                href={`/dashboard/forms/${formId}/analytics`}
+                className="flex items-center gap-2 px-4 py-2 border border-stone-300 rounded-lg hover:bg-stone-50"
+              >
+                <TrendingUp className="w-4 h-4" />
+                Analytics
+              </Link>
               <button
                 onClick={importFromCSV}
                 className="flex items-center gap-2 px-4 py-2 border border-stone-300 rounded-lg hover:bg-stone-50"
@@ -334,12 +352,15 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
                       <td className="px-6 py-4 text-sm text-stone-600">
                         {new Date(response.created_at).toLocaleString()}
                       </td>
-                      {fields.slice(0, 3).map(field => (
-                        <td key={field.id} className="px-6 py-4 text-sm text-stone-900">
-                          {response.answers[field.id]?.substring(0, 50) || '-'}
-                          {response.answers[field.id]?.length > 50 && '...'}
-                        </td>
-                      ))}
+                      {fields.slice(0, 3).map(field => {
+                        const text = formatAnswer(response.answers[field.id])
+                        return (
+                          <td key={field.id} className="px-6 py-4 text-sm text-stone-900">
+                            {text ? text.slice(0, 50) : '-'}
+                            {text.length > 50 && '…'}
+                          </td>
+                        )
+                      })}
                       <td className="px-6 py-4 text-right">
                         <button
                           onClick={() => setSelectedResponse(response)}
@@ -380,8 +401,8 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
               {fields.map(field => (
                 <div key={field.id}>
                   <label className="block text-sm font-medium text-stone-900 mb-2">{field.label}</label>
-                  <div className="p-4 bg-stone-50 rounded-lg text-stone-900">
-                    {selectedResponse.answers[field.id] || '(No answer)'}
+                  <div className="p-4 bg-stone-50 rounded-lg text-stone-900 whitespace-pre-wrap break-words">
+                    {formatAnswer(selectedResponse.answers[field.id]) || '(No answer)'}
                   </div>
                 </div>
               ))}

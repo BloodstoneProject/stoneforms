@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Question } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -53,6 +53,38 @@ export default function FormPlayer({
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
   const showProgressBar = settings.showProgressBar !== false
+
+  // Anonymous, non-PII session id for funnel analytics.
+  const [sessionId] = useState(() =>
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `s_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`
+  )
+
+  const track = useCallback((eventType: 'view' | 'start' | 'step' | 'submit', extra: Record<string, any> = {}) => {
+    try {
+      const payload = JSON.stringify({ event_type: eventType, session_id: sessionId, ...extra })
+      const url = `/api/public/forms/${formId}/events`
+      if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+        navigator.sendBeacon(url, new Blob([payload], { type: 'application/json' }))
+      } else {
+        fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true }).catch(() => {})
+      }
+    } catch {
+      /* analytics must never break the form */
+    }
+  }, [formId, sessionId])
+
+  // Log a single "view" when the form loads.
+  useEffect(() => {
+    track('view')
+  }, [track])
+
+  // Log a "step" each time the respondent reaches a question (funnel / drop-off).
+  useEffect(() => {
+    const q = questions[currentQuestionIndex]
+    if (q) track('step', { question_id: q.id, position: currentQuestionIndex })
+  }, [currentQuestionIndex, questions, track])
 
   const currentQuestion = questions[currentQuestionIndex]
   const isFirstQuestion = currentQuestionIndex === 0
@@ -170,7 +202,7 @@ export default function FormPlayer({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         // The submit API expects answers keyed by field id.
-        body: JSON.stringify({ responses: answers }),
+        body: JSON.stringify({ responses: answers, session_id: sessionId }),
       })
 
       const data = await res.json().catch(() => ({}))

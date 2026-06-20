@@ -43,9 +43,24 @@ export async function PATCH(
 
   const body = await request.json()
 
+  // Whitelist updatable columns (prevents mass-assignment of user_id, timestamps, etc.)
+  const ALLOWED = ['title', 'description', 'theme', 'logic', 'settings', 'status'] as const
+  const updates: Record<string, any> = {}
+  for (const key of ALLOWED) {
+    if (key in body) updates[key] = body[key]
+  }
+
+  if (updates.status && !['draft', 'published', 'archived'].includes(updates.status)) {
+    return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
+  }
+
   const { data: form, error } = await supabase
     .from('forms')
-    .update(body)
+    .update(updates)
     .eq('id', params.id)
     .eq('user_id', user.id)
     .select()
