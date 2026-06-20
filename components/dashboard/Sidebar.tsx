@@ -3,43 +3,23 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { 
-  LayoutDashboard, 
-  FileText, 
-  Users, 
-  TrendingUp, 
-  Settings, 
-  Zap,
+import {
+  LayoutDashboard,
+  FileText,
   BarChart3,
-  Webhook,
+  Settings,
   LogOut,
-  Award,
-  Calendar,
-  Palette,
-  FileBarChart,
-  UserPlus,
-  Library,
-  BookOpen
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { authHelpers } from '@/lib/supabase-client'
 import { useRouter } from 'next/navigation'
 
+// Only sections backed by real data are linked here. Demo modules from the
+// original scaffold have been removed so every link leads to a working page.
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Forms', href: '/dashboard/forms', icon: FileText },
-  { name: 'Quizzes', href: '/dashboard/quizzes', icon: Award },
-  { name: 'Publications', href: '/dashboard/publications', icon: BookOpen },
-  { name: 'Templates', href: '/dashboard/templates', icon: Library },
-  { name: 'Contacts', href: '/dashboard/contacts', icon: Users },
-  { name: 'Deals', href: '/dashboard/deals', icon: TrendingUp },
   { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
-  { name: 'Reports', href: '/dashboard/reports', icon: FileBarChart },
-  { name: 'Automations', href: '/dashboard/automations', icon: Zap },
-  { name: 'Appointments', href: '/dashboard/appointments', icon: Calendar },
-  { name: 'Webhooks', href: '/dashboard/webhooks', icon: Webhook },
-  { name: 'Integrations', href: '/dashboard/integrations', icon: Webhook },
-  { name: 'Team', href: '/dashboard/team', icon: UserPlus },
 ]
 
 export function Sidebar() {
@@ -65,7 +45,9 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
         {navigation.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+          const isActive = item.href === '/dashboard'
+            ? pathname === '/dashboard'
+            : pathname === item.href || pathname.startsWith(item.href + '/')
           return (
             <Link
               key={item.name}

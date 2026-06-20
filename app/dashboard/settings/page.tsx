@@ -1,45 +1,21 @@
 'use client'
 
 import Link from 'next/link'
-import { User, CreditCard, Bell, Shield, Users, Palette } from 'lucide-react'
+import { User, CreditCard } from 'lucide-react'
 
 export default function SettingsPage() {
   const settingsSections = [
     {
       icon: User,
       title: 'Account',
-      description: 'Manage your account details and preferences',
+      description: 'Your email and password',
       href: '/dashboard/settings/account',
     },
     {
       icon: CreditCard,
       title: 'Billing',
-      description: 'Subscription, payment methods, and invoices',
+      description: 'Subscription, plan, and usage',
       href: '/dashboard/settings/billing',
-    },
-    {
-      icon: Bell,
-      title: 'Notifications',
-      description: 'Email and in-app notification preferences',
-      href: '/dashboard/settings/notifications',
-    },
-    {
-      icon: Shield,
-      title: 'Security',
-      description: 'Password, two-factor authentication, and sessions',
-      href: '/dashboard/settings/security',
-    },
-    {
-      icon: Users,
-      title: 'Team',
-      description: 'Manage team members and permissions',
-      href: '/dashboard/team',
-    },
-    {
-      icon: Palette,
-      title: 'White Label',
-      description: 'Custom branding and domain settings',
-      href: '/dashboard/settings/white-label',
     },
   ]
 
