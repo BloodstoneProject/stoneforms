@@ -1,11 +1,24 @@
 'use client'
 
-import { use, useState, useEffect } from 'react'
+import { use, useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Plus, Trash2, GripVertical, Save, Eye, Share2 } from 'lucide-react'
+import {
+  ArrowLeft, Plus, Trash2, GripVertical, Eye, Share2,
+  Settings2, ChevronDown, ChevronUp, Check, Loader2, Globe, Pencil,
+} from 'lucide-react'
+import {
+  DndContext, closestCenter, PointerSensor, KeyboardSensor,
+  useSensor, useSensors, type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext, verticalListSortingStrategy, useSortable,
+  arrayMove, sortableKeyboardCoordinates,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import ShareModal from '@/components/forms/share-modal'
 import FieldOptionsEditor from '@/components/forms/field-options-editor'
+import { FIELD_TYPES, fieldHasOptions, getFieldMeta } from '@/lib/field-types'
 
 interface Form {
   id: string
@@ -22,47 +35,41 @@ interface Field {
   required: boolean
   options: string[] | null
   position: number
+  settings?: Record<string, any> | null
 }
+
+type SaveState = 'saved' | 'saving' | 'unsaved'
 
 export default function FormBuilderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: formId } = use(params)
   const router = useRouter()
-  
+
   const [form, setForm] = useState<Form | null>(null)
   const [fields, setFields] = useState<Field[]>([])
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [shareModalOpen, setShareModalOpen] = useState(false)
-  const [expandedFieldId, setExpandedFieldId] = useState<string | null>(null)
+  const [expandedSettingsId, setExpandedSettingsId] = useState<string | null>(null)
+  const [saveState, setSaveState] = useState<SaveState>('saved')
 
-  const fieldTypes = [
-    { value: 'short_text', label: 'Short Text', icon: '📝' },
-    { value: 'long_text', label: 'Long Text', icon: '📄' },
-    { value: 'email', label: 'Email', icon: '✉️' },
-    { value: 'number', label: 'Number', icon: '🔢' },
-    { value: 'phone', label: 'Phone', icon: '📞' },
-    { value: 'url', label: 'URL', icon: '🔗' },
-    { value: 'multiple_choice', label: 'Multiple Choice', icon: '☑️' },
-    { value: 'checkboxes', label: 'Checkboxes', icon: '✅' },
-    { value: 'dropdown', label: 'Dropdown', icon: '▼' },
-    { value: 'date', label: 'Date', icon: '📅' },
-    { value: 'rating', label: 'Rating', icon: '⭐' },
-    { value: 'yes_no', label: 'Yes/No', icon: '✓' },
-  ]
+  // refs to drive debounced autosave without re-running on first render
+  const metaTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hydrated = useRef(false)
 
-  const choiceFieldTypes = ['multiple_choice', 'checkboxes', 'dropdown']
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
 
   useEffect(() => {
     fetchFormAndFields()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formId])
 
   const fetchFormAndFields = async () => {
     try {
       const formRes = await fetch(`/api/forms/${formId}`)
       if (!formRes.ok) {
-        const error = await formRes.json()
-        alert(`Error loading form: ${error.error}`)
         router.push('/dashboard/forms')
         return
       }
@@ -74,141 +81,131 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
       if (fieldsData.fields) setFields(fieldsData.fields)
     } catch (error) {
       console.error('Failed to fetch:', error)
-      alert('Failed to load form')
     } finally {
       setLoading(false)
     }
   }
 
-  const saveForm = async () => {
-    if (!form) return
-    setSaving(true)
-
+  // ---- Debounced autosave of title/description ----
+  const persistMeta = useCallback(async (next: Form) => {
+    setSaveState('saving')
     try {
       const res = await fetch(`/api/forms/${formId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: form.title,
-          description: form.description
-        })
+        body: JSON.stringify({ title: next.title, description: next.description }),
       })
-
-      if (!res.ok) {
-        const error = await res.json()
-        alert(`Error saving: ${error.error}`)
-      } else {
-        alert('Form saved successfully!')
-      }
-    } catch (error) {
-      console.error('Failed to save:', error)
-      alert('Failed to save form')
-    } finally {
-      setSaving(false)
+      setSaveState(res.ok ? 'saved' : 'unsaved')
+    } catch {
+      setSaveState('unsaved')
     }
-  }
+  }, [formId])
+
+  useEffect(() => {
+    if (!form) return
+    if (!hydrated.current) { hydrated.current = true; return }
+    setSaveState('unsaved')
+    if (metaTimer.current) clearTimeout(metaTimer.current)
+    metaTimer.current = setTimeout(() => persistMeta(form), 800)
+    return () => { if (metaTimer.current) clearTimeout(metaTimer.current) }
+  }, [form?.title, form?.description, persistMeta]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const addField = async (fieldType: string) => {
+    const defaultOptions = fieldHasOptions(fieldType)
+      ? ['Option 1', 'Option 2', 'Option 3']
+      : null
     try {
-      const defaultOptions = choiceFieldTypes.includes(fieldType)
-        ? ['Option 1', 'Option 2', 'Option 3']
-        : null
-
       const res = await fetch(`/api/forms/${formId}/fields`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           field_type: fieldType,
-          label: 'New Question',
+          label: 'Untitled question',
           required: false,
-          options: defaultOptions
-        })
+          options: defaultOptions,
+        }),
       })
-
-      if (!res.ok) {
-        const error = await res.json()
-        alert(`Error adding field: ${error.error}`)
-        return
-      }
-
+      if (!res.ok) return
       const data = await res.json()
       if (data.field) {
-        setFields([...fields, data.field])
-        if (choiceFieldTypes.includes(fieldType)) {
-          setExpandedFieldId(data.field.id)
-        }
+        setFields((prev) => [...prev, data.field])
+        if (fieldHasOptions(fieldType)) setExpandedSettingsId(data.field.id)
       }
     } catch (error) {
       console.error('Failed to add field:', error)
-      alert('Failed to add field')
     }
   }
 
+  // Optimistic field update + persist. `optimistic` patches local state immediately.
   const updateField = async (fieldId: string, updates: Partial<Field>) => {
+    setFields((prev) => prev.map((f) => (f.id === fieldId ? { ...f, ...updates } : f)))
     try {
-      const res = await fetch(`/api/forms/${formId}/fields/${fieldId}`, {
+      await fetch(`/api/forms/${formId}/fields/${fieldId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates)
+        body: JSON.stringify(updates),
       })
-
-      if (!res.ok) {
-        const error = await res.json()
-        alert(`Error updating field: ${error.error}`)
-        return
-      }
-
-      const data = await res.json()
-      if (data.field) {
-        setFields(fields.map(f => f.id === fieldId ? data.field : f))
-      }
     } catch (error) {
       console.error('Failed to update field:', error)
     }
   }
 
+  // Merge a single key into a field's settings JSONB.
+  const updateFieldSetting = (field: Field, key: string, value: any) => {
+    const nextSettings = { ...(field.settings || {}), [key]: value }
+    if (value === '' || value === undefined || value === null) delete nextSettings[key]
+    updateField(field.id, { settings: nextSettings })
+  }
+
   const deleteField = async (fieldId: string) => {
     if (!confirm('Delete this field?')) return
-
+    setFields((prev) => prev.filter((f) => f.id !== fieldId))
     try {
-      const res = await fetch(`/api/forms/${formId}/fields/${fieldId}`, {
-        method: 'DELETE'
-      })
-
-      if (!res.ok) {
-        const error = await res.json()
-        alert(`Error deleting: ${error.error}`)
-        return
-      }
-
-      setFields(fields.filter(f => f.id !== fieldId))
+      await fetch(`/api/forms/${formId}/fields/${fieldId}`, { method: 'DELETE' })
     } catch (error) {
       console.error('Failed to delete field:', error)
     }
   }
 
-  const publishForm = async () => {
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = fields.findIndex((f) => f.id === active.id)
+    const newIndex = fields.findIndex((f) => f.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const reordered = arrayMove(fields, oldIndex, newIndex)
+    setFields(reordered)
+    // Persist new positions only for the rows whose index changed.
+    reordered.forEach((field, index) => {
+      if (field.position !== index) {
+        fetch(`/api/forms/${formId}/fields/${field.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ position: index }),
+        }).catch(() => {})
+      }
+    })
+    setFields(reordered.map((f, i) => ({ ...f, position: i })))
+  }
+
+  const setStatus = async (status: 'draft' | 'published') => {
     if (!form) return
+    if (status === 'published' && fields.length === 0) {
+      alert('Add at least one field before publishing.')
+      return
+    }
     setPublishing(true)
-    
     try {
       const res = await fetch(`/api/forms/${formId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'published' })
+        body: JSON.stringify({ status }),
       })
-
-      if (!res.ok) {
-        const error = await res.json()
-        alert(`Error publishing: ${error.error}`)
-      } else {
-        setForm({ ...form, status: 'published' })
-        alert('Form published!')
-        setShareModalOpen(true)
+      if (res.ok) {
+        setForm({ ...form, status })
+        if (status === 'published') setShareModalOpen(true)
       }
-    } catch (error) {
-      console.error('Failed to publish:', error)
-      alert('Failed to publish form')
     } finally {
       setPublishing(false)
     }
@@ -217,10 +214,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
   if (loading) {
     return (
       <div className="min-h-screen bg-stone-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stone-900 mx-auto"></div>
-          <p className="mt-4 text-stone-600">Loading form...</p>
-        </div>
+        <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
       </div>
     )
   }
@@ -230,82 +224,86 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
       <div className="min-h-screen bg-stone-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-stone-900 mb-4">Form Not Found</h1>
-          <Link href="/dashboard/forms" className="text-stone-600 hover:text-stone-900">
-            ← Back to Forms
-          </Link>
+          <Link href="/dashboard/forms" className="text-stone-600 hover:text-stone-900">← Back to Forms</Link>
         </div>
       </div>
     )
   }
+
+  const isPublished = form.status === 'published'
 
   return (
     <div className="min-h-screen bg-stone-50">
       {/* Top Bar */}
       <div className="bg-white border-b border-stone-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/dashboard/forms" className="text-stone-600 hover:text-stone-900">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4 min-w-0">
+              <Link href="/dashboard/forms" className="text-stone-600 hover:text-stone-900 shrink-0">
                 <ArrowLeft className="w-5 h-5" />
               </Link>
-              <div>
+              <div className="min-w-0">
                 <input
                   type="text"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  className="text-xl font-bold text-stone-900 border-none focus:outline-none bg-transparent"
+                  className="text-xl font-bold text-stone-900 border-none focus:outline-none bg-transparent w-full"
                   placeholder="Form Title"
                 />
-                <p className="text-sm text-stone-600">{form.status} · {fields.length} fields</p>
+                <div className="flex items-center gap-2 text-sm text-stone-500">
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${isPublished ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-600'}`}>
+                    {isPublished ? <Globe className="w-3 h-3" /> : <Pencil className="w-3 h-3" />}
+                    {isPublished ? 'Published' : 'Draft'}
+                  </span>
+                  <span>· {fields.length} {fields.length === 1 ? 'field' : 'fields'}</span>
+                  <span>·</span>
+                  <SaveIndicator state={saveState} />
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 shrink-0">
               <Link
                 href={`/f/${formId}`}
                 target="_blank"
-                className="flex items-center gap-2 px-4 py-2 border border-stone-300 rounded-lg hover:bg-stone-50"
+                className="flex items-center gap-2 px-3 py-2 border border-stone-300 rounded-lg hover:bg-stone-50 text-sm"
               >
-                <Eye className="w-4 h-4" />
-                Preview
+                <Eye className="w-4 h-4" /> Preview
               </Link>
 
-              {form.status === 'published' && (
+              {isPublished && (
                 <button
                   onClick={() => setShareModalOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 border border-stone-300 rounded-lg hover:bg-stone-50"
+                  className="flex items-center gap-2 px-3 py-2 border border-stone-300 rounded-lg hover:bg-stone-50 text-sm"
                 >
-                  <Share2 className="w-4 h-4" />
-                  Share
+                  <Share2 className="w-4 h-4" /> Share
                 </button>
               )}
 
-              <button
-                onClick={saveForm}
-                disabled={saving}
-                className="flex items-center gap-2 px-4 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800 disabled:opacity-50"
-              >
-                <Save className="w-4 h-4" />
-                {saving ? 'Saving...' : 'Save'}
-              </button>
-
-              {form.status === 'draft' && (
+              {isPublished ? (
+                <>
+                  <Link
+                    href={`/dashboard/forms/${formId}/responses`}
+                    className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                  >
+                    Responses
+                  </Link>
+                  <button
+                    onClick={() => setStatus('draft')}
+                    disabled={publishing}
+                    className="px-3 py-2 border border-stone-300 rounded-lg hover:bg-stone-50 text-sm disabled:opacity-50"
+                  >
+                    {publishing ? 'Working…' : 'Unpublish'}
+                  </button>
+                </>
+              ) : (
                 <button
-                  onClick={publishForm}
+                  onClick={() => setStatus('published')}
                   disabled={publishing}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 text-sm font-medium"
                 >
-                  {publishing ? 'Publishing...' : 'Publish'}
+                  {publishing ? 'Publishing…' : 'Publish'}
                 </button>
-              )}
-
-              {form.status === 'published' && (
-                <Link
-                  href={`/dashboard/forms/${formId}/responses`}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  View Responses
-                </Link>
               )}
             </div>
           </div>
@@ -319,13 +317,13 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
             <div className="bg-white rounded-lg border border-stone-200 p-4 sticky top-24">
               <h3 className="font-bold text-stone-900 mb-4">Add Fields</h3>
               <div className="space-y-2">
-                {fieldTypes.map((type) => (
+                {FIELD_TYPES.map((type) => (
                   <button
                     key={type.value}
                     onClick={() => addField(type.value)}
-                    className="w-full flex items-center gap-3 px-4 py-3 border border-stone-200 rounded-lg hover:bg-stone-50 text-left transition-colors"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 border border-stone-200 rounded-lg hover:bg-stone-50 hover:border-stone-300 text-left transition-colors"
                   >
-                    <span className="text-2xl">{type.icon}</span>
+                    <span className="text-xl">{type.icon}</span>
                     <span className="text-sm font-medium text-stone-900">{type.label}</span>
                   </button>
                 ))}
@@ -341,11 +339,11 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                 type="text"
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
-                className="text-2xl font-bold text-stone-900 w-full border-none focus:outline-none mb-4"
+                className="text-2xl font-bold text-stone-900 w-full border-none focus:outline-none mb-2"
                 placeholder="Form Title"
               />
               <textarea
-                value={form.description}
+                value={form.description || ''}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 className="w-full text-stone-600 border-none focus:outline-none resize-none"
                 placeholder="Add a description..."
@@ -355,83 +353,43 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
 
             {/* Fields */}
             {fields.length === 0 ? (
-              <div className="bg-white rounded-lg border border-stone-200 p-12 text-center">
+              <div className="bg-white rounded-lg border-2 border-dashed border-stone-200 p-12 text-center">
                 <Plus className="w-12 h-12 text-stone-400 mx-auto mb-4" />
                 <h3 className="text-lg font-bold text-stone-900 mb-2">No fields yet</h3>
                 <p className="text-stone-600">Click a field type on the left to add your first question</p>
               </div>
             ) : (
-              fields.map((field) => (
-                <div key={field.id} className="bg-white rounded-lg border border-stone-200 p-6">
-                  <div className="flex items-start gap-4">
-                    <GripVertical className="w-5 h-5 text-stone-400 mt-2 cursor-move" />
-                    <div className="flex-1 space-y-4">
-                      <div className="flex items-center gap-4">
-                        <input
-                          type="text"
-                          value={field.label}
-                          onChange={(e) => updateField(field.id, { label: e.target.value })}
-                          className="flex-1 text-lg font-medium text-stone-900 border-b border-stone-200 focus:outline-none focus:border-stone-900 pb-2"
-                          placeholder="Question"
-                        />
-                        <span className="px-3 py-1 bg-stone-100 text-stone-700 text-xs rounded-full">
-                          {fieldTypes.find(t => t.value === field.field_type)?.label}
-                        </span>
-                      </div>
-
-                      <input
-                        type="text"
-                        value={field.placeholder || ''}
-                        onChange={(e) => updateField(field.id, { placeholder: e.target.value })}
-                        className="w-full text-sm text-stone-600 border border-stone-200 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
-                        placeholder="Placeholder text..."
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={fields.map((f) => f.id)} strategy={verticalListSortingStrategy}>
+                  <div className="space-y-4">
+                    {fields.map((field, index) => (
+                      <SortableField
+                        key={field.id}
+                        field={field}
+                        index={index}
+                        expanded={expandedSettingsId === field.id}
+                        onToggleExpand={() =>
+                          setExpandedSettingsId(expandedSettingsId === field.id ? null : field.id)
+                        }
+                        onUpdate={updateField}
+                        onUpdateSetting={updateFieldSetting}
+                        onDelete={deleteField}
                       />
-
-                      {/* Field Options Editor for Choice Fields */}
-                      {choiceFieldTypes.includes(field.field_type) && (
-                        <div className="pt-4 border-t border-stone-200">
-                          <FieldOptionsEditor
-                            options={field.options || ['Option 1', 'Option 2', 'Option 3']}
-                            onChange={(opts) => updateField(field.id, { options: opts })}
-                            fieldType={field.field_type as any}
-                          />
-                        </div>
-                      )}
-
-                      <div className="flex items-center gap-4">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={field.required}
-                            onChange={(e) => updateField(field.id, { required: e.target.checked })}
-                            className="rounded"
-                          />
-                          <span className="text-sm text-stone-600">Required</span>
-                        </label>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => deleteField(field.id)}
-                      className="text-red-600 hover:text-red-700 mt-2"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
+                    ))}
                   </div>
-                </div>
-              ))
+                </SortableContext>
+              </DndContext>
             )}
 
-            {/* Share Prompt */}
-            {form.status === 'published' && (
+            {isPublished && (
               <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                <h3 className="font-bold text-green-900 mb-2">✅ Form Published!</h3>
+                <h3 className="font-bold text-green-900 mb-2">✅ Form Published</h3>
                 <p className="text-sm text-green-700 mb-4">Your form is live and ready to share.</p>
                 <button
                   onClick={() => setShareModalOpen(true)}
                   className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                 >
-                  <Share2 className="w-4 h-4" />
-                  Share Form
+                  <Share2 className="w-4 h-4" /> Share Form
                 </button>
               </div>
             )}
@@ -439,13 +397,172 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
         </div>
       </div>
 
-      {/* Share Modal */}
       <ShareModal
         formId={formId}
         formTitle={form.title}
         isOpen={shareModalOpen}
         onClose={() => setShareModalOpen(false)}
       />
+    </div>
+  )
+}
+
+function SaveIndicator({ state }: { state: SaveState }) {
+  if (state === 'saving') {
+    return <span className="inline-flex items-center gap-1 text-stone-500"><Loader2 className="w-3 h-3 animate-spin" /> Saving…</span>
+  }
+  if (state === 'unsaved') {
+    return <span className="text-amber-600">Unsaved changes</span>
+  }
+  return <span className="inline-flex items-center gap-1 text-stone-500"><Check className="w-3 h-3" /> All changes saved</span>
+}
+
+interface SortableFieldProps {
+  field: Field
+  index: number
+  expanded: boolean
+  onToggleExpand: () => void
+  onUpdate: (id: string, updates: Partial<Field>) => void
+  onUpdateSetting: (field: Field, key: string, value: any) => void
+  onDelete: (id: string) => void
+}
+
+function SortableField({ field, index, expanded, onToggleExpand, onUpdate, onUpdateSetting, onDelete }: SortableFieldProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: field.id })
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
+  const meta = getFieldMeta(field.field_type)
+  const settings = field.settings || {}
+  const isNumeric = meta?.category === 'number'
+  const isText = field.field_type === 'short_text' || field.field_type === 'long_text'
+
+  return (
+    <div ref={setNodeRef} style={style} className="bg-white rounded-lg border border-stone-200 p-5">
+      <div className="flex items-start gap-3">
+        <button
+          {...attributes}
+          {...listeners}
+          className="text-stone-300 hover:text-stone-500 mt-1.5 cursor-grab active:cursor-grabbing touch-none"
+          aria-label="Drag to reorder"
+        >
+          <GripVertical className="w-5 h-5" />
+        </button>
+
+        <div className="flex-1 space-y-3 min-w-0">
+          <div className="flex items-center gap-3">
+            <span className="text-stone-400 text-sm font-medium w-5 shrink-0">{index + 1}</span>
+            <input
+              type="text"
+              value={field.label}
+              onChange={(e) => onUpdate(field.id, { label: e.target.value })}
+              className="flex-1 text-lg font-medium text-stone-900 border-b border-transparent hover:border-stone-200 focus:outline-none focus:border-stone-900 pb-1"
+              placeholder="Question"
+            />
+            <span className="px-2.5 py-1 bg-stone-100 text-stone-600 text-xs rounded-full shrink-0">
+              {meta?.icon} {meta?.label || field.field_type}
+            </span>
+          </div>
+
+          {/* Choice options */}
+          {fieldHasOptions(field.field_type) && (
+            <div className="pt-2 pl-8">
+              <FieldOptionsEditor
+                options={field.options || ['Option 1', 'Option 2', 'Option 3']}
+                onChange={(opts) => onUpdate(field.id, { options: opts })}
+                fieldType={field.field_type as any}
+              />
+            </div>
+          )}
+
+          {/* Controls row */}
+          <div className="flex items-center gap-4 pl-8">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={field.required}
+                onChange={(e) => onUpdate(field.id, { required: e.target.checked })}
+                className="rounded"
+              />
+              <span className="text-sm text-stone-600">Required</span>
+            </label>
+            <button
+              onClick={onToggleExpand}
+              className="flex items-center gap-1 text-sm text-stone-500 hover:text-stone-900"
+            >
+              <Settings2 className="w-4 h-4" /> Settings
+              {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            </button>
+          </div>
+
+          {/* Expandable per-field settings */}
+          {expanded && (
+            <div className="pl-8 pt-3 mt-2 border-t border-stone-100 space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-stone-700 mb-1">Help text</label>
+                <input
+                  type="text"
+                  value={settings.description || ''}
+                  onChange={(e) => onUpdateSetting(field, 'description', e.target.value)}
+                  className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+                  placeholder="Extra guidance shown under the question"
+                />
+              </div>
+
+              {!fieldHasOptions(field.field_type) && field.field_type !== 'yes_no' && (
+                <div>
+                  <label className="block text-xs font-medium text-stone-700 mb-1">Placeholder</label>
+                  <input
+                    type="text"
+                    value={field.placeholder || ''}
+                    onChange={(e) => onUpdate(field.id, { placeholder: e.target.value })}
+                    className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+                    placeholder="Placeholder text…"
+                  />
+                </div>
+              )}
+
+              {isNumeric && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-stone-700 mb-1">Min</label>
+                    <input
+                      type="number"
+                      value={settings.min ?? ''}
+                      onChange={(e) => onUpdateSetting(field, 'min', e.target.value === '' ? '' : Number(e.target.value))}
+                      className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-stone-700 mb-1">Max</label>
+                    <input
+                      type="number"
+                      value={settings.max ?? ''}
+                      onChange={(e) => onUpdateSetting(field, 'max', e.target.value === '' ? '' : Number(e.target.value))}
+                      className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {isText && (
+                <div>
+                  <label className="block text-xs font-medium text-stone-700 mb-1">Max length (characters)</label>
+                  <input
+                    type="number"
+                    value={settings.maxLength ?? ''}
+                    onChange={(e) => onUpdateSetting(field, 'maxLength', e.target.value === '' ? '' : Number(e.target.value))}
+                    className="w-40 text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+                    placeholder="No limit"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <button onClick={() => onDelete(field.id)} className="text-stone-400 hover:text-red-600 mt-1.5" aria-label="Delete field">
+          <Trash2 className="w-5 h-5" />
+        </button>
+      </div>
     </div>
   )
 }
