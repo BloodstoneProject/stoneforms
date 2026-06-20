@@ -47,10 +47,16 @@ export async function POST(
       .eq('form_id', params.id)
       .order('position')
 
-    // Validate required fields
+    // Validate required fields (handles strings, arrays, booleans, numbers)
+    const isEmpty = (v: any) =>
+      v === undefined ||
+      v === null ||
+      (typeof v === 'string' && v.trim() === '') ||
+      (Array.isArray(v) && v.length === 0)
+
     const requiredFields = fields?.filter(f => f.required) || []
     for (const field of requiredFields) {
-      if (!responses[field.id] || responses[field.id].trim() === '') {
+      if (isEmpty(responses?.[field.id])) {
         return NextResponse.json({
           error: `${field.label} is required`
         }, { status: 400 })

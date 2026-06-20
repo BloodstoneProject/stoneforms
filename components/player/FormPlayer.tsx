@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Question, Answer, Submission } from '@/types'
+import { Question } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
@@ -15,11 +15,18 @@ import {
 import { QuestionRenderer } from '@/components/player/QuestionRenderer'
 import { ThankYouScreen } from '@/components/player/ThankYouScreen'
 
+interface FormSettings {
+  showProgressBar?: boolean
+  redirectUrl?: string
+  customEndingMessage?: string
+}
+
 interface FormPlayerProps {
   formId: string
   formTitle: string
   formDescription?: string
   questions: Question[]
+  settings?: FormSettings
   theme?: {
     primaryColor: string
     backgroundColor: string
@@ -32,6 +39,7 @@ export default function FormPlayer({
   formTitle,
   formDescription,
   questions,
+  settings = {},
   theme = {
     primaryColor: '#142c1c',
     backgroundColor: '#f4f2ed',
@@ -43,6 +51,8 @@ export default function FormPlayer({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const showProgressBar = settings.showProgressBar !== false
 
   const currentQuestion = questions[currentQuestionIndex]
   const isFirstQuestion = currentQuestionIndex === 0
@@ -96,15 +106,22 @@ export default function FormPlayer({
       }
     }
 
-    // Validate text length
-    if (['short_text', 'long_text'].includes(currentQuestion.type) && answer) {
-      const length = answer.length
-      if (currentQuestion.validation?.min !== undefined && length < currentQuestion.validation.min) {
-        setErrors({ [currentQuestion.id]: `Minimum length is ${currentQuestion.validation.min} characters` })
+    // Validate URL
+    if (currentQuestion.type === 'url' && answer) {
+      try {
+        // eslint-disable-next-line no-new
+        new URL(/^https?:\/\//i.test(answer) ? answer : `https://${answer}`)
+      } catch {
+        setErrors({ [currentQuestion.id]: 'Please enter a valid URL' })
         return false
       }
-      if (currentQuestion.validation?.max !== undefined && length > currentQuestion.validation.max) {
-        setErrors({ [currentQuestion.id]: `Maximum length is ${currentQuestion.validation.max} characters` })
+    }
+
+    // Validate text length
+    if (['short_text', 'long_text'].includes(currentQuestion.type) && typeof answer === 'string' && answer) {
+      const max = currentQuestion.validation?.maxLength
+      if (max !== undefined && answer.length > max) {
+        setErrors({ [currentQuestion.id]: `Maximum length is ${max} characters` })
         return false
       }
     }
@@ -146,35 +163,35 @@ export default function FormPlayer({
   // Submit form
   const handleSubmit = async () => {
     setIsSubmitting(true)
-
-    // Create submission object
-    const submission: Partial<Submission> = {
-      formId,
-      answers: Object.entries(answers).map(([questionId, value]) => ({
-        questionId,
-        value,
-        type: questions.find(q => q.id === questionId)?.type || 'short_text',
-      })),
-      metadata: {
-        userAgent: navigator.userAgent,
-        startedAt: new Date().toISOString(),
-        completedAt: new Date().toISOString(),
-        timeSpent: 0, // TODO: Track actual time
-      },
-      createdAt: new Date().toISOString(),
-    }
+    setSubmitError(null)
 
     try {
-      // TODO: Save to Supabase
-      console.log('Submitting:', submission)
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
+      const res = await fetch(`/api/forms/${formId}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // The submit API expects answers keyed by field id.
+        body: JSON.stringify({ responses: answers }),
+      })
+
+      const data = await res.json().catch(() => ({}))
+
+      if (!res.ok) {
+        setSubmitError(data.error || 'Failed to submit form. Please try again.')
+        return
+      }
+
+      if (settings.redirectUrl) {
+        const target = /^https?:\/\//i.test(settings.redirectUrl)
+          ? settings.redirectUrl
+          : `https://${settings.redirectUrl}`
+        window.location.href = target
+        return
+      }
+
       setIsComplete(true)
     } catch (error) {
       console.error('Submission error:', error)
-      alert('Failed to submit form. Please try again.')
+      setSubmitError('Something went wrong. Please check your connection and try again.')
     } finally {
       setIsSubmitting(false)
     }
@@ -185,19 +202,30 @@ export default function FormPlayer({
       <ThankYouScreen
         formTitle={formTitle}
         theme={theme}
+        customMessage={settings.customEndingMessage}
       />
     )
   }
 
+  if (!currentQuestion) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: theme.backgroundColor }}>
+        <p style={{ color: theme.textColor, opacity: 0.7 }}>This form has no questions yet.</p>
+      </div>
+    )
+  }
+
   return (
-    <div 
+    <div
       className="min-h-screen flex flex-col"
       style={{ backgroundColor: theme.backgroundColor }}
     >
       {/* Progress Bar */}
-      <div className="fixed top-0 left-0 right-0 z-50">
-        <Progress value={progress} className="h-1 rounded-none" />
-      </div>
+      {showProgressBar && (
+        <div className="fixed top-0 left-0 right-0 z-50">
+          <Progress value={progress} className="h-1 rounded-none" />
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center p-4 pt-8">
@@ -239,6 +267,13 @@ export default function FormPlayer({
               theme={theme}
             />
           </div>
+
+          {/* Submit error */}
+          {submitError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              {submitError}
+            </div>
+          )}
 
           {/* Navigation Buttons */}
           <div className="flex items-center justify-between">

@@ -37,6 +37,7 @@ export function dbFieldToQuestion(field: DbField): Question {
     validation: {
       min: settings.min,
       max: settings.max,
+      maxLength: settings.maxLength,
       pattern: settings.pattern,
       message: settings.message,
     },

@@ -20,11 +20,20 @@ import ShareModal from '@/components/forms/share-modal'
 import FieldOptionsEditor from '@/components/forms/field-options-editor'
 import { FIELD_TYPES, fieldHasOptions, getFieldMeta } from '@/lib/field-types'
 
+interface FormSettings {
+  showProgressBar?: boolean
+  allowMultipleSubmissions?: boolean
+  requireEmail?: boolean
+  redirectUrl?: string
+  customEndingMessage?: string
+}
+
 interface Form {
   id: string
   title: string
   description: string
   status: string
+  settings?: FormSettings
 }
 
 interface Field {
@@ -50,6 +59,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
   const [publishing, setPublishing] = useState(false)
   const [shareModalOpen, setShareModalOpen] = useState(false)
   const [expandedSettingsId, setExpandedSettingsId] = useState<string | null>(null)
+  const [formSettingsOpen, setFormSettingsOpen] = useState(false)
   const [saveState, setSaveState] = useState<SaveState>('saved')
 
   // refs to drive debounced autosave without re-running on first render
@@ -93,7 +103,11 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
       const res = await fetch(`/api/forms/${formId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: next.title, description: next.description }),
+        body: JSON.stringify({
+          title: next.title,
+          description: next.description,
+          settings: next.settings || {},
+        }),
       })
       setSaveState(res.ok ? 'saved' : 'unsaved')
     } catch {
@@ -108,7 +122,11 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
     if (metaTimer.current) clearTimeout(metaTimer.current)
     metaTimer.current = setTimeout(() => persistMeta(form), 800)
     return () => { if (metaTimer.current) clearTimeout(metaTimer.current) }
-  }, [form?.title, form?.description, persistMeta]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [form?.title, form?.description, JSON.stringify(form?.settings), persistMeta]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const updateSetting = (key: keyof FormSettings, value: any) => {
+    setForm((prev) => (prev ? { ...prev, settings: { ...(prev.settings || {}), [key]: value } } : prev))
+  }
 
   const addField = async (fieldType: string) => {
     const defaultOptions = fieldHasOptions(fieldType)
@@ -349,6 +367,61 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                 placeholder="Add a description..."
                 rows={2}
               />
+            </div>
+
+            {/* Form Settings */}
+            <div className="bg-white rounded-lg border border-stone-200">
+              <button
+                onClick={() => setFormSettingsOpen((v) => !v)}
+                className="w-full flex items-center justify-between px-6 py-4 text-left"
+              >
+                <span className="flex items-center gap-2 font-medium text-stone-900">
+                  <Settings2 className="w-4 h-4" /> Form settings
+                </span>
+                {formSettingsOpen ? <ChevronUp className="w-4 h-4 text-stone-500" /> : <ChevronDown className="w-4 h-4 text-stone-500" />}
+              </button>
+              {formSettingsOpen && (
+                <div className="px-6 pb-6 space-y-4 border-t border-stone-100 pt-4">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form.settings?.showProgressBar !== false}
+                      onChange={(e) => updateSetting('showProgressBar', e.target.checked)}
+                      className="rounded"
+                    />
+                    <span className="text-sm text-stone-700">Show progress bar</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form.settings?.allowMultipleSubmissions !== false}
+                      onChange={(e) => updateSetting('allowMultipleSubmissions', e.target.checked)}
+                      className="rounded"
+                    />
+                    <span className="text-sm text-stone-700">Allow multiple submissions per visitor</span>
+                  </label>
+                  <div>
+                    <label className="block text-xs font-medium text-stone-700 mb-1">Custom thank-you message</label>
+                    <input
+                      type="text"
+                      value={form.settings?.customEndingMessage || ''}
+                      onChange={(e) => updateSetting('customEndingMessage', e.target.value)}
+                      className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+                      placeholder="Your response has been recorded successfully."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-stone-700 mb-1">Redirect URL after submit (optional)</label>
+                    <input
+                      type="text"
+                      value={form.settings?.redirectUrl || ''}
+                      onChange={(e) => updateSetting('redirectUrl', e.target.value)}
+                      className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+                      placeholder="https://example.com/thank-you"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Fields */}
