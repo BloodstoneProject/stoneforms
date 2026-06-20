@@ -17,6 +17,9 @@ import {
   Video,
   Mic,
   AlignLeft,
+  Phone,
+  Link as LinkIcon,
+  ListChecks,
   Copy,
   Trash2
 } from 'lucide-react'
@@ -38,7 +41,10 @@ const questionTypeIcons: Record<QuestionType, any> = {
   long_text: AlignLeft,
   email: Mail,
   number: Hash,
+  phone: Phone,
+  url: LinkIcon,
   multiple_choice: List,
+  checkboxes: ListChecks,
   dropdown: ChevronDown,
   rating: Star,
   yes_no: CheckSquare,

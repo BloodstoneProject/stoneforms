@@ -1,9 +1,8 @@
 'use client'
 
-import { use, useState } from 'react'
+import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Check, Sparkles, Eye } from 'lucide-react'
-import { getFormById } from '@/lib/mock-data'
+import { ArrowLeft, Check, Sparkles, Eye, Loader } from 'lucide-react'
 
 interface Theme {
   id: string
@@ -22,8 +21,25 @@ interface Theme {
 
 export default function FormThemesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const form = getFormById(id)
+  const [form, setForm] = useState<{ id: string; title: string; theme?: any } | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [savedTheme, setSavedTheme] = useState<string>('default')
   const [selectedTheme, setSelectedTheme] = useState<string>('default')
+
+  useEffect(() => {
+    fetch(`/api/forms/${id}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.form) {
+          setForm(data.form)
+          const themeId = data.form.theme?.id || 'default'
+          setSelectedTheme(themeId)
+          setSavedTheme(themeId)
+        }
+      })
+      .finally(() => setLoading(false))
+  }, [id])
 
   const themes: Theme[] = [
     {
@@ -207,11 +223,47 @@ export default function FormThemesPage({ params }: { params: Promise<{ id: strin
 
   const [categoryFilter, setCategoryFilter] = useState('all')
 
-  const filteredThemes = categoryFilter === 'all' 
-    ? themes 
+  const filteredThemes = categoryFilter === 'all'
+    ? themes
     : themes.filter(t => t.category === categoryFilter)
 
-  if (!form) return <div>Form not found</div>
+  const applyTheme = async () => {
+    const theme = themes.find((t) => t.id === selectedTheme)
+    if (!theme) return
+    setSaving(true)
+    try {
+      const themePayload = {
+        id: theme.id,
+        name: theme.name,
+        colors: {
+          primary: theme.primaryColor,
+          background: theme.backgroundColor,
+          text: theme.textColor,
+          button: theme.accentColor,
+          buttonText: '#FFFFFF',
+        },
+        fonts: { heading: theme.fontFamily, body: theme.fontFamily },
+      }
+      const res = await fetch(`/api/forms/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ theme: themePayload }),
+      })
+      if (res.ok) setSavedTheme(theme.id)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-stone-50">
+        <Loader className="w-6 h-6 animate-spin text-stone-400" />
+      </div>
+    )
+  }
+
+  if (!form) return <div className="p-8">Form not found</div>
 
   return (
     <div className="min-h-screen bg-stone-50">
@@ -334,10 +386,10 @@ export default function FormThemesPage({ params }: { params: Promise<{ id: strin
                   />
                 </div>
 
-                {selectedTheme === theme.id && (
-                  <button className="w-full mt-3 px-4 py-2 bg-stone-900 text-white rounded-lg font-semibold">
+                {savedTheme === theme.id && (
+                  <div className="w-full mt-3 px-4 py-2 bg-green-600 text-white rounded-lg font-semibold text-center">
                     Applied ✓
-                  </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -355,8 +407,12 @@ export default function FormThemesPage({ params }: { params: Promise<{ id: strin
                 This theme will be applied to your form
               </p>
             </div>
-            <button className="px-8 py-3 bg-stone-900 text-white rounded-lg hover:bg-stone-800 font-semibold text-lg">
-              Apply Theme
+            <button
+              onClick={applyTheme}
+              disabled={saving || savedTheme === selectedTheme}
+              className="px-8 py-3 bg-stone-900 text-white rounded-lg hover:bg-stone-800 font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {saving ? 'Applying…' : savedTheme === selectedTheme ? 'Applied ✓' : 'Apply Theme'}
             </button>
           </div>
         </div>

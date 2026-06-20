@@ -28,7 +28,13 @@ export function createServerSupabaseClient() {
   })
 }
 
-// Admin client for operations that bypass RLS (use sparingly)
+// Admin client for trusted server-side operations that must bypass RLS
+// (webhook delivery, cron jobs, Stripe reconciliation). Uses the service-role
+// key when available; falls back to the anon key (RLS still applies) so local
+// dev without the secret degrades gracefully instead of crashing.
 export function createAdminClient() {
-  return createClient(supabaseUrl, supabaseAnonKey)
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnonKey
+  return createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
 }

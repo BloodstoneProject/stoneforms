@@ -1,9 +1,8 @@
 'use client'
 
-import { use, useState } from 'react'
+import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Plus, Trash2, Save, Eye, Zap, ChevronDown } from 'lucide-react'
-import { getFormById } from '@/lib/mock-data'
+import { ArrowLeft, Plus, Trash2, Save, Eye, Zap, Loader } from 'lucide-react'
 
 interface LogicRule {
   id: string
@@ -19,25 +18,65 @@ interface LogicRule {
   }
 }
 
+interface QuestionRef {
+  id: string
+  label: string
+  type: string
+}
+
 export default function ConditionalLogicPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const form = getFormById(id)
-  
-  const [rules, setRules] = useState<LogicRule[]>([
-    {
-      id: '1',
-      condition: { field: 'q1', operator: 'equals', value: 'Yes' },
-      action: { type: 'show', target: 'q3' }
+  const [form, setForm] = useState<{ id: string; title: string } | null>(null)
+  const [questions, setQuestions] = useState<QuestionRef[]>([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [rules, setRules] = useState<LogicRule[]>([])
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const [formRes, fieldsRes] = await Promise.all([
+          fetch(`/api/forms/${id}`).then((r) => r.json()),
+          fetch(`/api/forms/${id}/fields`).then((r) => r.json()),
+        ])
+        if (formRes.form) {
+          setForm(formRes.form)
+          if (Array.isArray(formRes.form.logic)) setRules(formRes.form.logic)
+        }
+        if (Array.isArray(fieldsRes.fields)) {
+          setQuestions(
+            fieldsRes.fields.map((f: any) => ({ id: f.id, label: f.label, type: f.field_type }))
+          )
+        }
+      } finally {
+        setLoading(false)
+      }
     }
-  ])
+    load()
+  }, [id])
 
-  if (!form) return <div>Form not found</div>
+  const saveLogic = async () => {
+    setSaving(true)
+    try {
+      await fetch(`/api/forms/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ logic: rules }),
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
 
-  const questions = form.questions || [
-    { id: 'q1', label: 'Are you interested?', type: 'multiple_choice', choices: [{ id: 'a', text: 'Yes' }, { id: 'b', text: 'No' }] },
-    { id: 'q2', label: 'Your email', type: 'email' },
-    { id: 'q3', label: 'Tell us more', type: 'long_text' },
-  ]
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-stone-50">
+        <Loader className="w-6 h-6 animate-spin text-stone-400" />
+      </div>
+    )
+  }
+
+  if (!form) return <div className="p-8">Form not found</div>
 
   const operators = [
     { value: 'equals', label: 'equals' },
@@ -57,10 +96,11 @@ export default function ConditionalLogicPage({ params }: { params: Promise<{ id:
   ]
 
   const addRule = () => {
+    if (questions.length < 1) return
     const newRule: LogicRule = {
       id: Date.now().toString(),
       condition: { field: questions[0].id, operator: 'equals', value: '' },
-      action: { type: 'show', target: questions[1].id }
+      action: { type: 'show', target: questions[questions.length > 1 ? 1 : 0].id }
     }
     setRules([...rules, newRule])
   }
@@ -104,9 +144,13 @@ export default function ConditionalLogicPage({ params }: { params: Promise<{ id:
                 <Eye className="w-4 h-4" />
                 Preview
               </Link>
-              <button className="flex items-center gap-2 px-6 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800 font-medium">
+              <button
+                onClick={saveLogic}
+                disabled={saving}
+                className="flex items-center gap-2 px-6 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800 font-medium disabled:opacity-50"
+              >
                 <Save className="w-4 h-4" />
-                Save Logic
+                {saving ? 'Saving…' : 'Save Logic'}
               </button>
             </div>
           </div>

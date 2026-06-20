@@ -1,10 +1,13 @@
 // Question/Block Types
-export type QuestionType = 
+export type QuestionType =
   | 'short_text'
   | 'long_text'
   | 'email'
   | 'number'
+  | 'phone'
+  | 'url'
   | 'multiple_choice'
+  | 'checkboxes'
   | 'dropdown'
   | 'rating'
   | 'yes_no'

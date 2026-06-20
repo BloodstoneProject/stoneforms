@@ -112,6 +112,32 @@ function renderQuestionInput(
         />
       )
 
+    case 'phone':
+      return (
+        <Input
+          type="tel"
+          value={value || ''}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={question.placeholder || '+1 (555) 000-0000'}
+          className="text-xl py-6 border-2 focus:ring-2"
+          style={{ borderColor: '#e8e4db' }}
+          autoFocus
+        />
+      )
+
+    case 'url':
+      return (
+        <Input
+          type="url"
+          value={value || ''}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={question.placeholder || 'https://example.com'}
+          className="text-xl py-6 border-2 focus:ring-2"
+          style={{ borderColor: '#e8e4db' }}
+          autoFocus
+        />
+      )
+
     case 'number':
       return (
         <Input
@@ -168,6 +194,54 @@ function renderQuestionInput(
           })}
         </div>
       )
+
+    case 'checkboxes': {
+      const selected: string[] = Array.isArray(value) ? value : []
+      const toggle = (choiceValue: string) => {
+        if (selected.includes(choiceValue)) {
+          onChange(selected.filter((v) => v !== choiceValue))
+        } else {
+          onChange([...selected, choiceValue])
+        }
+      }
+      return (
+        <div className="space-y-3">
+          {question.choices?.map((choice) => {
+            const isSelected = selected.includes(choice.value)
+            return (
+              <button
+                key={choice.id}
+                onClick={() => toggle(choice.value)}
+                className={cn(
+                  'w-full flex items-center gap-4 p-5 rounded-xl border-2 transition-all text-left group hover:shadow-md',
+                  isSelected && 'ring-2'
+                )}
+                style={isSelected
+                  ? { borderColor: theme.primaryColor, backgroundColor: `${theme.primaryColor}10` }
+                  : { borderColor: '#e8e4db' }
+                }
+              >
+                <div
+                  className={cn(
+                    'w-6 h-6 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all',
+                    isSelected && 'border-transparent'
+                  )}
+                  style={isSelected
+                    ? { backgroundColor: theme.primaryColor }
+                    : { borderColor: '#3d5948' }
+                  }
+                >
+                  {isSelected && <Check className="w-4 h-4 text-white" />}
+                </div>
+                <span className="text-lg font-medium" style={{ color: theme.textColor }}>
+                  {choice.label}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      )
+    }
 
     case 'dropdown':
       return (
