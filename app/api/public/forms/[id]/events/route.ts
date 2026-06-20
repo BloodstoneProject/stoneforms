@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
+import { rateLimit, getClientIp } from '@/lib/rate-limit'
 
 const ALLOWED_EVENTS = new Set(['view', 'start', 'step', 'submit'])
 
@@ -10,6 +11,13 @@ export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  // Analytics beacons are high-volume but capped per IP. Fail silently (202)
+  // when exceeded so the respondent's form is never disrupted.
+  const ip = getClientIp(request)
+  if (!rateLimit(`events:${ip}`, 100, 60_000).allowed) {
+    return NextResponse.json({ ok: false }, { status: 202 })
+  }
+
   let body: any
   try {
     body = await request.json()

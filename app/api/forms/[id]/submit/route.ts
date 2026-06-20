@@ -3,12 +3,23 @@ import { NextResponse } from 'next/server'
 import { checkCanAcceptResponse } from '@/lib/plan-enforcement'
 import { sendSubmissionNotification, sendAutoResponder } from '@/lib/email-utils'
 import { deliverWebhooks } from '@/lib/webhooks'
+import { rateLimit, getClientIp } from '@/lib/rate-limit'
 
 // POST /api/forms/[id]/submit - Submit form response
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  // Throttle submissions per IP to blunt spam bursts.
+  const ip = getClientIp(request)
+  const limit = rateLimit(`submit:${ip}`, 10, 60_000)
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: 'Too many submissions. Please wait a moment and try again.' },
+      { status: 429, headers: { 'Retry-After': String(limit.retryAfter) } }
+    )
+  }
+
   const supabase = createServerSupabaseClient()
 
   try {
