@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
+import crypto from 'crypto'
 import { checkCanAcceptResponse } from '@/lib/plan-enforcement'
 import { sendSubmissionNotification, sendAutoResponder } from '@/lib/email-utils'
 import { deliverWebhooks } from '@/lib/webhooks'
@@ -75,21 +76,25 @@ export async function POST(
       }
     }
 
-    // Create submission - use correct column names (answers, not response_data)
-    const { data: submission, error: submissionError } = await supabase
+    // Create submission. Generate the id ourselves and do NOT .select() it back:
+    // anonymous respondents can INSERT (RLS) but cannot SELECT submissions (only
+    // the form owner can), so reading the row back would fail for them.
+    const submissionId = crypto.randomUUID()
+    const { error: submissionError } = await supabase
       .from('submissions')
       .insert({
+        id: submissionId,
         form_id: params.id,
         answers: responses,
-        status: 'completed'
+        status: 'completed',
       })
-      .select()
-      .single()
 
     if (submissionError) {
       console.error('Submission error:', submissionError)
       return NextResponse.json({ error: 'Failed to submit form' }, { status: 500 })
     }
+
+    const submission = { id: submissionId }
 
     // Record an authoritative completion event for analytics (best-effort).
     try {
