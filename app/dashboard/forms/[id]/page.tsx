@@ -1007,7 +1007,12 @@ function SortableField({ field, index, allFields, quizEnabled, expanded, onToggl
                 />
               )}
 
-              {!fieldHasOptions(field.field_type) && field.field_type !== 'yes_no' && field.field_type !== 'consent' && field.field_type !== 'calculator' && (
+              {/* Payment config (Stripe Connect, fixed amount) */}
+              {field.field_type === 'payment' && (
+                <PaymentConfig field={field} onUpdateSetting={onUpdateSetting} />
+              )}
+
+              {!fieldHasOptions(field.field_type) && field.field_type !== 'yes_no' && field.field_type !== 'consent' && field.field_type !== 'calculator' && field.field_type !== 'payment' && (
                 <div>
                   <label className="block text-xs font-medium text-stone-700 mb-1">Placeholder</label>
                   <input
@@ -1243,6 +1248,86 @@ function CalculatorConfig({
         </div>
       </div>
       <p className="text-xs text-stone-400">Value = sum(field × weight) + constant. Computed live and recomputed on submit.</p>
+    </div>
+  )
+}
+
+interface PaymentConfigShape {
+  amount?: number
+  currency?: 'gbp' | 'usd' | 'eur'
+  description?: string
+  label?: string
+}
+
+// Config UI for a payment field. Writes settings.payment =
+// { amount, currency, description?, label? }. Amount is in major units (e.g.
+// 25.00). Collection only happens once the owner connects Stripe — a banner
+// links to the Payments settings page. Dormant-safe: this just persists config.
+function PaymentConfig({
+  field,
+  onUpdateSetting,
+}: {
+  field: Field
+  onUpdateSetting: (field: Field, key: string, value: any) => void
+}) {
+  const pay: PaymentConfigShape = (field.settings?.payment as PaymentConfigShape) || {}
+  const write = (patch: Partial<PaymentConfigShape>) =>
+    onUpdateSetting(field, 'payment', { ...pay, ...patch })
+
+  return (
+    <div className="rounded-lg border border-stone-200 p-3 space-y-3">
+      <p className="text-xs font-medium text-stone-700">Payment (fixed amount)</p>
+
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+        Connect a Stripe account to actually collect this payment.{' '}
+        <Link href="/dashboard/settings/payments" className="underline font-medium">
+          Set up payments
+        </Link>
+        . Until connected, this is shown to respondents but they can still submit without paying.
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs text-stone-600 mb-1">Amount</label>
+          <input
+            type="number"
+            min={0}
+            step="0.01"
+            value={pay.amount ?? ''}
+            onChange={(e) => write({ amount: e.target.value === '' ? undefined : Number(e.target.value) })}
+            className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+            placeholder="25.00"
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-stone-600 mb-1">Currency</label>
+          <select
+            value={pay.currency || 'gbp'}
+            onChange={(e) => write({ currency: e.target.value as PaymentConfigShape['currency'] })}
+            className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+          >
+            <option value="gbp">GBP (£)</option>
+            <option value="usd">USD ($)</option>
+            <option value="eur">EUR (€)</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-xs text-stone-600 mb-1">Payment description (optional)</label>
+        <input
+          type="text"
+          value={pay.description || ''}
+          onChange={(e) => write({ description: e.target.value || undefined })}
+          className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+          placeholder="e.g. Event ticket — General admission"
+        />
+      </div>
+
+      <p className="text-xs text-stone-400">
+        Respondents fill the form, then are redirected to a secure Stripe checkout on submit. The amount is enforced
+        server-side.
+      </p>
     </div>
   )
 }

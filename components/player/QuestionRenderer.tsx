@@ -10,6 +10,7 @@ import { SignatureField } from '@/components/player/SignatureField'
 import { AddressField } from '@/components/player/AddressField'
 import { ConsentField } from '@/components/player/ConsentField'
 import { CalculatorField } from '@/components/player/CalculatorField'
+import { PaymentField } from '@/components/player/PaymentField'
 
 interface QuestionRendererProps {
   question: Question
@@ -511,6 +512,23 @@ function renderQuestionInput(
           theme={{ primaryColor: theme.primaryColor, textColor: theme.textColor }}
         />
       )
+
+    case 'payment': {
+      // Config lives at field.settings.payment -> question.properties.payment.
+      const pay = (question.properties?.payment as Record<string, any>) || {}
+      // The player injects whether the owner can actually accept payments under
+      // properties._canAcceptPayments (defaults to true when unknown).
+      const canAcceptPayments = question.properties?._canAcceptPayments !== false
+      return (
+        <PaymentField
+          amount={typeof pay.amount === 'number' ? pay.amount : Number(pay.amount)}
+          currency={pay.currency}
+          description={pay.description}
+          canAcceptPayments={canAcceptPayments}
+          theme={{ primaryColor: theme.primaryColor, textColor: theme.textColor }}
+        />
+      )
+    }
 
     default:
       return (

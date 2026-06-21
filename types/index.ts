@@ -22,6 +22,7 @@ export type QuestionType =
   | 'address'
   | 'consent'
   | 'calculator'
+  | 'payment'
   | 'page_break'
   | 'video'
   | 'audio';

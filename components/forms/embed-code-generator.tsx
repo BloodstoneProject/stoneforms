@@ -1,91 +1,56 @@
 'use client'
 
-import { useState } from 'react'
-import { Copy, Check, Code, FileCode, Globe } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Copy, Check, Code, LayoutTemplate, PanelRight, SquareMousePointer } from 'lucide-react'
+import {
+  buildInlineSnippet,
+  buildPopupSnippet,
+  buildSliderSnippet,
+  buildIframeSnippet,
+  type SnippetOptions,
+} from '@/lib/embed'
 
 interface EmbedCodeGeneratorProps {
   formId: string
   formTitle: string
 }
 
+type EmbedType = 'inline' | 'popup' | 'slider' | 'iframe'
+
+const TABS: { key: EmbedType; label: string; sub: string; icon: any }[] = [
+  { key: 'inline', label: 'Inline', sub: 'Auto-resize', icon: LayoutTemplate },
+  { key: 'popup', label: 'Popup', sub: 'Button → modal', icon: SquareMousePointer },
+  { key: 'slider', label: 'Slide-over', sub: 'Button → panel', icon: PanelRight },
+  { key: 'iframe', label: 'Iframe', sub: 'No JavaScript', icon: Code },
+]
+
 export default function EmbedCodeGenerator({ formId, formTitle }: EmbedCodeGeneratorProps) {
-  const [embedType, setEmbedType] = useState<'iframe' | 'javascript' | 'wordpress'>('iframe')
+  const [embedType, setEmbedType] = useState<EmbedType>('inline')
   const [copied, setCopied] = useState(false)
+  const [height, setHeight] = useState(600)
+  const [buttonLabel, setButtonLabel] = useState('Open form')
 
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
-  const formUrl = `${baseUrl}/f/${formId}`
+  // Build snippets from this browser's origin (lib/embed → getSiteUrl falls back
+  // to window.location.origin client-side), so the pasted code points back here.
+  const origin = typeof window !== 'undefined' ? window.location.origin : undefined
 
-  const embedCodes = {
-    iframe: `<!-- Stoneforms Embed - ${formTitle} -->
-<iframe 
-  src="${formUrl}" 
-  width="100%" 
-  height="600" 
-  frameborder="0" 
-  style="border: none; border-radius: 8px;"
-  title="${formTitle}"
-></iframe>`,
+  const opts: SnippetOptions = useMemo(
+    () => ({ id: formId, title: formTitle, origin, height, buttonLabel }),
+    [formId, formTitle, origin, height, buttonLabel]
+  )
 
-    javascript: `<!-- Stoneforms JavaScript Embed - ${formTitle} -->
-<div id="stoneforms-${formId}"></div>
-<script>
-  (function() {
-    const container = document.getElementById('stoneforms-${formId}');
-    const iframe = document.createElement('iframe');
-    iframe.src = '${formUrl}';
-    iframe.width = '100%';
-    iframe.height = '600';
-    iframe.frameBorder = '0';
-    iframe.style.border = 'none';
-    iframe.style.borderRadius = '8px';
-    iframe.title = '${formTitle}';
-    container.appendChild(iframe);
-    
-    // Auto-resize iframe based on content
-    window.addEventListener('message', function(e) {
-      if (e.origin === '${baseUrl}' && e.data.formId === '${formId}') {
-        iframe.height = e.data.height + 'px';
-      }
-    });
-  })();
-</script>`,
-
-    wordpress: `<?php
-/**
- * Stoneforms Embed Shortcode
- * Usage: [stoneforms id="${formId}"]
- */
-function stoneforms_embed_shortcode($atts) {
-    $atts = shortcode_atts(array(
-        'id' => '${formId}',
-        'width' => '100%',
-        'height' => '600',
-    ), $atts);
-    
-    $form_url = '${formUrl}';
-    
-    return sprintf(
-        '<div class="stoneforms-embed">
-            <iframe 
-                src="%s" 
-                width="%s" 
-                height="%s" 
-                frameborder="0" 
-                style="border: none; border-radius: 8px;"
-                title="${formTitle}"
-            ></iframe>
-        </div>',
-        esc_url($form_url),
-        esc_attr($atts['width']),
-        esc_attr($atts['height'])
-    );
-}
-add_shortcode('stoneforms', 'stoneforms_embed_shortcode');
-
-// Add this to your theme's functions.php file
-// Then use shortcode: [stoneforms id="${formId}"]
-?>`
-  }
+  const snippet = useMemo(() => {
+    switch (embedType) {
+      case 'popup':
+        return buildPopupSnippet(opts)
+      case 'slider':
+        return buildSliderSnippet(opts)
+      case 'iframe':
+        return buildIframeSnippet(opts)
+      default:
+        return buildInlineSnippet(opts)
+    }
+  }, [embedType, opts])
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -93,63 +58,100 @@ add_shortcode('stoneforms', 'stoneforms_embed_shortcode');
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const usesButton = embedType === 'popup' || embedType === 'slider'
+
   return (
     <div className="space-y-6">
       {/* Embed Type Selector */}
-      <div className="flex gap-2">
-        <button
-          onClick={() => setEmbedType('iframe')}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 rounded-lg transition-all ${
-            embedType === 'iframe' 
-              ? 'border-stone-900 bg-stone-50' 
-              : 'border-stone-200 hover:border-stone-300'
-          }`}
-        >
-          <Code className="w-5 h-5" />
-          <div className="text-left">
-            <div className="font-medium">HTML/iframe</div>
-            <div className="text-xs text-stone-600">Simple embed</div>
-          </div>
-        </button>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {TABS.map((tab) => {
+          const Icon = tab.icon
+          const active = embedType === tab.key
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setEmbedType(tab.key)}
+              className={`flex items-center gap-2 px-4 py-3 border-2 rounded-lg transition-all ${
+                active ? 'border-stone-900 bg-stone-50' : 'border-stone-200 hover:border-stone-300'
+              }`}
+            >
+              <Icon className="w-5 h-5 shrink-0" />
+              <div className="text-left">
+                <div className="font-medium text-sm">{tab.label}</div>
+                <div className="text-xs text-stone-600">{tab.sub}</div>
+              </div>
+            </button>
+          )
+        })}
+      </div>
 
-        <button
-          onClick={() => setEmbedType('javascript')}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 rounded-lg transition-all ${
-            embedType === 'javascript' 
-              ? 'border-stone-900 bg-stone-50' 
-              : 'border-stone-200 hover:border-stone-300'
-          }`}
-        >
-          <FileCode className="w-5 h-5" />
-          <div className="text-left">
-            <div className="font-medium">JavaScript</div>
-            <div className="text-xs text-stone-600">Auto-resize</div>
+      {/* Per-mode options */}
+      <div className="flex flex-wrap gap-4">
+        {(embedType === 'inline' || embedType === 'iframe') && (
+          <div>
+            <label className="block text-xs font-medium text-stone-700 mb-1">
+              Default height (px)
+            </label>
+            <input
+              type="number"
+              value={height}
+              min={200}
+              onChange={(e) => setHeight(Math.max(200, parseInt(e.target.value, 10) || 600))}
+              className="w-32 px-3 py-2 border border-stone-300 rounded-lg text-sm"
+            />
           </div>
-        </button>
+        )}
+        {usesButton && (
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-xs font-medium text-stone-700 mb-1">
+              Button label
+            </label>
+            <input
+              type="text"
+              value={buttonLabel}
+              onChange={(e) => setButtonLabel(e.target.value)}
+              placeholder="Open form"
+              className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm"
+            />
+          </div>
+        )}
+      </div>
 
-        <button
-          onClick={() => setEmbedType('wordpress')}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 rounded-lg transition-all ${
-            embedType === 'wordpress' 
-              ? 'border-stone-900 bg-stone-50' 
-              : 'border-stone-200 hover:border-stone-300'
-          }`}
-        >
-          <Globe className="w-5 h-5" />
-          <div className="text-left">
-            <div className="font-medium">WordPress</div>
-            <div className="text-xs text-stone-600">Shortcode</div>
-          </div>
-        </button>
+      {/* Description */}
+      <div className="text-sm text-stone-600">
+        {embedType === 'inline' && (
+          <p>
+            Drops the form straight into your page and grows/shrinks to fit its content
+            automatically. Needs the one-line Stoneforms script (included below).
+          </p>
+        )}
+        {embedType === 'popup' && (
+          <p>
+            Renders a button. Clicking it opens the form in a centered modal overlay.
+            Great for landing pages and call-to-action sections.
+          </p>
+        )}
+        {embedType === 'slider' && (
+          <p>
+            Renders a button. Clicking it slides the form in as a panel from the right
+            edge of the screen, leaving your page visible behind it.
+          </p>
+        )}
+        {embedType === 'iframe' && (
+          <p>
+            A plain iframe that works even where scripts are blocked. Fixed height (no
+            auto-resize) — adjust the height above to suit your form.
+          </p>
+        )}
       </div>
 
       {/* Code Display */}
       <div className="relative">
-        <pre className="bg-stone-900 text-stone-100 p-6 rounded-lg overflow-x-auto text-sm">
-          <code>{embedCodes[embedType]}</code>
+        <pre className="bg-stone-900 text-stone-100 p-6 pr-32 rounded-lg overflow-x-auto text-sm">
+          <code>{snippet}</code>
         </pre>
         <button
-          onClick={() => copyToClipboard(embedCodes[embedType])}
+          onClick={() => copyToClipboard(snippet)}
           className="absolute top-4 right-4 flex items-center gap-2 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-white rounded-lg transition-colors"
         >
           {copied ? (
@@ -166,91 +168,125 @@ add_shortcode('stoneforms', 'stoneforms_embed_shortcode');
         </button>
       </div>
 
+      {/* Live Preview */}
+      <div>
+        <div className="text-xs font-medium text-stone-700 mb-2">Live preview</div>
+        <div className="border border-stone-200 rounded-lg p-4 bg-stone-50">
+          {embedType === 'iframe' && origin && (
+            <iframe
+              src={`${origin}/embed/${formId}`}
+              width="100%"
+              height={Math.min(height, 480)}
+              style={{ border: 'none', borderRadius: 12 }}
+              title={formTitle}
+            />
+          )}
+          {embedType === 'inline' && origin && (
+            <iframe
+              src={`${origin}/embed/${formId}`}
+              width="100%"
+              height={Math.min(height, 480)}
+              style={{ border: 'none', borderRadius: 12 }}
+              title={formTitle}
+            />
+          )}
+          {usesButton && (
+            <div className="flex items-center justify-center py-8">
+              <PreviewButton
+                label={buttonLabel || 'Open form'}
+                mode={embedType === 'popup' ? 'popup' : 'slider'}
+                src={origin ? `${origin}/embed/${formId}` : ''}
+                title={formTitle}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Instructions */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-medium text-blue-900 mb-2">📝 How to use:</h4>
+        <h4 className="font-medium text-blue-900 mb-2">How to use</h4>
         <div className="text-sm text-blue-800 space-y-1">
-          {embedType === 'iframe' && (
+          <p>1. Copy the code above.</p>
+          {embedType === 'iframe' ? (
+            <p>2. Paste it into your page's HTML where the form should appear.</p>
+          ) : (
             <>
-              <p>1. Copy the code above</p>
-              <p>2. Paste it into your website's HTML</p>
-              <p>3. The form will appear embedded on your page</p>
-            </>
-          )}
-          {embedType === 'javascript' && (
-            <>
-              <p>1. Copy the code above</p>
-              <p>2. Paste it into your website's HTML where you want the form</p>
-              <p>3. The form will automatically resize based on content</p>
-            </>
-          )}
-          {embedType === 'wordpress' && (
-            <>
-              <p>1. Copy the PHP code above</p>
-              <p>2. Add it to your theme's functions.php file</p>
-              <p>3. Use the shortcode [stoneforms id="{formId}"] in any page or post</p>
-              <p>4. The form will appear wherever you place the shortcode</p>
+              <p>2. Paste it into your page's HTML where you want the form/button.</p>
+              <p>
+                3. The <code className="bg-blue-100 px-1 rounded">embed.js</code> script can be
+                included once per page even if you embed several forms.
+              </p>
             </>
           )}
         </div>
       </div>
-
-      {/* Direct Link */}
-      <div className="border-t border-stone-200 pt-4">
-        <label className="block text-sm font-medium text-stone-900 mb-2">
-          Direct Link (for emails, social media, etc.):
-        </label>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={formUrl}
-            readOnly
-            className="flex-1 px-4 py-2 border border-stone-300 rounded-lg bg-stone-50 text-sm"
-          />
-          <button
-            onClick={() => copyToClipboard(formUrl)}
-            className="px-4 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800"
-          >
-            Copy
-          </button>
-        </div>
-      </div>
-
-      {/* Advanced Options */}
-      <details className="border border-stone-200 rounded-lg">
-        <summary className="px-4 py-3 cursor-pointer font-medium text-stone-900 hover:bg-stone-50">
-          Advanced Options
-        </summary>
-        <div className="p-4 border-t border-stone-200 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-stone-900 mb-2">
-              Custom Width
-            </label>
-            <input
-              type="text"
-              placeholder="100%"
-              className="w-full px-4 py-2 border border-stone-300 rounded-lg"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-stone-900 mb-2">
-              Custom Height
-            </label>
-            <input
-              type="text"
-              placeholder="600"
-              className="w-full px-4 py-2 border border-stone-300 rounded-lg"
-            />
-          </div>
-          <div>
-            <label className="flex items-center gap-2">
-              <input type="checkbox" className="rounded" />
-              <span className="text-sm text-stone-900">Hide branding</span>
-              <span className="text-xs text-stone-600">(Pro plan)</span>
-            </label>
-          </div>
-        </div>
-      </details>
     </div>
+  )
+}
+
+// Simple in-modal preview so users can see popup/slider behaviour without leaving
+// the share dialog. Mirrors embed.js visuals at a high level.
+function PreviewButton({
+  label,
+  mode,
+  src,
+  title,
+}: {
+  label: string
+  mode: 'popup' | 'slider'
+  src: string
+  title: string
+}) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="px-6 py-3 bg-stone-900 text-white rounded-lg font-medium hover:bg-stone-800"
+      >
+        {label}
+      </button>
+      {open && src && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/55 flex items-stretch justify-center"
+          onClick={() => setOpen(false)}
+        >
+          {mode === 'popup' ? (
+            <div className="m-auto p-4 w-full max-w-2xl">
+              <div
+                className="relative bg-white rounded-2xl overflow-hidden h-[80vh] max-h-[760px] flex flex-col shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  onClick={() => setOpen(false)}
+                  className="absolute top-2 right-3 z-10 w-9 h-9 rounded-full bg-black/5 text-2xl leading-none"
+                  aria-label="Close"
+                >
+                  &times;
+                </button>
+                <iframe src={src} title={title} className="flex-1 w-full border-none" />
+              </div>
+            </div>
+          ) : (
+            <div
+              className="ml-auto bg-white h-full w-full max-w-md flex flex-col shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setOpen(false)}
+                className="absolute top-2 right-3 z-10 w-9 h-9 rounded-full bg-black/5 text-2xl leading-none"
+                aria-label="Close"
+              >
+                &times;
+              </button>
+              <iframe src={src} title={title} className="flex-1 w-full border-none" />
+            </div>
+          )}
+        </div>
+      )}
+    </>
   )
 }

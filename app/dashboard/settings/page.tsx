@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { User, CreditCard } from 'lucide-react'
+import { User, CreditCard, Wallet } from 'lucide-react'
 
 export default function SettingsPage() {
   const settingsSections = [
@@ -16,6 +16,12 @@ export default function SettingsPage() {
       title: 'Billing',
       description: 'Subscription, plan, and usage',
       href: '/dashboard/settings/billing',
+    },
+    {
+      icon: Wallet,
+      title: 'Payments',
+      description: 'Connect Stripe to collect payments on your forms',
+      href: '/dashboard/settings/payments',
     },
   ]
 

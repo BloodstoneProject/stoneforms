@@ -11,6 +11,7 @@ import { getFormAvailability } from '@/lib/form-controls'
 import { verifyRecaptcha } from '@/lib/recaptcha'
 import { computeCalc } from '@/lib/calc'
 import { dispatchIntegrations } from '@/lib/integrations/dispatch'
+import { createCheckoutForSubmission } from '@/lib/stripe-connect'
 
 // POST /api/forms/[id]/submit - Submit form response
 export async function POST(
@@ -145,6 +146,8 @@ export async function POST(
       }
       // Calculator is a computed display — never block submission on it.
       if (field.field_type === 'calculator') continue
+      // Payment is a disclosure panel collected on submit — never block on it.
+      if (field.field_type === 'payment') continue
       if (isEmpty(responses?.[field.id], field.field_type)) {
         return NextResponse.json({
           error: `${field.label} is required`
@@ -176,6 +179,12 @@ export async function POST(
       safeMetadata = { ...safeMetadata, quiz: quizMeta }
     }
 
+    // Detect a payment field — its presence makes this a pay-on-submit form. The
+    // submission is stored as 'pending' (awaiting payment) when we'll actually
+    // create a Stripe Checkout below; the Connect webhook flips it to 'completed'
+    // once paid. Forms with no payment field keep the exact original behaviour.
+    const hasPaymentField = (fields || []).some((f) => f.field_type === 'payment')
+
     // Create submission. Generate the id ourselves and do NOT .select() it back:
     // anonymous respondents can INSERT (RLS) but cannot SELECT submissions (only
     // the form owner can), so reading the row back would fail for them.
@@ -187,7 +196,7 @@ export async function POST(
         form_id: params.id,
         answers: responses,
         metadata: safeMetadata,
-        status: 'completed',
+        status: hasPaymentField ? 'pending' : 'completed',
       })
 
     if (submissionError) {
@@ -284,9 +293,45 @@ export async function POST(
       console.error('Auto-responder error:', autoErr)
     }
 
+    // ---- Payment collection (Stripe Connect, fixed amount) ----
+    // When the form has a payment field, try to create a Checkout Session on the
+    // owner's connected account and return its URL for the player to redirect to.
+    // Fully dormant-safe: if Connect isn't configured or the owner isn't
+    // connected, createCheckoutForSubmission returns ok:false and we simply mark
+    // the submission completed and finish normally (the payment field was just
+    // informational). The amount is server-authoritative (read from the field).
+    let checkoutUrl: string | null = null
+    if (hasPaymentField) {
+      try {
+        const result = await createCheckoutForSubmission({
+          formId: params.id,
+          submissionId: submission.id,
+        })
+        if (result.ok && result.checkoutUrl) {
+          checkoutUrl = result.checkoutUrl
+        }
+      } catch (payErr) {
+        console.error('Payment checkout error:', payErr)
+      }
+      // No checkout URL means payment is dormant / unavailable — don't leave the
+      // submission stuck in 'pending'. Promote it to 'completed' (service-role).
+      if (!checkoutUrl) {
+        try {
+          const admin = createAdminClient()
+          await admin
+            .from('submissions')
+            .update({ status: 'completed' })
+            .eq('id', submission.id)
+        } catch (e) {
+          console.error('Submission status promote error:', e)
+        }
+      }
+    }
+
     return NextResponse.json({
       success: true,
       submission_id: submission.id,
+      ...(checkoutUrl ? { checkoutUrl } : {}),
       ...(quizResponse ? { quiz: quizResponse } : {}),
     })
   } catch (error) {

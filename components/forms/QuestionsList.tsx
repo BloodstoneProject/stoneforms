@@ -25,6 +25,7 @@ import {
   EyeOff,
   ShieldCheck,
   Calculator,
+  CreditCard,
   SeparatorHorizontal,
   Copy,
   Trash2
@@ -65,6 +66,7 @@ const questionTypeIcons: Record<QuestionType, any> = {
   address: Type,
   consent: ShieldCheck,
   calculator: Calculator,
+  payment: CreditCard,
   page_break: SeparatorHorizontal,
   video: Video,
   audio: Mic,

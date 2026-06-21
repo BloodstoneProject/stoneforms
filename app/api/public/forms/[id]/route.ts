@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { getUserPlan } from '@/lib/plan-enforcement'
 import { hasPlanFeature } from '@/lib/plan-limits'
 import { getFormAvailability } from '@/lib/form-controls'
+import { isConnectConfigured } from '@/lib/stripe-connect'
 
 // Matches a canonical v4-style UUID (the shape Supabase generates for form ids).
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -76,6 +77,26 @@ export async function GET(
     availability = { open: true }
   }
 
+  // Whether the form owner can accept payments right now. Dormant unless Stripe
+  // Connect is configured AND the owner has an onboarded (charges_enabled)
+  // connected account. Only worth checking when the form actually has a payment
+  // field — otherwise this is irrelevant and we skip the extra query.
+  let paymentsEnabled = false
+  try {
+    const hasPaymentField = (fields || []).some((f) => f.field_type === 'payment')
+    if (hasPaymentField && isConnectConfigured()) {
+      const admin = createAdminClient()
+      const { data: acct } = await admin
+        .from('connect_accounts')
+        .select('charges_enabled')
+        .eq('user_id', (formRow as any).user_id)
+        .maybeSingle()
+      paymentsEnabled = !!acct?.charges_enabled
+    }
+  } catch {
+    paymentsEnabled = false
+  }
+
   // Don't leak user_id to the public client.
   const { user_id, ...form } = formRow as any
 
@@ -84,5 +105,6 @@ export async function GET(
     fields: fields || [],
     branding: { hide: hideBranding },
     availability,
+    payments: { enabled: paymentsEnabled },
   })
 }

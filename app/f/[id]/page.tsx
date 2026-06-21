@@ -28,6 +28,7 @@ export default function PublicFormPage({ params }: { params: Promise<{ id: strin
   const [form, setForm] = useState<PublicForm | null>(null)
   const [fields, setFields] = useState<DbField[]>([])
   const [hideBranding, setHideBranding] = useState(false)
+  const [paymentsEnabled, setPaymentsEnabled] = useState(false)
   const [availability, setAvailability] = useState<{ open: boolean; reason?: string; message?: string }>({ open: true })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -44,6 +45,7 @@ export default function PublicFormPage({ params }: { params: Promise<{ id: strin
           setForm(data.form)
           setFields(data.fields || [])
           setHideBranding(!!data.branding?.hide)
+          setPaymentsEnabled(!!data.payments?.enabled)
           if (data.availability) setAvailability(data.availability)
         }
       })
@@ -87,6 +89,7 @@ export default function PublicFormPage({ params }: { params: Promise<{ id: strin
       logic={form.logic || []}
       hideBranding={hideBranding}
       availability={availability as any}
+      paymentsEnabled={paymentsEnabled}
     />
   )
 }

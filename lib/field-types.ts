@@ -25,6 +25,7 @@ export type FieldType =
   | 'address'
   | 'consent'
   | 'calculator'
+  | 'payment'
   | 'page_break'
 
 export interface FieldTypeMeta {
@@ -35,7 +36,7 @@ export interface FieldTypeMeta {
   hasOptions: boolean
   // value shape produced by the player for this field
   valueKind: 'string' | 'number' | 'boolean' | 'string[]' | 'object' | 'file' | 'none'
-  category: 'text' | 'choice' | 'number' | 'date' | 'media' | 'display'
+  category: 'text' | 'choice' | 'number' | 'date' | 'media' | 'display' | 'payment'
 }
 
 export const FIELD_TYPES: FieldTypeMeta[] = [
@@ -59,6 +60,7 @@ export const FIELD_TYPES: FieldTypeMeta[] = [
   { value: 'signature', label: 'Signature', icon: '✍️', hasOptions: false, valueKind: 'string', category: 'media' },
   { value: 'address', label: 'Address', icon: '🏠', hasOptions: false, valueKind: 'object', category: 'text' },
   { value: 'file_upload', label: 'File Upload', icon: '📎', hasOptions: false, valueKind: 'file', category: 'media' },
+  { value: 'payment', label: 'Payment', icon: '💳', hasOptions: false, valueKind: 'none', category: 'payment' },
   { value: 'statement', label: 'Statement', icon: '💬', hasOptions: false, valueKind: 'none', category: 'display' },
   { value: 'hidden', label: 'Hidden Field', icon: '🕵️', hasOptions: false, valueKind: 'string', category: 'display' },
   { value: 'page_break', label: 'Page Break', icon: '🔀', hasOptions: false, valueKind: 'none', category: 'display' },

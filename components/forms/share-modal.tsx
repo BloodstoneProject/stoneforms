@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { X, Link as LinkIcon, Code, QrCode, Mail, MessageSquare, Copy, Check } from 'lucide-react'
 import EmbedCodeGenerator from './embed-code-generator'
+import { appendUtm, getQrImageUrl, type UtmParams } from '@/lib/embed'
 
 interface ShareModalProps {
   formId: string
@@ -16,6 +17,10 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
   const [activeTab, setActiveTab] = useState<'link' | 'embed' | 'qr' | 'social'>('link')
   const [copied, setCopied] = useState(false)
   const [vanityCopied, setVanityCopied] = useState(false)
+  const [utmCopied, setUtmCopied] = useState(false)
+
+  // UTM / link builder — appended to whichever link a user shares.
+  const [utm, setUtm] = useState<UtmParams>({ source: '', medium: '', campaign: '' })
 
   if (!isOpen) return null
 
@@ -23,62 +28,68 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
   const formUrl = `${baseUrl}/f/${formId}`
   const vanityUrl = slug ? `${baseUrl}/f/${slug}` : null
 
-  const copyLink = () => {
-    navigator.clipboard.writeText(formUrl)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  // The canonical link people share = vanity if set, else the id link, plus UTM.
+  const shareBase = vanityUrl || formUrl
+  const shareUrl = appendUtm(shareBase, utm)
+
+  const hasUtm = !!(utm.source?.trim() || utm.medium?.trim() || utm.campaign?.trim())
+
+  const copyText = (text: string, set: (v: boolean) => void) => {
+    navigator.clipboard.writeText(text)
+    set(true)
+    setTimeout(() => set(false), 2000)
   }
 
-  const copyVanity = () => {
-    if (!vanityUrl) return
-    navigator.clipboard.writeText(vanityUrl)
-    setVanityCopied(true)
-    setTimeout(() => setVanityCopied(false), 2000)
-  }
+  const copyLink = () => copyText(formUrl, setCopied)
+  const copyVanity = () => vanityUrl && copyText(vanityUrl, setVanityCopied)
+  const copyShareUrl = () => copyText(shareUrl, setUtmCopied)
+
+  const openShare = (url: string) =>
+    window.open(url, '_blank', 'noopener,noreferrer,width=600,height=600')
 
   const shareViaEmail = () => {
     const subject = encodeURIComponent(`Fill out: ${formTitle}`)
-    const body = encodeURIComponent(`Please fill out this form:\n\n${formUrl}`)
+    const body = encodeURIComponent(`Please fill out this form:\n\n${shareUrl}`)
     window.open(`mailto:?subject=${subject}&body=${body}`)
   }
 
+  const shareViaWhatsApp = () => {
+    const text = encodeURIComponent(`Fill out this form: ${shareUrl}`)
+    openShare(`https://wa.me/?text=${text}`)
+  }
+
   const shareViaSMS = () => {
-    const text = encodeURIComponent(`Fill out this form: ${formUrl}`)
+    const text = encodeURIComponent(`Fill out this form: ${shareUrl}`)
     window.open(`sms:?body=${text}`)
   }
 
   const shareOnTwitter = () => {
     const text = encodeURIComponent(`Check out this form: ${formTitle}`)
-    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(formUrl)}`)
+    openShare(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(shareUrl)}`)
   }
 
-  const shareOnLinkedIn = () => {
-    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(formUrl)}`)
-  }
+  const shareOnLinkedIn = () =>
+    openShare(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`)
 
-  const shareOnFacebook = () => {
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(formUrl)}`)
-  }
+  const shareOnFacebook = () =>
+    openShare(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`)
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between">
+        <div className="sticky top-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between z-10">
           <div>
             <h2 className="text-2xl font-bold text-stone-900">Share Form</h2>
             <p className="text-sm text-stone-600 mt-1">{formTitle}</p>
           </div>
-          <button
-            onClick={onClose}
-            className="text-stone-600 hover:text-stone-900"
-          >
+          <button onClick={onClose} className="text-stone-600 hover:text-stone-900">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -140,9 +151,7 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
             <div className="space-y-6">
               {vanityUrl && (
                 <div>
-                  <label className="block text-sm font-medium text-stone-900 mb-2">
-                    Custom link
-                  </label>
+                  <label className="block text-sm font-medium text-stone-900 mb-2">Custom link</label>
                   <div className="flex gap-2">
                     <input
                       type="text"
@@ -154,15 +163,23 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
                       onClick={copyVanity}
                       className="flex items-center gap-2 px-6 py-3 bg-stone-900 text-white rounded-lg hover:bg-stone-800"
                     >
-                      {vanityCopied ? (<><Check className="w-4 h-4" />Copied!</>) : (<><Copy className="w-4 h-4" />Copy</>)}
+                      {vanityCopied ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4" />
+                          Copy
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
               )}
               <div>
-                <label className="block text-sm font-medium text-stone-900 mb-2">
-                  Form URL
-                </label>
+                <label className="block text-sm font-medium text-stone-900 mb-2">Form URL</label>
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -186,6 +203,77 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
                       </>
                     )}
                   </button>
+                </div>
+              </div>
+
+              {/* UTM / link builder */}
+              <div className="border border-stone-200 rounded-lg p-4 space-y-4">
+                <div>
+                  <h4 className="font-medium text-stone-900">Campaign tracking (UTM)</h4>
+                  <p className="text-xs text-stone-600 mt-1">
+                    Tag this link so you can see where responses came from in your analytics.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-stone-700 mb-1">Source</label>
+                    <input
+                      type="text"
+                      value={utm.source || ''}
+                      onChange={(e) => setUtm((u) => ({ ...u, source: e.target.value }))}
+                      placeholder="newsletter"
+                      className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-stone-700 mb-1">Medium</label>
+                    <input
+                      type="text"
+                      value={utm.medium || ''}
+                      onChange={(e) => setUtm((u) => ({ ...u, medium: e.target.value }))}
+                      placeholder="email"
+                      className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-stone-700 mb-1">Campaign</label>
+                    <input
+                      type="text"
+                      value={utm.campaign || ''}
+                      onChange={(e) => setUtm((u) => ({ ...u, campaign: e.target.value }))}
+                      placeholder="spring_launch"
+                      className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-stone-700 mb-1">
+                    Shareable link {hasUtm ? '(with tracking)' : ''}
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={shareUrl}
+                      readOnly
+                      className="flex-1 px-4 py-2 border border-stone-300 rounded-lg bg-stone-50 text-sm"
+                    />
+                    <button
+                      onClick={copyShareUrl}
+                      className="flex items-center gap-2 px-4 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800 text-sm"
+                    >
+                      {utmCopied ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4" />
+                          Copy
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -216,29 +304,30 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
           )}
 
           {/* Embed Tab */}
-          {activeTab === 'embed' && (
-            <EmbedCodeGenerator formId={formId} formTitle={formTitle} />
-          )}
+          {activeTab === 'embed' && <EmbedCodeGenerator formId={formId} formTitle={formTitle} />}
 
           {/* QR Code Tab */}
           {activeTab === 'qr' && (
             <div className="space-y-6 text-center">
               <div className="inline-block p-8 bg-white border-2 border-stone-200 rounded-lg">
                 <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(formUrl)}`}
+                  src={getQrImageUrl(shareUrl, 300)}
                   alt="QR Code"
                   className="w-64 h-64"
                 />
               </div>
               <div>
-                <p className="text-sm text-stone-600 mb-4">
-                  Scan this QR code to access the form
-                </p>
+                <p className="text-sm text-stone-600 mb-1">Scan this QR code to open the form</p>
+                {hasUtm && (
+                  <p className="text-xs text-stone-500 mb-3">Includes your campaign tracking tags.</p>
+                )}
+                <p className="text-xs text-stone-400 break-all max-w-md mx-auto mb-4">{shareUrl}</p>
                 <button
                   onClick={() => {
                     const link = document.createElement('a')
-                    link.href = `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&data=${encodeURIComponent(formUrl)}`
+                    link.href = getQrImageUrl(shareUrl, 1000)
                     link.download = `${formTitle}-qr-code.png`
+                    link.target = '_blank'
                     link.click()
                   }}
                   className="px-6 py-3 bg-stone-900 text-white rounded-lg hover:bg-stone-800"
@@ -252,19 +341,19 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
           {/* Social Tab */}
           {activeTab === 'social' && (
             <div className="space-y-4">
-              <p className="text-sm text-stone-600 mb-6">
-                Share your form on social media
+              <p className="text-sm text-stone-600">
+                Share your form. Links include any campaign tracking set on the Link tab.
               </p>
 
               <button
                 onClick={shareOnTwitter}
                 className="w-full flex items-center gap-4 px-6 py-4 border border-stone-300 rounded-lg hover:bg-stone-50 transition-colors"
               >
-                <div className="w-12 h-12 bg-blue-400 rounded-lg flex items-center justify-center text-white text-xl font-bold">
+                <div className="w-12 h-12 bg-stone-900 rounded-lg flex items-center justify-center text-white text-xl font-bold">
                   𝕏
                 </div>
                 <div className="flex-1 text-left">
-                  <div className="font-medium">Share on Twitter/X</div>
+                  <div className="font-medium">Share on X (Twitter)</div>
                   <div className="text-sm text-stone-600">Post to your followers</div>
                 </div>
               </button>
@@ -292,6 +381,32 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
                 <div className="flex-1 text-left">
                   <div className="font-medium">Share on Facebook</div>
                   <div className="text-sm text-stone-600">Post to your timeline</div>
+                </div>
+              </button>
+
+              <button
+                onClick={shareViaWhatsApp}
+                className="w-full flex items-center gap-4 px-6 py-4 border border-stone-300 rounded-lg hover:bg-stone-50 transition-colors"
+              >
+                <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center text-white text-xl font-bold">
+                  W
+                </div>
+                <div className="flex-1 text-left">
+                  <div className="font-medium">Share on WhatsApp</div>
+                  <div className="text-sm text-stone-600">Send in a chat</div>
+                </div>
+              </button>
+
+              <button
+                onClick={shareViaEmail}
+                className="w-full flex items-center gap-4 px-6 py-4 border border-stone-300 rounded-lg hover:bg-stone-50 transition-colors"
+              >
+                <div className="w-12 h-12 bg-stone-600 rounded-lg flex items-center justify-center text-white">
+                  <Mail className="w-6 h-6" />
+                </div>
+                <div className="flex-1 text-left">
+                  <div className="font-medium">Share via Email</div>
+                  <div className="text-sm text-stone-600">Open your mail client</div>
                 </div>
               </button>
             </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { Question } from '@/types'
 import { QuestionRenderer } from '@/components/player/QuestionRenderer'
 import { ThankYouScreen } from '@/components/player/ThankYouScreen'
@@ -50,14 +50,31 @@ interface FormPlayerProps {
   // Server-computed open/closed state (schedule + response cap). When closed,
   // the player renders a themed "closed" screen instead of the form.
   availability?: FormAvailability
+  // Whether the form owner can currently accept payments (Stripe Connect enabled
+  // + owner onboarded). When false (the dormant default), any payment field is
+  // shown as informational/skippable and submit proceeds without redirecting to
+  // Stripe. Forms with no payment field ignore this entirely.
+  paymentsEnabled?: boolean
 }
 
 const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
 
 export default function FormPlayer({
-  formId, formTitle, formDescription, questions, settings = {}, theme = DEFAULT_THEME, logic = [], hideBranding = false,
-  availability,
+  formId, formTitle, formDescription, questions: rawQuestions, settings = {}, theme = DEFAULT_THEME, logic = [], hideBranding = false,
+  availability, paymentsEnabled = false,
 }: FormPlayerProps) {
+  // Inject the owner's payment-acceptance state into each payment field so the
+  // renderer can show the right copy (secure-checkout vs informational). This is
+  // a no-op for forms without a payment field.
+  const questions = useMemo(
+    () =>
+      rawQuestions.map((q) =>
+        q.type === 'payment'
+          ? { ...q, properties: { ...(q.properties || {}), _canAcceptPayments: paymentsEnabled } }
+          : q
+      ),
+    [rawQuestions, paymentsEnabled]
+  )
   // Capture URL query params once (for lead tracking + hidden-field prefill).
   const [urlParams] = useState<Record<string, string>>(() =>
     typeof window !== 'undefined' ? Object.fromEntries(new URLSearchParams(window.location.search)) : {}
@@ -249,6 +266,7 @@ export default function FormPlayer({
   const validateQuestion = (q: Question): string | null => {
     if (q.type === 'statement' || q.type === 'page_break') return null // no answer
     if (q.type === 'calculator') return null // computed display, never blocks
+    if (q.type === 'payment') return null // disclosure panel, paid on submit, never blocks
     const a = answers[q.id]
     // Consent: required means the box must be ticked (answer exactly true).
     if (q.type === 'consent') {
@@ -410,6 +428,16 @@ export default function FormPlayer({
       if (!res.ok) { setSubmitError(data.error || 'Failed to submit. Please try again.'); return }
       // Successful submit — drop any saved progress.
       clearDraft()
+      // Payment collection: when the form has a payment field AND the owner is
+      // connected, the submit route returns a Stripe Checkout URL. Redirect the
+      // respondent to the hosted checkout to pay. This takes precedence over the
+      // ending screen / redirect (they complete the flow after paying). When the
+      // owner isn't connected (dormant), no checkoutUrl is returned and submit
+      // completes normally.
+      if (typeof data.checkoutUrl === 'string' && data.checkoutUrl) {
+        window.location.href = data.checkoutUrl
+        return
+      }
       // Redirect takes precedence over any ending / results screen.
       if (settings.redirectUrl) {
         window.location.href = /^https?:\/\//i.test(settings.redirectUrl) ? settings.redirectUrl : `https://${settings.redirectUrl}`
