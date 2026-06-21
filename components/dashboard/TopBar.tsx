@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Plus, Settings, CreditCard, LogOut } from 'lucide-react'
 import { authHelpers } from '@/lib/supabase-client'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 interface TopBarProps {
   user?: {
@@ -53,45 +54,65 @@ export function TopBar({ user }: TopBarProps) {
   }
 
   return (
-    <div className="h-16 border-b bg-white flex items-center justify-end px-6 gap-3">
+    <div className="flex h-16 items-center justify-end gap-3 border-b border-border bg-card px-6">
       <button
         onClick={createForm}
         disabled={creating}
-        className="flex items-center gap-2 px-4 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800 text-sm font-medium disabled:opacity-50"
+        className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50"
       >
-        <Plus className="w-4 h-4" />
+        <Plus className="h-4 w-4" />
         {creating ? 'Creating…' : 'Create form'}
       </button>
+
+      <ThemeToggle />
 
       <div className="relative">
         <button
           onClick={() => setMenuOpen((v) => !v)}
-          className="flex items-center gap-2 p-1 rounded-lg hover:bg-stone-100"
+          className="flex items-center gap-2 rounded-md p-1 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
-          <div className="w-8 h-8 bg-stone-900 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
             {initials}
           </div>
         </button>
 
         {menuOpen && (
           <>
-            <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-            <div className="absolute right-0 mt-2 w-60 bg-white rounded-lg shadow-lg border border-stone-200 py-2 z-50">
-              <div className="px-4 py-3 border-b border-stone-100">
-                <p className="text-sm font-medium text-stone-900 truncate">{displayName}</p>
-                <p className="text-xs text-stone-500 truncate">{user?.email}</p>
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setMenuOpen(false)}
+            />
+            <div className="absolute right-0 z-50 mt-2 w-60 rounded-lg border border-border bg-popover py-2 text-popover-foreground shadow-sm">
+              <div className="border-b border-border px-4 py-3">
+                <p className="truncate text-sm font-medium text-foreground">
+                  {displayName}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {user?.email}
+                </p>
               </div>
               <div className="py-1">
-                <Link href="/dashboard/settings" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-stone-700 hover:bg-stone-50">
-                  <Settings className="w-4 h-4" /> Settings
+                <Link
+                  href="/dashboard/settings"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-foreground transition-colors hover:bg-accent"
+                >
+                  <Settings className="h-4 w-4" /> Settings
                 </Link>
-                <Link href="/dashboard/settings/billing" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-stone-700 hover:bg-stone-50">
-                  <CreditCard className="w-4 h-4" /> Billing
+                <Link
+                  href="/dashboard/settings/billing"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-foreground transition-colors hover:bg-accent"
+                >
+                  <CreditCard className="h-4 w-4" /> Billing
                 </Link>
               </div>
-              <div className="border-t border-stone-100 pt-1">
-                <button onClick={signOut} className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                  <LogOut className="w-4 h-4" /> Sign out
+              <div className="border-t border-border pt-1">
+                <button
+                  onClick={signOut}
+                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10"
+                >
+                  <LogOut className="h-4 w-4" /> Sign out
                 </button>
               </div>
             </div>

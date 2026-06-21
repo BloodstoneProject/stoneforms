@@ -2,50 +2,82 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Stoneforms design foundation
+ * Aesthetic: clean, airy, premium. Warm off-white + charcoal, fully neutral.
+ * Charcoal (light) / off-white (dark) is the only "accent" for CTAs + active states.
+ * All tokens are HSL triples consumed by tailwind.config.js via hsl(var(--token)).
+ */
+
 @layer base {
   :root {
-    --background: 32 14% 95%;        /* #f4f2ed - warm beige */
-    --foreground: 150 44% 13%;       /* #142c1c - deep forest green */
-    --card: 0 0% 100%;
-    --card-foreground: 150 44% 13%;
+    /* Warm paper background, charcoal text */
+    --background: 48 20% 98%;          /* #FAFAF8 warm paper */
+    --foreground: 60 5% 10%;           /* #1A1A18 charcoal */
+
+    --card: 0 0% 100%;                 /* #FFFFFF */
+    --card-foreground: 60 5% 10%;
+
     --popover: 0 0% 100%;
-    --popover-foreground: 150 44% 13%;
-    --primary: 150 44% 13%;          /* #142c1c - deep forest green */
-    --primary-foreground: 32 14% 95%;
-    --secondary: 134 16% 29%;        /* #3d5948 - sage green */
-    --secondary-foreground: 32 14% 95%;
-    --muted: 32 14% 90%;
-    --muted-foreground: 134 16% 29%;
-    --accent: 356 83% 25%;           /* #770a19 - deep crimson */
-    --accent-foreground: 32 14% 95%;
-    --destructive: 357 86% 24%;      /* #39090a - dark blood red */
-    --destructive-foreground: 32 14% 95%;
-    --border: 32 14% 88%;
-    --input: 32 14% 88%;
-    --ring: 150 44% 13%;
+    --popover-foreground: 60 5% 10%;
+
+    /* Primary = charcoal with off-white text */
+    --primary: 60 5% 10%;              /* #1A1A18 */
+    --primary-foreground: 48 20% 98%;  /* #FAFAF8 */
+
+    /* Secondary = muted warm surface */
+    --secondary: 43 21% 94%;           /* #F2F1EC */
+    --secondary-foreground: 60 5% 10%;
+
+    --muted: 43 21% 94%;               /* #F2F1EC */
+    --muted-foreground: 40 5% 40%;     /* #6B6862 warm grey */
+
+    /* Accent = subtle warm surface for hovers (no brand colour) */
+    --accent: 43 21% 94%;              /* #F2F1EC */
+    --accent-foreground: 60 5% 10%;
+
+    /* Destructive = restrained error red, destructive only */
+    --destructive: 4 77% 40%;          /* #B42318 */
+    --destructive-foreground: 48 20% 98%;
+
+    /* Hairlines */
+    --border: 43 19% 91%;              /* #ECEAE4 */
+    --input: 43 19% 91%;               /* #ECEAE4 */
+    --ring: 60 5% 10%;                 /* charcoal focus ring */
+
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    /* Warm neutral dark (not cold blue) */
+    --background: 40 8% 8%;            /* #161513 */
+    --foreground: 40 23% 95%;          /* #F5F3EF warm off-white */
+
+    --card: 45 6% 11%;                 /* #1E1D1A */
+    --card-foreground: 40 23% 95%;
+
+    --popover: 45 6% 11%;              /* #1E1D1A */
+    --popover-foreground: 40 23% 95%;
+
+    /* Primary inverts: off-white CTA with dark text so it pops */
+    --primary: 40 23% 95%;             /* #F5F3EF */
+    --primary-foreground: 40 8% 8%;    /* #161513 */
+
+    --secondary: 40 8% 15%;            /* #2A2825 */
+    --secondary-foreground: 40 23% 95%;
+
+    --muted: 40 8% 15%;                /* #2A2825 */
+    --muted-foreground: 40 8% 63%;     /* #A8A39A */
+
+    --accent: 40 8% 15%;               /* #2A2825 */
+    --accent-foreground: 40 23% 95%;
+
+    --destructive: 4 60% 50%;          /* slightly brighter red for dark surfaces */
+    --destructive-foreground: 40 23% 95%;
+
+    --border: 40 8% 15%;               /* #2A2825 hairline */
+    --input: 40 8% 15%;                /* #2A2825 */
+    --ring: 40 23% 95%;                /* off-white focus ring */
   }
 }
 
@@ -53,7 +85,98 @@
   * {
     @apply border-border;
   }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv11", "ss01";
+    font-variation-settings: normal;
+  }
+
+  /* Smooth theme transition for surfaces only. Respect reduced motion. */
+  body,
+  body * {
+    transition-property: background-color, border-color;
+    transition-duration: 200ms;
+    transition-timing-function: ease-out;
+  }
+
+  /* Never transition the no-flash boot or transformy/interactive elements awkwardly */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Selection: subtle warm charcoal wash */
+  ::selection {
+    background-color: hsl(var(--foreground) / 0.12);
+    color: hsl(var(--foreground));
+  }
+
+  /* Focus ring convention: thin, offset, token-driven. */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+}
+
+@layer base {
+  /* Nice, thin, theme-aware scrollbars */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border));
+    border-radius: 9999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.5);
+    background-clip: content-box;
+  }
+}
+
+@layer components {
+  /*
+   * Optional ergonomic helper classes. Surface agents may use these OR the
+   * raw token utilities documented in the cheat-sheet. Both stay in sync via tokens.
+   */
+
+  /* Flat hairline card surface, no shadow. */
+  .card-surface {
+    @apply rounded-lg border border-border bg-card text-card-foreground;
+  }
+
+  /* Standard page padding container for dashboard surfaces. */
+  .page-container {
+    @apply mx-auto w-full max-w-6xl px-6 py-8;
+  }
+
+  /* Heading treatment: tighter tracking, no new font. */
+  .heading-tight {
+    @apply font-semibold tracking-tight;
   }
 }
