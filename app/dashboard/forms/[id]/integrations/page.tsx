@@ -5,9 +5,12 @@ import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   ArrowLeft, Loader2, Plus, Trash2, Mail, Webhook, Copy, Check,
-  Power, Bell, Reply,
+  Power, Bell, Reply, MessageSquare, FileText, Send as SendIcon,
 } from 'lucide-react'
 import GoogleSheetsConnect from '@/components/forms/GoogleSheetsConnect'
+import IntegrationCard from '@/components/integrations/IntegrationCard'
+import EmailBrandingSection from '@/components/integrations/EmailBrandingSection'
+import ZapierCard from '@/components/integrations/ZapierCard'
 
 interface WebhookRow {
   id: string
@@ -44,13 +47,17 @@ export default function IntegrationsPage({ params }: { params: Promise<{ id: str
   const [hookError, setHookError] = useState<string | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
+  // Third-party integrations (Slack / Notion / Mailchimp), keyed by type.
+  const [integrations, setIntegrations] = useState<Record<string, { config: any; enabled: boolean }>>({})
+
   useEffect(() => {
     async function load() {
       try {
-        const [formData, notifData, hookData] = await Promise.all([
+        const [formData, notifData, hookData, integData] = await Promise.all([
           fetch(`/api/forms/${formId}`).then((r) => r.json()).catch(() => ({})),
           fetch(`/api/forms/${formId}/notifications`).then((r) => r.json()).catch(() => ({})),
           fetch(`/api/forms/${formId}/webhooks`).then((r) => r.json()).catch(() => ({})),
+          fetch(`/api/forms/${formId}/integrations-config`).then((r) => r.json()).catch(() => ({})),
         ])
         if (formData.form) {
           setTitle(formData.form.title)
@@ -65,6 +72,13 @@ export default function IntegrationsPage({ params }: { params: Promise<{ id: str
           setNotifyEmails((notifData.settings.notification_emails || []).join(', '))
         }
         if (hookData.webhooks) setWebhooks(hookData.webhooks)
+        if (Array.isArray(integData.integrations)) {
+          const map: Record<string, { config: any; enabled: boolean }> = {}
+          for (const row of integData.integrations) {
+            map[row.type] = { config: row.config || {}, enabled: row.enabled }
+          }
+          setIntegrations(map)
+        }
       } finally {
         setLoading(false)
       }
@@ -306,6 +320,98 @@ export default function IntegrationsPage({ params }: { params: Promise<{ id: str
         </section>
 
         <GoogleSheetsConnect formId={formId} />
+
+        {/* Slack */}
+        <IntegrationCard
+          formId={formId}
+          type="slack"
+          title="Slack"
+          description="Post a formatted message to a Slack channel on every submission. Create an Incoming Webhook in Slack and paste its URL below."
+          icon={<MessageSquare className="w-5 h-5 text-stone-700" />}
+          fields={[
+            {
+              key: 'webhookUrl',
+              label: 'Incoming webhook URL',
+              type: 'url',
+              placeholder: 'https://hooks.slack.com/services/...',
+              help: 'Slack → Apps → Incoming Webhooks → Add to Slack → copy the Webhook URL.',
+            },
+          ]}
+          initialConfig={integrations.slack?.config}
+          initialEnabled={integrations.slack?.enabled}
+          connected={!!integrations.slack}
+        />
+
+        {/* Notion */}
+        <IntegrationCard
+          formId={formId}
+          type="notion"
+          title="Notion"
+          description="Create a Notion database page for each submission. Answers are matched to database properties by label; everything is also written into the page body."
+          icon={<FileText className="w-5 h-5 text-stone-700" />}
+          fields={[
+            {
+              key: 'token',
+              label: 'Internal integration token',
+              type: 'password',
+              placeholder: 'secret_xxx / ntn_xxx',
+              help: 'Create an internal integration at notion.so/my-integrations, then share your database with it.',
+            },
+            {
+              key: 'databaseId',
+              label: 'Database ID',
+              placeholder: '32-character database id',
+              help: 'The ID in your database URL (the 32-char string before any ?v=).',
+            },
+            {
+              key: 'titleProperty',
+              label: 'Title property (optional)',
+              placeholder: 'Name',
+              help: 'Defaults to your database title column.',
+            },
+          ]}
+          initialConfig={integrations.notion?.config}
+          initialEnabled={integrations.notion?.enabled}
+          connected={!!integrations.notion}
+        />
+
+        {/* Mailchimp */}
+        <IntegrationCard
+          formId={formId}
+          type="mailchimp"
+          title="Mailchimp"
+          description="Add respondents to a Mailchimp audience. Requires an email field on the form; name fields map to FNAME/LNAME automatically."
+          icon={<SendIcon className="w-5 h-5 text-stone-700" />}
+          fields={[
+            {
+              key: 'apiKey',
+              label: 'API key',
+              type: 'password',
+              placeholder: 'xxxxxxxxxxxxxxxx-us21',
+              help: 'Account → Extras → API keys. The datacenter (e.g. us21) is the suffix after the dash.',
+            },
+            {
+              key: 'audienceId',
+              label: 'Audience / list ID',
+              placeholder: 'e.g. a1b2c3d4e5',
+              help: 'Audience → Settings → Audience name and defaults → Audience ID.',
+            },
+            {
+              key: 'tags',
+              label: 'Tags (optional, comma-separated)',
+              placeholder: 'lead, stoneforms',
+            },
+          ]}
+          initialConfig={integrations.mailchimp?.config}
+          initialEnabled={integrations.mailchimp?.enabled}
+          connected={!!integrations.mailchimp}
+        />
+
+        {/* Zapier / Make */}
+        <ZapierCard formId={formId} formUrl={`/f/${formId}`} />
+
+        {/* Per-form email branding */}
+        <EmailBrandingSection formId={formId} />
       </div>
     </div>
   )

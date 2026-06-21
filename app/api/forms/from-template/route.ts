@@ -32,7 +32,8 @@ export async function POST(request: Request) {
       title: template.name,
       description: template.description,
       status: 'draft',
-      settings: {},
+      // Forward the template's quiz config so scored-quiz templates work out of the box.
+      settings: template.quiz ? { quiz: template.quiz } : {},
     })
     .select()
     .single()
@@ -50,7 +51,8 @@ export async function POST(request: Request) {
     required: !!f.required,
     options: f.options || null,
     position: index,
-    settings: {},
+    // Forward per-field scoring so quiz templates tally points correctly.
+    settings: f.scoring ? { scoring: f.scoring } : {},
   }))
 
   const { error: fieldsError } = await supabase.from('form_fields').insert(rows)

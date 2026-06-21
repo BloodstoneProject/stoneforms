@@ -3,8 +3,9 @@
 import { useState } from 'react'
 import { Plus, Loader2, FileText } from 'lucide-react'
 import { FORM_TEMPLATES, type FormTemplate } from '@/lib/form-templates'
+import { TEMPLATE_CATEGORIES, CATEGORY_BLURBS } from '@/lib/template-categories'
 
-const CATEGORIES = ['All', 'Lead gen', 'Feedback', 'Events', 'HR', 'Support'] as const
+const CATEGORIES = ['All', ...TEMPLATE_CATEGORIES] as const
 
 export default function TemplatesPage() {
   const [category, setCategory] = useState<(typeof CATEGORIES)[number]>('All')
@@ -38,6 +39,30 @@ export default function TemplatesPage() {
 
   const shown = category === 'All' ? FORM_TEMPLATES : FORM_TEMPLATES.filter((t) => t.category === category)
 
+  // Group the shown templates by category so we can render section headers.
+  const sections = TEMPLATE_CATEGORIES
+    .map((cat) => ({ cat, items: shown.filter((t) => t.category === cat) }))
+    .filter((s) => s.items.length > 0)
+
+  const renderCard = (t: FormTemplate) => (
+    <div key={t.id} className="bg-white rounded-xl border border-stone-200 p-6 flex flex-col">
+      <div className="w-11 h-11 rounded-lg bg-stone-100 flex items-center justify-center text-xl mb-4">{t.icon}</div>
+      <h3 className="font-bold text-stone-900">{t.name}</h3>
+      <p className="text-sm text-stone-500 mt-1 flex-1">{t.description}</p>
+      <div className="flex items-center gap-1.5 text-xs text-stone-400 mt-3">
+        <FileText className="w-3.5 h-3.5" /> {t.fields.length} fields
+        {t.quiz ? ' · scored quiz' : ''}
+      </div>
+      <button
+        onClick={() => useTemplate(t)}
+        disabled={busyId !== null}
+        className="mt-4 w-full py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800 text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+      >
+        {busyId === t.id ? <><Loader2 className="w-4 h-4 animate-spin" /> Creating…</> : 'Use template'}
+      </button>
+    </div>
+  )
+
   return (
     <div className="min-h-screen bg-stone-50">
       <div className="bg-white border-b border-stone-200">
@@ -63,13 +88,13 @@ export default function TemplatesPage() {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {/* Blank */}
-          {category === 'All' && (
+        {/* Blank form (only on the "All" view) */}
+        {category === 'All' && (
+          <div className="mb-10">
             <button
               onClick={() => useTemplate(null)}
               disabled={busyId !== null}
-              className="text-left bg-white rounded-xl border-2 border-dashed border-stone-300 p-6 hover:border-stone-900 transition-colors disabled:opacity-50 flex flex-col"
+              className="text-left w-full sm:max-w-sm bg-white rounded-xl border-2 border-dashed border-stone-300 p-6 hover:border-stone-900 transition-colors disabled:opacity-50 flex flex-col"
             >
               <div className="w-11 h-11 rounded-lg bg-stone-100 flex items-center justify-center text-xl mb-4">
                 <Plus className="w-5 h-5 text-stone-700" />
@@ -80,24 +105,21 @@ export default function TemplatesPage() {
                 {busyId === 'blank' ? 'Creating…' : 'Start blank →'}
               </span>
             </button>
-          )}
+          </div>
+        )}
 
-          {shown.map((t) => (
-            <div key={t.id} className="bg-white rounded-xl border border-stone-200 p-6 flex flex-col">
-              <div className="w-11 h-11 rounded-lg bg-stone-100 flex items-center justify-center text-xl mb-4">{t.icon}</div>
-              <h3 className="font-bold text-stone-900">{t.name}</h3>
-              <p className="text-sm text-stone-500 mt-1 flex-1">{t.description}</p>
-              <div className="flex items-center gap-1.5 text-xs text-stone-400 mt-3">
-                <FileText className="w-3.5 h-3.5" /> {t.fields.length} fields · {t.category}
+        {/* Templates grouped by category */}
+        <div className="space-y-12">
+          {sections.map((section) => (
+            <section key={section.cat}>
+              <div className="mb-4">
+                <h2 className="text-xl font-bold text-stone-900">{section.cat}</h2>
+                <p className="text-sm text-stone-500 mt-0.5">{CATEGORY_BLURBS[section.cat]}</p>
               </div>
-              <button
-                onClick={() => useTemplate(t)}
-                disabled={busyId !== null}
-                className="mt-4 w-full py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800 text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {busyId === t.id ? <><Loader2 className="w-4 h-4 animate-spin" /> Creating…</> : 'Use template'}
-              </button>
-            </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {section.items.map(renderCard)}
+              </div>
+            </section>
           ))}
         </div>
       </div>

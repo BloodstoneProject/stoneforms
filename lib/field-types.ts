@@ -23,6 +23,8 @@ export type FieldType =
   | 'picture_choice'
   | 'signature'
   | 'address'
+  | 'consent'
+  | 'calculator'
 
 export interface FieldTypeMeta {
   value: FieldType
@@ -47,8 +49,10 @@ export const FIELD_TYPES: FieldTypeMeta[] = [
   { value: 'checkboxes', label: 'Checkboxes', icon: '✅', hasOptions: true, valueKind: 'string[]', category: 'choice' },
   { value: 'dropdown', label: 'Dropdown', icon: '▼', hasOptions: true, valueKind: 'string', category: 'choice' },
   { value: 'yes_no', label: 'Yes / No', icon: '🔘', hasOptions: false, valueKind: 'boolean', category: 'choice' },
+  { value: 'consent', label: 'Consent (GDPR)', icon: '🛡️', hasOptions: false, valueKind: 'boolean', category: 'choice' },
   { value: 'rating', label: 'Rating', icon: '⭐', hasOptions: false, valueKind: 'number', category: 'number' },
   { value: 'opinion_scale', label: 'Opinion Scale', icon: '📊', hasOptions: false, valueKind: 'number', category: 'number' },
+  { value: 'calculator', label: 'Calculator', icon: '🧮', hasOptions: false, valueKind: 'number', category: 'number' },
   { value: 'ranking', label: 'Ranking', icon: '🔢', hasOptions: true, valueKind: 'string[]', category: 'choice' },
   { value: 'date', label: 'Date', icon: '📅', hasOptions: false, valueKind: 'string', category: 'date' },
   { value: 'signature', label: 'Signature', icon: '✍️', hasOptions: false, valueKind: 'string', category: 'media' },

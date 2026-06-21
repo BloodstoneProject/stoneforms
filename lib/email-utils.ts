@@ -2,6 +2,7 @@
 
 import { Resend } from 'resend'
 import { getSiteUrl } from '@/lib/site'
+import { createAdminClient } from '@/lib/supabase-server'
 
 // Lazy-initialize Resend to avoid build-time crash when API key is missing
 let _resend: Resend | null = null
@@ -15,14 +16,72 @@ function getResend(): Resend | null {
 // verified in Resend (Bloodstone for now). Never hardcode an unverified domain.
 const DEFAULT_FROM = process.env.EMAIL_FROM || 'Stoneforms <notifications@bloodstone.co.uk>'
 
+// Per-form email branding (forms.email_branding jsonb). All fields optional;
+// when the column is null, emails behave exactly as before.
+export interface EmailBranding {
+  fromName?: string
+  replyTo?: string
+  logoUrl?: string
+  accentColor?: string
+  signature?: string
+}
+
+// Load a form's email_branding via the admin client. Runs in the public submit
+// path, so it must bypass RLS to read the owner's branding config. Always
+// returns an object (empty when unset) and never throws.
+export async function getEmailBranding(formId?: string): Promise<EmailBranding> {
+  if (!formId) return {}
+  try {
+    const admin = createAdminClient()
+    const { data, error } = await admin
+      .from('forms')
+      .select('email_branding')
+      .eq('id', formId)
+      .single()
+    if (error || !data?.email_branding || typeof data.email_branding !== 'object') return {}
+    return data.email_branding as EmailBranding
+  } catch (err) {
+    console.error('Email branding load error:', err)
+    return {}
+  }
+}
+
+// Split the env From into a display name + bare address, then override the
+// display name with the form's `fromName` while keeping the verified address.
+function applyFromName(branding: EmailBranding): string {
+  const fromName = branding.fromName?.trim()
+  if (!fromName) return DEFAULT_FROM
+
+  const match = DEFAULT_FROM.match(/<([^>]+)>/)
+  const address = match ? match[1] : DEFAULT_FROM
+  // Quote the display name if it contains characters that would break parsing.
+  const safeName = fromName.replace(/["\r\n]/g, '')
+  return `${safeName} <${address}>`
+}
+
+// Render a branded HTML header (logo) given branding + accent.
+function brandingHeaderHtml(branding: EmailBranding): string {
+  if (!branding.logoUrl) return ''
+  const safeLogo = String(branding.logoUrl).replace(/"/g, '')
+  return `<div style="text-align:center;margin-bottom:24px;"><img src="${safeLogo}" alt="" style="max-height:48px;max-width:200px;height:auto;" /></div>`
+}
+
+// Render a branded HTML signature/footer block.
+function brandingSignatureHtml(branding: EmailBranding): string {
+  if (!branding.signature) return ''
+  const safe = String(branding.signature).replace(/\n/g, '<br/>')
+  return `<div style="margin-top:24px;padding-top:16px;border-top:1px solid #e5e5e5;color:#666;font-size:14px;">${safe}</div>`
+}
+
 interface SendEmailParams {
   to: string | string[]
   subject: string
   html: string
   from?: string
+  replyTo?: string
 }
 
-export async function sendEmail({ to, subject, html, from }: SendEmailParams) {
+export async function sendEmail({ to, subject, html, from, replyTo }: SendEmailParams) {
   try {
     const resend = getResend()
     if (!resend) {
@@ -34,6 +93,7 @@ export async function sendEmail({ to, subject, html, from }: SendEmailParams) {
       to: Array.isArray(to) ? to : [to],
       subject,
       html,
+      ...(replyTo ? { replyTo } : {}),
     })
 
     return { success: true, id: result.data?.id }
@@ -53,6 +113,11 @@ export async function sendSubmissionNotification(params: {
   formFields: Array<{ id: string; label: string }>
 }) {
   const { formTitle, formId, responses, notificationEmails, formFields } = params
+
+  const branding = await getEmailBranding(formId)
+  const accent = branding.accentColor && /^#[0-9a-fA-F]{3,8}$/.test(branding.accentColor)
+    ? branding.accentColor
+    : '#0a0a0a'
 
   // Build response summary
   const responseSummary = formFields
@@ -75,28 +140,30 @@ export async function sendSubmissionNotification(params: {
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; line-height: 1.6; color: #0a0a0a; }
           .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: #fafaf9; padding: 24px; border-radius: 12px; margin-bottom: 24px; }
+          .header { background: #fafaf9; padding: 24px; border-radius: 12px; margin-bottom: 24px; border-top: 4px solid ${accent}; }
           .content { background: white; padding: 24px; border: 1px solid #e5e5e5; border-radius: 12px; }
-          .button { display: inline-block; background: #0a0a0a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; margin-top: 16px; }
+          .button { display: inline-block; background: ${accent}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; margin-top: 16px; }
           .footer { margin-top: 24px; text-align: center; color: #666; font-size: 14px; }
         </style>
       </head>
       <body>
         <div class="container">
+          ${brandingHeaderHtml(branding)}
           <div class="header">
             <h1 style="margin: 0; font-size: 24px; font-weight: 600;">New Form Submission</h1>
             <p style="margin: 8px 0 0 0; color: #666;">You have a new response to <strong>${formTitle}</strong></p>
           </div>
-          
+
           <div class="content">
             <h2 style="font-size: 18px; margin-top: 0;">Response Details</h2>
             ${responseSummary}
-            
+
             <a href="${getSiteUrl()}/dashboard/forms/${formId}/responses" class="button">
               View Full Response
             </a>
+            ${brandingSignatureHtml(branding)}
           </div>
-          
+
           <div class="footer">
             <p>This email was sent by Stoneforms because you enabled notifications for this form.</p>
             <p><a href="${getSiteUrl()}/dashboard/forms/${formId}" style="color: #0a0a0a;">Manage notification settings</a></p>
@@ -110,6 +177,8 @@ export async function sendSubmissionNotification(params: {
     to: notificationEmails,
     subject: `New response to ${formTitle}`,
     html,
+    from: applyFromName(branding),
+    replyTo: branding.replyTo,
   })
 }
 
@@ -117,10 +186,17 @@ export async function sendSubmissionNotification(params: {
 export async function sendAutoResponder(params: {
   to: string
   formTitle: string
+  formId?: string
   subject?: string
   message?: string
 }) {
-  const { to, formTitle, subject, message } = params
+  const { to, formTitle, formId, subject, message } = params
+
+  const branding = await getEmailBranding(formId)
+  const accent = branding.accentColor && /^#[0-9a-fA-F]{3,8}$/.test(branding.accentColor)
+    ? branding.accentColor
+    : '#0a0a0a'
+
   const safeMessage = (message || 'Thanks for your submission. We have received your response and will be in touch shortly.')
     .replace(/\n/g, '<br/>')
 
@@ -130,9 +206,11 @@ export async function sendAutoResponder(params: {
       <head><meta charset="utf-8" /></head>
       <body style="font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; line-height: 1.6; color: #0a0a0a;">
         <div style="max-width: 600px; margin: 0 auto; padding: 24px;">
-          <div style="background: white; padding: 24px; border: 1px solid #e5e5e5; border-radius: 12px;">
-            <h1 style="font-size: 20px; margin-top: 0;">${formTitle}</h1>
+          ${brandingHeaderHtml(branding)}
+          <div style="background: white; padding: 24px; border: 1px solid #e5e5e5; border-radius: 12px; border-top: 4px solid ${accent};">
+            <h1 style="font-size: 20px; margin-top: 0; color: ${accent};">${formTitle}</h1>
             <p style="color: #444;">${safeMessage}</p>
+            ${brandingSignatureHtml(branding)}
           </div>
           <p style="margin-top: 16px; text-align: center; color: #999; font-size: 12px;">Powered by Stoneforms</p>
         </div>
@@ -144,6 +222,8 @@ export async function sendAutoResponder(params: {
     to,
     subject: subject || `Thanks for your response to ${formTitle}`,
     html,
+    from: applyFromName(branding),
+    replyTo: branding.replyTo,
   })
 }
 

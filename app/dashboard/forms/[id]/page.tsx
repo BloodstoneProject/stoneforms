@@ -35,6 +35,13 @@ interface QuizConfig {
   outcomes?: QuizOutcome[]
 }
 
+interface FormSchedule {
+  opensAt?: string
+  closesAt?: string
+  maxResponses?: number
+  closedMessage?: string
+}
+
 interface FormSettings {
   showProgressBar?: boolean
   allowMultipleSubmissions?: boolean
@@ -44,6 +51,11 @@ interface FormSettings {
   welcome?: { enabled?: boolean; title?: string; description?: string; buttonText?: string }
   ending?: { title?: string; message?: string }
   quiz?: QuizConfig
+  schedule?: FormSchedule
+  recaptcha?: { enabled?: boolean }
+  // Unknown keys written by other features (emailBranding, integrations, …) are
+  // preserved on save — see persistMeta / updateSetting spreads.
+  [key: string]: any
 }
 
 interface Form {
@@ -156,6 +168,23 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
     setForm((prev) => prev ? {
       ...prev,
       settings: { ...(prev.settings || {}), [group]: { ...((prev.settings as any)?.[group] || {}), [key]: value } },
+    } : prev)
+  }
+
+  const updateScheduleSetting = (key: keyof FormSchedule, value: any) => {
+    setForm((prev) => {
+      if (!prev) return prev
+      const schedule = { ...((prev.settings as any)?.schedule || {}) }
+      if (value === '' || value === undefined || value === null) delete schedule[key]
+      else schedule[key] = value
+      return { ...prev, settings: { ...(prev.settings || {}), schedule } }
+    })
+  }
+
+  const updateRecaptchaSetting = (enabled: boolean) => {
+    setForm((prev) => prev ? {
+      ...prev,
+      settings: { ...(prev.settings || {}), recaptcha: { ...((prev.settings as any)?.recaptcha || {}), enabled } },
     } : prev)
   }
 
@@ -642,6 +671,69 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                       </div>
                     )}
                   </div>
+
+                  {/* Schedule + response caps */}
+                  <div className="pt-3 border-t border-stone-100">
+                    <p className="text-sm font-medium text-stone-700 mb-2">Schedule &amp; limits</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-stone-700 mb-1">Opens at</label>
+                        <input
+                          type="datetime-local"
+                          value={toLocalInput(form.settings?.schedule?.opensAt)}
+                          onChange={(e) => updateScheduleSetting('opensAt', fromLocalInput(e.target.value))}
+                          className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-stone-700 mb-1">Closes at</label>
+                        <input
+                          type="datetime-local"
+                          value={toLocalInput(form.settings?.schedule?.closesAt)}
+                          onChange={(e) => updateScheduleSetting('closesAt', fromLocalInput(e.target.value))}
+                          className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <label className="block text-xs font-medium text-stone-700 mb-1">Max responses (leave blank for unlimited)</label>
+                      <input
+                        type="number"
+                        min={1}
+                        value={form.settings?.schedule?.maxResponses ?? ''}
+                        onChange={(e) => updateScheduleSetting('maxResponses', e.target.value === '' ? '' : Number(e.target.value))}
+                        className="w-40 text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+                        placeholder="Unlimited"
+                      />
+                    </div>
+                    <div className="mt-3">
+                      <label className="block text-xs font-medium text-stone-700 mb-1">Closed message</label>
+                      <textarea
+                        value={form.settings?.schedule?.closedMessage || ''}
+                        onChange={(e) => updateScheduleSetting('closedMessage', e.target.value)}
+                        rows={2}
+                        className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900 resize-none"
+                        placeholder="Shown when the form isn't open (e.g. Registration is now closed.)"
+                      />
+                    </div>
+                    <p className="text-xs text-stone-400 mt-1">Times use your local timezone. The window and cap are enforced server-side.</p>
+                  </div>
+
+                  {/* Spam protection (reCAPTCHA v3) */}
+                  <div className="pt-3 border-t border-stone-100">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={!!form.settings?.recaptcha?.enabled}
+                        onChange={(e) => updateRecaptchaSetting(e.target.checked)}
+                        className="rounded"
+                      />
+                      <span className="text-sm font-medium text-stone-700">Enable reCAPTCHA v3 spam protection</span>
+                    </label>
+                    <p className="text-xs text-stone-400 mt-1 pl-6">
+                      Only active once the <code>NEXT_PUBLIC_RECAPTCHA_SITE_KEY</code> and <code>RECAPTCHA_SECRET_KEY</code> env vars are configured.
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
@@ -662,6 +754,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                         key={field.id}
                         field={field}
                         index={index}
+                        allFields={fields}
                         quizEnabled={!!form.settings?.quiz?.enabled}
                         expanded={expandedSettingsId === field.id}
                         onToggleExpand={() =>
@@ -704,6 +797,24 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
   )
 }
 
+// Convert a stored ISO string to the value a <input type="datetime-local">
+// expects (local wall-clock, no timezone suffix). Empty when unset/invalid.
+function toLocalInput(iso?: string): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+// Convert a datetime-local value (local wall-clock) back to a stored ISO string.
+function fromLocalInput(local: string): string {
+  if (!local) return ''
+  const d = new Date(local)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toISOString()
+}
+
 function SaveIndicator({ state }: { state: SaveState }) {
   if (state === 'saving') {
     return <span className="inline-flex items-center gap-1 text-stone-500"><Loader2 className="w-3 h-3 animate-spin" /> Saving…</span>
@@ -717,6 +828,7 @@ function SaveIndicator({ state }: { state: SaveState }) {
 interface SortableFieldProps {
   field: Field
   index: number
+  allFields: Field[]
   quizEnabled: boolean
   expanded: boolean
   onToggleExpand: () => void
@@ -727,7 +839,13 @@ interface SortableFieldProps {
 
 const SCORABLE_NUMERIC = new Set(['rating', 'opinion_scale', 'number'])
 
-function SortableField({ field, index, quizEnabled, expanded, onToggleExpand, onUpdate, onUpdateSetting, onDelete }: SortableFieldProps) {
+// Field types whose answers can feed a calculator term (numeric-ish).
+const CALC_SOURCE_TYPES = new Set(['number', 'rating', 'opinion_scale', 'yes_no', 'consent'])
+
+interface CalcTerm { fieldId: string; weight: number }
+interface CalcConfig { terms?: CalcTerm[]; constant?: number; prefix?: string; suffix?: string }
+
+function SortableField({ field, index, allFields, quizEnabled, expanded, onToggleExpand, onUpdate, onUpdateSetting, onDelete }: SortableFieldProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: field.id })
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
   const meta = getFieldMeta(field.field_type)
@@ -813,7 +931,56 @@ function SortableField({ field, index, quizEnabled, expanded, onToggleExpand, on
                 />
               </div>
 
-              {!fieldHasOptions(field.field_type) && field.field_type !== 'yes_no' && (
+              {/* Consent (GDPR) config */}
+              {field.field_type === 'consent' && (
+                <div className="rounded-lg border border-stone-200 p-3 space-y-2">
+                  <p className="text-xs font-medium text-stone-700">Consent</p>
+                  <div>
+                    <label className="block text-xs text-stone-600 mb-1">Consent text</label>
+                    <input
+                      type="text"
+                      value={settings.consentLabel || ''}
+                      onChange={(e) => onUpdateSetting(field, 'consentLabel', e.target.value)}
+                      className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+                      placeholder="I agree to the terms and conditions"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs text-stone-600 mb-1">Privacy policy URL</label>
+                      <input
+                        type="text"
+                        value={settings.policyUrl || ''}
+                        onChange={(e) => onUpdateSetting(field, 'policyUrl', e.target.value)}
+                        className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+                        placeholder="https://example.com/privacy"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-stone-600 mb-1">Link text</label>
+                      <input
+                        type="text"
+                        value={settings.policyText || ''}
+                        onChange={(e) => onUpdateSetting(field, 'policyText', e.target.value)}
+                        className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+                        placeholder="Privacy Policy"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-stone-400">Mark the field Required to force respondents to tick the box.</p>
+                </div>
+              )}
+
+              {/* Calculator config */}
+              {field.field_type === 'calculator' && (
+                <CalculatorConfig
+                  field={field}
+                  allFields={allFields}
+                  onUpdateSetting={onUpdateSetting}
+                />
+              )}
+
+              {!fieldHasOptions(field.field_type) && field.field_type !== 'yes_no' && field.field_type !== 'consent' && field.field_type !== 'calculator' && (
                 <div>
                   <label className="block text-xs font-medium text-stone-700 mb-1">Placeholder</label>
                   <input
@@ -928,6 +1095,127 @@ function SortableField({ field, index, quizEnabled, expanded, onToggleExpand, on
           <Trash2 className="w-5 h-5" />
         </button>
       </div>
+    </div>
+  )
+}
+
+// Config UI for a calculator field. Writes settings.calculation =
+// { terms: [{fieldId, weight}], constant?, prefix?, suffix? }.
+function CalculatorConfig({
+  field,
+  allFields,
+  onUpdateSetting,
+}: {
+  field: Field
+  allFields: Field[]
+  onUpdateSetting: (field: Field, key: string, value: any) => void
+}) {
+  const calc: CalcConfig = (field.settings?.calculation as CalcConfig) || {}
+  const terms: CalcTerm[] = Array.isArray(calc.terms) ? calc.terms : []
+  // Candidate source fields: numeric-ish fields, excluding this calculator itself.
+  const sources = allFields.filter(
+    (f) => f.id !== field.id && CALC_SOURCE_TYPES.has(f.field_type)
+  )
+  const labelFor = (id: string) => allFields.find((f) => f.id === id)?.label || 'Unknown field'
+
+  const write = (next: CalcConfig) => onUpdateSetting(field, 'calculation', next)
+
+  const addTerm = () => {
+    const used = new Set(terms.map((t) => t.fieldId))
+    const candidate = sources.find((s) => !used.has(s.id)) || sources[0]
+    if (!candidate) return
+    write({ ...calc, terms: [...terms, { fieldId: candidate.id, weight: 1 }] })
+  }
+  const updateTerm = (i: number, patch: Partial<CalcTerm>) => {
+    write({ ...calc, terms: terms.map((t, idx) => (idx === i ? { ...t, ...patch } : t)) })
+  }
+  const removeTerm = (i: number) => {
+    write({ ...calc, terms: terms.filter((_, idx) => idx !== i) })
+  }
+
+  return (
+    <div className="rounded-lg border border-stone-200 p-3 space-y-3">
+      <p className="text-xs font-medium text-stone-700">Calculation</p>
+      {sources.length === 0 && (
+        <p className="text-xs text-stone-400">
+          Add Number, Rating, Opinion Scale, Yes/No or Consent fields above to reference them here.
+        </p>
+      )}
+
+      <div className="space-y-2">
+        {terms.map((t, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <select
+              value={t.fieldId}
+              onChange={(e) => updateTerm(i, { fieldId: e.target.value })}
+              className="flex-1 text-sm border border-stone-300 rounded px-2 py-1.5 focus:outline-none focus:border-stone-900"
+            >
+              {!sources.some((s) => s.id === t.fieldId) && (
+                <option value={t.fieldId}>{labelFor(t.fieldId)}</option>
+              )}
+              {sources.map((s) => (
+                <option key={s.id} value={s.id}>{s.label || 'Untitled'}</option>
+              ))}
+            </select>
+            <span className="text-xs text-stone-400">×</span>
+            <input
+              type="number"
+              step="any"
+              value={t.weight}
+              onChange={(e) => updateTerm(i, { weight: e.target.value === '' ? 0 : Number(e.target.value) })}
+              className="w-20 text-sm border border-stone-300 rounded px-2 py-1.5 focus:outline-none focus:border-stone-900"
+              placeholder="1"
+            />
+            <button type="button" onClick={() => removeTerm(i)} className="text-red-600 hover:text-red-700" aria-label="Remove term">
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <button
+        type="button"
+        onClick={addTerm}
+        disabled={sources.length === 0}
+        className="flex items-center gap-1.5 text-sm text-stone-600 hover:text-stone-900 disabled:opacity-40"
+      >
+        <Plus className="w-4 h-4" /> Add field to formula
+      </button>
+
+      <div className="grid grid-cols-3 gap-2 pt-2 border-t border-stone-100">
+        <div>
+          <label className="block text-xs text-stone-600 mb-1">Constant (+)</label>
+          <input
+            type="number"
+            step="any"
+            value={calc.constant ?? ''}
+            onChange={(e) => write({ ...calc, constant: e.target.value === '' ? undefined : Number(e.target.value) })}
+            className="w-full text-sm border border-stone-300 rounded px-2 py-1.5 focus:outline-none focus:border-stone-900"
+            placeholder="0"
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-stone-600 mb-1">Prefix</label>
+          <input
+            type="text"
+            value={calc.prefix ?? ''}
+            onChange={(e) => write({ ...calc, prefix: e.target.value || undefined })}
+            className="w-full text-sm border border-stone-300 rounded px-2 py-1.5 focus:outline-none focus:border-stone-900"
+            placeholder="£"
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-stone-600 mb-1">Suffix</label>
+          <input
+            type="text"
+            value={calc.suffix ?? ''}
+            onChange={(e) => write({ ...calc, suffix: e.target.value || undefined })}
+            className="w-full text-sm border border-stone-300 rounded px-2 py-1.5 focus:outline-none focus:border-stone-900"
+            placeholder=" pts"
+          />
+        </div>
+      </div>
+      <p className="text-xs text-stone-400">Value = sum(field × weight) + constant. Computed live and recomputed on submit.</p>
     </div>
   )
 }

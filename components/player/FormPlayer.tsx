@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Question } from '@/types'
 import { QuestionRenderer } from '@/components/player/QuestionRenderer'
 import { ThankYouScreen } from '@/components/player/ThankYouScreen'
@@ -11,6 +11,8 @@ import {
 } from '@/lib/themes'
 import { nextQuestionId, progressFor, type LogicRule } from '@/lib/logic'
 import type { QuizConfig, QuizOutcome } from '@/lib/quiz'
+import { computeCalc } from '@/lib/calc'
+import type { FormAvailability } from '@/lib/form-controls'
 
 interface FormSettings {
   showProgressBar?: boolean
@@ -19,6 +21,15 @@ interface FormSettings {
   welcome?: { enabled?: boolean; title?: string; description?: string; buttonText?: string }
   ending?: { title?: string; message?: string }
   quiz?: QuizConfig
+}
+
+declare global {
+  interface Window {
+    grecaptcha?: {
+      ready: (cb: () => void) => void
+      execute: (siteKey: string, opts: { action: string }) => Promise<string>
+    }
+  }
 }
 
 interface QuizResultData {
@@ -36,10 +47,16 @@ interface FormPlayerProps {
   theme?: FormTheme
   logic?: LogicRule[]
   hideBranding?: boolean
+  // Server-computed open/closed state (schedule + response cap). When closed,
+  // the player renders a themed "closed" screen instead of the form.
+  availability?: FormAvailability
 }
+
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
 
 export default function FormPlayer({
   formId, formTitle, formDescription, questions, settings = {}, theme = DEFAULT_THEME, logic = [], hideBranding = false,
+  availability,
 }: FormPlayerProps) {
   // Capture URL query params once (for lead tracking + hidden-field prefill).
   const [urlParams] = useState<Record<string, string>>(() =>
@@ -48,9 +65,31 @@ export default function FormPlayer({
   // Hidden fields are prefilled from URL params and never shown in the flow.
   const flowQuestions = questions.filter((q) => q.type !== 'hidden')
   const orderedIds = flowQuestions.map((q) => q.id)
+  const draftKey = `stoneforms:draft:${formId}`
+  // Field ids whose values we never persist to localStorage (sensitive / large).
+  const nonPersistedIds = questions
+    .filter((q) => q.type === 'signature' || q.type === 'file_upload')
+    .map((q) => q.id)
+
+  // Read any saved draft for this form (SSR-guarded). Returns null if none/invalid.
+  const readDraft = (): { answers?: Record<string, any>; currentId?: string } | null => {
+    if (typeof window === 'undefined') return null
+    try {
+      const raw = window.localStorage.getItem(draftKey)
+      if (!raw) return null
+      const parsed = JSON.parse(raw)
+      return parsed && typeof parsed === 'object' ? parsed : null
+    } catch { return null }
+  }
+  const [draft] = useState(() => readDraft())
+
   const [started, setStarted] = useState(false)
-  const [currentId, setCurrentId] = useState<string>(orderedIds[0] || '')
+  const [currentId, setCurrentId] = useState<string>(() => {
+    const saved = draft?.currentId
+    return saved && orderedIds.includes(saved) ? saved : (orderedIds[0] || '')
+  })
   const [history, setHistory] = useState<string[]>([])
+  const [draftRestored, setDraftRestored] = useState(false)
   const [answers, setAnswers] = useState<Record<string, any>>(() => {
     const init: Record<string, any> = {}
     const search = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams()
@@ -59,6 +98,10 @@ export default function FormPlayer({
       const val = search.get(ref)
       if (ref && val !== null) init[q.id] = val
     })
+    // Layer any restored draft answers on top of the hidden-field seeds.
+    if (draft?.answers && typeof draft.answers === 'object') {
+      for (const [k, v] of Object.entries(draft.answers)) init[k] = v
+    }
     return init
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -110,6 +153,67 @@ export default function FormPlayer({
     if (started && current) track('step', { question_id: current.id, position: index })
   }, [started, currentId, current, index, track])
 
+  // If a draft was restored, skip the welcome screen and show a brief note.
+  useEffect(() => {
+    if (draft && (draft.answers || draft.currentId)) {
+      setStarted(true)
+      setDraftRestored(true)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Load Google reCAPTCHA v3 once, only when a site key is configured (dormant otherwise).
+  useEffect(() => {
+    if (!RECAPTCHA_SITE_KEY || typeof window === 'undefined') return
+    const src = `https://www.google.com/recaptcha/api.js?render=${RECAPTCHA_SITE_KEY}`
+    if (document.querySelector(`script[src="${src}"]`)) return
+    const s = document.createElement('script')
+    s.src = src
+    s.async = true
+    document.head.appendChild(s)
+  }, [])
+
+  // Calculator fields are computed, read-only — recompute and persist their value
+  // whenever the answers they depend on change, so they're stored on submit.
+  const calcFields = questions.filter((q) => q.type === 'calculator')
+  useEffect(() => {
+    if (calcFields.length === 0) return
+    setAnswers((prev) => {
+      let changed = false
+      const next = { ...prev }
+      for (const f of calcFields) {
+        const v = computeCalc({ properties: f.properties, settings: f.properties }, prev)
+        if (next[f.id] !== v) { next[f.id] = v; changed = true }
+      }
+      return changed ? next : prev
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(answers), questions])
+
+  // ---- Partial save & resume: debounce-persist progress to localStorage ----
+  const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    if (typeof window === 'undefined' || complete) return
+    if (draftTimer.current) clearTimeout(draftTimer.current)
+    draftTimer.current = setTimeout(() => {
+      try {
+        // Exclude sensitive / large fields (signatures, uploads) from the draft.
+        const persistable: Record<string, any> = {}
+        for (const [k, v] of Object.entries(answers)) {
+          if (!nonPersistedIds.includes(k)) persistable[k] = v
+        }
+        window.localStorage.setItem(draftKey, JSON.stringify({ answers: persistable, currentId }))
+      } catch { /* storage full / disabled — ignore */ }
+    }, 500)
+    return () => { if (draftTimer.current) clearTimeout(draftTimer.current) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(answers), currentId, complete])
+
+  const clearDraft = useCallback(() => {
+    if (typeof window === 'undefined') return
+    try { window.localStorage.removeItem(draftKey) } catch { /* ignore */ }
+  }, [draftKey])
+
   const setAnswer = (qid: string, value: any) => {
     setAnswers((p) => ({ ...p, [qid]: value }))
     if (errors[qid]) setErrors((p) => { const n = { ...p }; delete n[qid]; return n })
@@ -118,7 +222,15 @@ export default function FormPlayer({
   const validate = (): boolean => {
     if (!current) return true
     if (current.type === 'statement') return true // informational, no answer
+    if (current.type === 'calculator') return true // computed display, never blocks
     const a = answers[current.id]
+    // Consent: required means the box must be ticked (answer exactly true).
+    if (current.type === 'consent') {
+      if (current.required && a !== true) {
+        setErrors({ [current.id]: 'Please tick this box to continue' }); return false
+      }
+      return true
+    }
     let empty = a === undefined || a === null || a === '' || (Array.isArray(a) && a.length === 0)
     // Address is empty unless line1, city and postal are all present.
     if (current.type === 'address') {
@@ -190,19 +302,38 @@ export default function FormPlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [started, index, answers])
 
+  // Fetch a reCAPTCHA v3 token if a site key is configured and the script loaded.
+  // Returns undefined when dormant / unavailable so the submit still proceeds.
+  const getRecaptchaToken = async (): Promise<string | undefined> => {
+    if (!RECAPTCHA_SITE_KEY || typeof window === 'undefined' || !window.grecaptcha) return undefined
+    try {
+      return await new Promise<string | undefined>((resolve) => {
+        window.grecaptcha!.ready(() => {
+          window.grecaptcha!.execute(RECAPTCHA_SITE_KEY!, { action: 'submit' })
+            .then((token) => resolve(token))
+            .catch(() => resolve(undefined))
+        })
+      })
+    } catch { return undefined }
+  }
+
   const handleSubmit = async () => {
     setSubmitting(true); setSubmitError(null)
     try {
+      const recaptchaToken = await getRecaptchaToken()
       const res = await fetch(`/api/forms/${formId}/submit`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           responses: answers,
           session_id: sessionId,
           metadata: Object.keys(urlParams).length ? { url_params: urlParams } : {},
+          ...(recaptchaToken ? { recaptchaToken } : {}),
         }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setSubmitError(data.error || 'Failed to submit. Please try again.'); return }
+      // Successful submit — drop any saved progress.
+      clearDraft()
       // Redirect takes precedence over any ending / results screen.
       if (settings.redirectUrl) {
         window.location.href = /^https?:\/\//i.test(settings.redirectUrl) ? settings.redirectUrl : `https://${settings.redirectUrl}`
@@ -258,6 +389,34 @@ export default function FormPlayer({
     )
   }
 
+  // Closed screen — schedule window not open, or response cap reached.
+  // A respondent who already completed (above) still sees their thank-you screen.
+  if (availability && availability.open === false) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6" style={{ background: bg, fontFamily: ff }}>
+        <div className="w-full max-w-xl text-center">
+          <div
+            className="w-16 h-16 rounded-full mx-auto mb-6 flex items-center justify-center text-3xl"
+            style={{ backgroundColor: `${c.primary}1a` }}
+          >
+            🔒
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: c.text }}>
+            {availability.reason === 'not_open' ? 'Not open yet' : 'Form closed'}
+          </h1>
+          <p className="text-lg opacity-70" style={{ color: c.text }}>
+            {availability.message || 'This form is not currently accepting responses.'}
+          </p>
+          {!hideBranding && (
+            <p className="text-xs mt-10 opacity-40" style={{ color: c.text }}>
+              Powered by <span className="font-semibold">Stoneforms</span>
+            </p>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   // Welcome screen
   if (!started && welcomeEnabled) {
     return (
@@ -306,11 +465,41 @@ export default function FormPlayer({
             <span className="opacity-50">{questions.length}</span>
           </div>
 
+          {draftRestored && (
+            <div
+              className="flex items-center justify-between gap-3 mb-5 px-3 py-2 rounded-lg text-sm"
+              style={{ backgroundColor: `${c.primary}12`, color: c.text }}
+            >
+              <span className="opacity-80">We restored your progress on this form.</span>
+              <button
+                onClick={() => {
+                  clearDraft()
+                  setDraftRestored(false)
+                  setHistory([])
+                  setErrors({})
+                  setCurrentId(orderedIds[0] || '')
+                  // Keep hidden/URL-captured fields, drop respondent-entered answers.
+                  setAnswers((prev) => {
+                    const kept: Record<string, any> = {}
+                    questions.filter((q) => q.type === 'hidden').forEach((q) => {
+                      if (prev[q.id] !== undefined) kept[q.id] = prev[q.id]
+                    })
+                    return kept
+                  })
+                }}
+                className="text-xs font-medium underline opacity-70 hover:opacity-100"
+              >
+                Start over
+              </button>
+            </div>
+          )}
+
           <QuestionRenderer
             question={current}
             value={answers[current.id]}
             error={errors[current.id]}
             onChange={(v) => setAnswer(current.id, v)}
+            allAnswers={answers}
             theme={{ primaryColor: c.primary, backgroundColor: c.background, textColor: c.text }}
           />
 

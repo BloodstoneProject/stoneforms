@@ -23,6 +23,8 @@ import {
   BarChart3,
   MessageSquare,
   EyeOff,
+  ShieldCheck,
+  Calculator,
   Copy,
   Trash2
 } from 'lucide-react'
@@ -60,6 +62,8 @@ const questionTypeIcons: Record<QuestionType, any> = {
   picture_choice: List,
   signature: Type,
   address: Type,
+  consent: ShieldCheck,
+  calculator: Calculator,
   video: Video,
   audio: Mic,
 }

@@ -8,12 +8,16 @@ import { Star, Check } from 'lucide-react'
 import { FileUploadField } from '@/components/player/FileUploadField'
 import { SignatureField } from '@/components/player/SignatureField'
 import { AddressField } from '@/components/player/AddressField'
+import { ConsentField } from '@/components/player/ConsentField'
+import { CalculatorField } from '@/components/player/CalculatorField'
 
 interface QuestionRendererProps {
   question: Question
   value: any
   error?: string
   onChange: (value: any) => void
+  // All current answers, keyed by field id — needed by computed fields (calculator).
+  allAnswers?: Record<string, any>
   theme: {
     primaryColor: string
     backgroundColor: string
@@ -26,6 +30,7 @@ export function QuestionRenderer({
   value,
   error,
   onChange,
+  allAnswers = {},
   theme,
 }: QuestionRendererProps) {
   return (
@@ -53,7 +58,7 @@ export function QuestionRenderer({
 
       {/* Question Input */}
       <div>
-        {renderQuestionInput(question, value, onChange, theme)}
+        {renderQuestionInput(question, value, onChange, theme, allAnswers)}
       </div>
 
       {/* Error Message */}
@@ -73,7 +78,8 @@ function renderQuestionInput(
   question: Question,
   value: any,
   onChange: (value: any) => void,
-  theme: { primaryColor: string; backgroundColor: string; textColor: string }
+  theme: { primaryColor: string; backgroundColor: string; textColor: string },
+  allAnswers: Record<string, any>
 ) {
   switch (question.type) {
     case 'short_text':
@@ -475,6 +481,29 @@ function renderQuestionInput(
         <AddressField
           value={value && typeof value === 'object' ? value : undefined}
           onChange={onChange}
+          theme={{ primaryColor: theme.primaryColor, textColor: theme.textColor }}
+        />
+      )
+
+    case 'consent': {
+      const props = question.properties || {}
+      return (
+        <ConsentField
+          value={value === true}
+          onChange={onChange}
+          label={props.consentLabel || question.placeholder}
+          policyUrl={props.policyUrl}
+          policyText={props.policyText}
+          theme={{ primaryColor: theme.primaryColor, textColor: theme.textColor }}
+        />
+      )
+    }
+
+    case 'calculator':
+      return (
+        <CalculatorField
+          field={{ properties: question.properties, settings: question.properties }}
+          answers={allAnswers}
           theme={{ primaryColor: theme.primaryColor, textColor: theme.textColor }}
         />
       )

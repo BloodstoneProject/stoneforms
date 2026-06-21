@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { createServerSupabaseClient, createAdminClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { checkCanAcceptResponse } from '@/lib/plan-enforcement'
@@ -7,6 +7,10 @@ import { deliverWebhooks } from '@/lib/webhooks'
 import { rateLimit, getClientIp } from '@/lib/rate-limit'
 import { appendSubmissionToSheet } from '@/lib/google-sheets'
 import { computeScore, resolveOutcome, type QuizConfig } from '@/lib/quiz'
+import { getFormAvailability } from '@/lib/form-controls'
+import { verifyRecaptcha } from '@/lib/recaptcha'
+import { computeCalc } from '@/lib/calc'
+import { dispatchIntegrations } from '@/lib/integrations/dispatch'
 
 // POST /api/forms/[id]/submit - Submit form response
 export async function POST(
@@ -27,7 +31,17 @@ export async function POST(
 
   try {
     const body = await request.json()
-    const { responses, session_id, metadata } = body
+    const { responses, session_id, metadata, recaptchaToken } = body
+
+    // reCAPTCHA v3 (dormant unless RECAPTCHA_SECRET_KEY is set). Verify before
+    // doing any real work so spam is cheap to reject.
+    const recaptcha = await verifyRecaptcha(recaptchaToken, ip)
+    if (!recaptcha.ok) {
+      return NextResponse.json(
+        { error: 'Could not verify you are human. Please refresh and try again.' },
+        { status: 403 }
+      )
+    }
 
     // Sanitize incoming metadata (URL params / hidden tracking) — cap size.
     let safeMetadata: Record<string, any> = {}
@@ -51,6 +65,29 @@ export async function POST(
 
     if (form.status !== 'published') {
       return NextResponse.json({ error: 'Form is not published' }, { status: 400 })
+    }
+
+    // Re-check schedule window + response cap server-side (never trust the client).
+    {
+      const schedule = (form.settings as any)?.schedule
+      let responseCount = 0
+      if (schedule && typeof schedule.maxResponses === 'number' && schedule.maxResponses > 0) {
+        try {
+          const admin = createAdminClient()
+          const { count } = await admin
+            .from('submissions')
+            .select('id', { count: 'exact', head: true })
+            .eq('form_id', params.id)
+          responseCount = count ?? 0
+        } catch { responseCount = 0 }
+      }
+      const availability = getFormAvailability(form as any, responseCount)
+      if (!availability.open) {
+        return NextResponse.json(
+          { error: availability.message || 'This form is not currently accepting responses.' },
+          { status: 403 }
+        )
+      }
     }
 
     // Check plan limits
@@ -97,10 +134,30 @@ export async function POST(
 
     const requiredFields = fields?.filter(f => f.required) || []
     for (const field of requiredFields) {
+      // Consent: required means the box must be ticked (answer exactly true).
+      if (field.field_type === 'consent') {
+        if (responses?.[field.id] !== true) {
+          return NextResponse.json({
+            error: `${field.label} is required`
+          }, { status: 400 })
+        }
+        continue
+      }
+      // Calculator is a computed display — never block submission on it.
+      if (field.field_type === 'calculator') continue
       if (isEmpty(responses?.[field.id], field.field_type)) {
         return NextResponse.json({
           error: `${field.label} is required`
         }, { status: 400 })
+      }
+    }
+
+    // Recompute calculator fields server-side (don't trust the client) and write
+    // the authoritative value back into responses before storing.
+    const calcFields = (fields || []).filter((f) => f.field_type === 'calculator')
+    if (calcFields.length > 0 && responses && typeof responses === 'object') {
+      for (const f of calcFields) {
+        responses[f.id] = computeCalc({ settings: f.settings }, responses)
       }
     }
 
@@ -171,6 +228,20 @@ export async function POST(
       console.error('Webhook delivery error:', webhookError)
     }
 
+    // Dispatch to connected integrations (owned by the integrations agent).
+    // Best-effort; never fails the submit.
+    try {
+      await dispatchIntegrations({
+        formId: params.id,
+        submissionId: submission.id,
+        form,
+        fields: fields || [],
+        responses,
+      })
+    } catch (e) {
+      console.error('Integrations dispatch error:', e)
+    }
+
     // Owner notification email.
     try {
       const { data: notificationSettings } = await supabase
@@ -202,6 +273,7 @@ export async function POST(
         if (typeof respondentEmail === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(respondentEmail)) {
           sendAutoResponder({
             to: respondentEmail,
+            formId: params.id,
             formTitle: form.title,
             subject: autoResponder.subject,
             message: autoResponder.message,

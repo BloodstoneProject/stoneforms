@@ -28,6 +28,7 @@ export default function PublicFormPage({ params }: { params: Promise<{ id: strin
   const [form, setForm] = useState<PublicForm | null>(null)
   const [fields, setFields] = useState<DbField[]>([])
   const [hideBranding, setHideBranding] = useState(false)
+  const [availability, setAvailability] = useState<{ open: boolean; reason?: string; message?: string }>({ open: true })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -43,6 +44,7 @@ export default function PublicFormPage({ params }: { params: Promise<{ id: strin
           setForm(data.form)
           setFields(data.fields || [])
           setHideBranding(!!data.branding?.hide)
+          if (data.availability) setAvailability(data.availability)
         }
       })
       .catch(() => active && setError('Failed to load form.'))
@@ -84,6 +86,7 @@ export default function PublicFormPage({ params }: { params: Promise<{ id: strin
       theme={theme}
       logic={form.logic || []}
       hideBranding={hideBranding}
+      availability={availability as any}
     />
   )
 }

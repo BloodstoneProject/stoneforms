@@ -20,6 +20,8 @@ export type QuestionType =
   | 'picture_choice'
   | 'signature'
   | 'address'
+  | 'consent'
+  | 'calculator'
   | 'video'
   | 'audio';
 
