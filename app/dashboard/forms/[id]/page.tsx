@@ -855,6 +855,33 @@ function SortableField({ field, index, allFields, quizEnabled, expanded, onToggl
   const scoring: Record<string, number> = (settings.scoring as Record<string, number>) || {}
   const showOptionScoring = quizEnabled && (field.field_type === 'multiple_choice' || field.field_type === 'dropdown' || field.field_type === 'picture_choice')
 
+  // Page break is a structural divider, not an editable question — render a
+  // clear separator rather than the label/options/settings UI.
+  if (field.field_type === 'page_break') {
+    return (
+      <div ref={setNodeRef} style={style} className="flex items-center gap-3">
+        <button
+          {...attributes}
+          {...listeners}
+          className="text-stone-300 hover:text-stone-500 cursor-grab active:cursor-grabbing touch-none"
+          aria-label="Drag to reorder"
+        >
+          <GripVertical className="w-5 h-5" />
+        </button>
+        <div className="flex-1 flex items-center gap-3" aria-label="Page break">
+          <div className="flex-1 border-t-2 border-dashed border-stone-300" />
+          <span className="px-3 py-1 bg-stone-100 text-stone-600 text-xs font-medium rounded-full uppercase tracking-wide shrink-0">
+            Page break
+          </span>
+          <div className="flex-1 border-t-2 border-dashed border-stone-300" />
+        </div>
+        <button onClick={() => onDelete(field.id)} className="text-stone-400 hover:text-red-600" aria-label="Delete page break">
+          <Trash2 className="w-5 h-5" />
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div ref={setNodeRef} style={style} className="bg-white rounded-lg border border-stone-200 p-5">
       <div className="flex items-start gap-3">

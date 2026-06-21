@@ -365,6 +365,10 @@ function renderQuestionInput(
       // Informational block — no input. The label/description carry the message.
       return null
 
+    case 'page_break':
+      // Purely structural divider — splits the flow into pages, renders nothing.
+      return null
+
     case 'yes_no':
       return (
         <div className="grid grid-cols-2 gap-4">

@@ -25,6 +25,7 @@ export type FieldType =
   | 'address'
   | 'consent'
   | 'calculator'
+  | 'page_break'
 
 export interface FieldTypeMeta {
   value: FieldType
@@ -60,6 +61,7 @@ export const FIELD_TYPES: FieldTypeMeta[] = [
   { value: 'file_upload', label: 'File Upload', icon: '📎', hasOptions: false, valueKind: 'file', category: 'media' },
   { value: 'statement', label: 'Statement', icon: '💬', hasOptions: false, valueKind: 'none', category: 'display' },
   { value: 'hidden', label: 'Hidden Field', icon: '🕵️', hasOptions: false, valueKind: 'string', category: 'display' },
+  { value: 'page_break', label: 'Page Break', icon: '🔀', hasOptions: false, valueKind: 'none', category: 'display' },
 ]
 
 const BY_VALUE: Record<string, FieldTypeMeta> = Object.fromEntries(

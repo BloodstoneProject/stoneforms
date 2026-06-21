@@ -25,6 +25,7 @@ import {
   EyeOff,
   ShieldCheck,
   Calculator,
+  SeparatorHorizontal,
   Copy,
   Trash2
 } from 'lucide-react'
@@ -64,6 +65,7 @@ const questionTypeIcons: Record<QuestionType, any> = {
   address: Type,
   consent: ShieldCheck,
   calculator: Calculator,
+  page_break: SeparatorHorizontal,
   video: Video,
   audio: Mic,
 }

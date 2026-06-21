@@ -63,8 +63,27 @@ export default function FormPlayer({
     typeof window !== 'undefined' ? Object.fromEntries(new URLSearchParams(window.location.search)) : {}
   )
   // Hidden fields are prefilled from URL params and never shown in the flow.
-  const flowQuestions = questions.filter((q) => q.type !== 'hidden')
+  // Page breaks are structural — they split the flow into pages but are not
+  // themselves answerable questions, so they're dropped from the single-question
+  // flow exactly as they're dropped from each page's question list below.
+  const flowQuestions = questions.filter((q) => q.type !== 'hidden' && q.type !== 'page_break')
   const orderedIds = flowQuestions.map((q) => q.id)
+
+  // ---- Page mode: split the (hidden-filtered) flow on each page_break ----
+  // When there are NO page breaks, `hasPageBreaks` is false and the entire
+  // existing one-question-at-a-time + logic-engine path runs unchanged.
+  const visibleFlow = questions.filter((q) => q.type !== 'hidden')
+  const pages: Question[][] = (() => {
+    const out: Question[][] = [[]]
+    for (const q of visibleFlow) {
+      if (q.type === 'page_break') out.push([])
+      else out[out.length - 1].push(q)
+    }
+    // Drop any empty pages (e.g. leading/trailing/adjacent breaks) so navigation
+    // never lands on a page with nothing to show.
+    return out.filter((p) => p.length > 0)
+  })()
+  const hasPageBreaks = questions.some((q) => q.type === 'page_break') && pages.length > 1
   const draftKey = `stoneforms:draft:${formId}`
   // Field ids whose values we never persist to localStorage (sensitive / large).
   const nonPersistedIds = questions
@@ -89,6 +108,11 @@ export default function FormPlayer({
     return saved && orderedIds.includes(saved) ? saved : (orderedIds[0] || '')
   })
   const [history, setHistory] = useState<string[]>([])
+  // Current page (page mode only). Restored from a saved draft if valid.
+  const [pageIndex, setPageIndex] = useState<number>(() => {
+    const saved = (draft as any)?.pageIndex
+    return typeof saved === 'number' && saved >= 0 ? saved : 0
+  })
   const [draftRestored, setDraftRestored] = useState(false)
   const [answers, setAnswers] = useState<Record<string, any>>(() => {
     const init: Record<string, any> = {}
@@ -202,12 +226,12 @@ export default function FormPlayer({
         for (const [k, v] of Object.entries(answers)) {
           if (!nonPersistedIds.includes(k)) persistable[k] = v
         }
-        window.localStorage.setItem(draftKey, JSON.stringify({ answers: persistable, currentId }))
+        window.localStorage.setItem(draftKey, JSON.stringify({ answers: persistable, currentId, pageIndex }))
       } catch { /* storage full / disabled — ignore */ }
     }, 500)
     return () => { if (draftTimer.current) clearTimeout(draftTimer.current) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(answers), currentId, complete])
+  }, [JSON.stringify(answers), currentId, pageIndex, complete])
 
   const clearDraft = useCallback(() => {
     if (typeof window === 'undefined') return
@@ -219,50 +243,57 @@ export default function FormPlayer({
     if (errors[qid]) setErrors((p) => { const n = { ...p }; delete n[qid]; return n })
   }
 
-  const validate = (): boolean => {
-    if (!current) return true
-    if (current.type === 'statement') return true // informational, no answer
-    if (current.type === 'calculator') return true // computed display, never blocks
-    const a = answers[current.id]
+  // Pure validation for a single question — returns an error message, or null
+  // when the answer is acceptable. Shared by the single-question path and the
+  // paged path (which validates every question on a page).
+  const validateQuestion = (q: Question): string | null => {
+    if (q.type === 'statement' || q.type === 'page_break') return null // no answer
+    if (q.type === 'calculator') return null // computed display, never blocks
+    const a = answers[q.id]
     // Consent: required means the box must be ticked (answer exactly true).
-    if (current.type === 'consent') {
-      if (current.required && a !== true) {
-        setErrors({ [current.id]: 'Please tick this box to continue' }); return false
-      }
-      return true
+    if (q.type === 'consent') {
+      if (q.required && a !== true) return 'Please tick this box to continue'
+      return null
     }
     let empty = a === undefined || a === null || a === '' || (Array.isArray(a) && a.length === 0)
     // Address is empty unless line1, city and postal are all present.
-    if (current.type === 'address') {
+    if (q.type === 'address') {
       const addr = (a && typeof a === 'object') ? a : {}
       empty = !(addr.line1?.trim() && addr.city?.trim() && addr.postal?.trim())
     }
     // Signature is empty when the data-URL string is blank.
-    if (current.type === 'signature') {
+    if (q.type === 'signature') {
       empty = typeof a !== 'string' || a.trim() === ''
     }
-    if (current.required && empty) { setErrors({ [current.id]: 'This question is required' }); return false }
-    if (current.type === 'address' && !empty) {
+    if (q.required && empty) return 'This question is required'
+    if (q.type === 'address' && !empty) {
       const addr = (a && typeof a === 'object') ? a : {}
       if (!(addr.line1?.trim() && addr.city?.trim() && addr.postal?.trim())) {
-        setErrors({ [current.id]: 'Please fill in address line 1, city and postal code' }); return false
+        return 'Please fill in address line 1, city and postal code'
       }
     }
-    if (current.type === 'email' && a && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a)) {
-      setErrors({ [current.id]: 'Please enter a valid email address' }); return false
+    if (q.type === 'email' && a && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a)) {
+      return 'Please enter a valid email address'
     }
-    if (current.type === 'url' && a) {
-      try { new URL(/^https?:\/\//i.test(a) ? a : `https://${a}`) } catch { setErrors({ [current.id]: 'Please enter a valid URL' }); return false }
+    if (q.type === 'url' && a) {
+      try { new URL(/^https?:\/\//i.test(a) ? a : `https://${a}`) } catch { return 'Please enter a valid URL' }
     }
-    if (current.type === 'number' && a !== undefined && a !== '') {
-      const n = Number(a), v = current.validation || {}
-      if (v.min !== undefined && n < v.min) { setErrors({ [current.id]: `Minimum value is ${v.min}` }); return false }
-      if (v.max !== undefined && n > v.max) { setErrors({ [current.id]: `Maximum value is ${v.max}` }); return false }
+    if (q.type === 'number' && a !== undefined && a !== '') {
+      const n = Number(a), v = q.validation || {}
+      if (v.min !== undefined && n < v.min) return `Minimum value is ${v.min}`
+      if (v.max !== undefined && n > v.max) return `Maximum value is ${v.max}`
     }
-    if ((current.type === 'short_text' || current.type === 'long_text') && typeof a === 'string') {
-      const max = current.validation?.maxLength
-      if (max && a.length > max) { setErrors({ [current.id]: `Maximum length is ${max} characters` }); return false }
+    if ((q.type === 'short_text' || q.type === 'long_text') && typeof a === 'string') {
+      const max = q.validation?.maxLength
+      if (max && a.length > max) return `Maximum length is ${max} characters`
     }
+    return null
+  }
+
+  const validate = (): boolean => {
+    if (!current) return true
+    const msg = validateQuestion(current)
+    if (msg) { setErrors({ [current.id]: msg }); return false }
     return true
   }
 
@@ -290,17 +321,62 @@ export default function FormPlayer({
     }, 180)
   }
 
+  // ---- Page-mode navigation (linear; only used when hasPageBreaks) ----
+  // Clamp the working index so a stale restored pageIndex can't desync from the
+  // page the respondent actually sees.
+  const safePage = hasPageBreaks ? Math.min(Math.max(pageIndex, 0), pages.length - 1) : 0
+  const isLastPage = hasPageBreaks && safePage >= pages.length - 1
+  const validatePage = (): boolean => {
+    const page = pages[safePage] || []
+    const pageErrors: Record<string, string> = {}
+    for (const q of page) {
+      const msg = validateQuestion(q)
+      if (msg) pageErrors[q.id] = msg
+    }
+    if (Object.keys(pageErrors).length > 0) { setErrors(pageErrors); return false }
+    setErrors({})
+    return true
+  }
+  const goNextPage = () => {
+    if (!validatePage()) return
+    if (isLastPage) { handleSubmit(); return }
+    setAnim('out-up')
+    setTimeout(() => {
+      setPageIndex(Math.min(safePage + 1, pages.length - 1))
+      setErrors({})
+      setAnim('in')
+    }, 180)
+  }
+  const goPrevPage = () => {
+    if (safePage === 0) return
+    setAnim('out-down')
+    setTimeout(() => {
+      setPageIndex(Math.max(safePage - 1, 0))
+      setErrors({})
+      setAnim('in')
+    }, 180)
+  }
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // In page mode, a multi-question page may contain a textarea where Enter is
+      // a legitimate newline — don't hijack Enter inside textareas.
+      if (hasPageBreaks && e.target instanceof HTMLTextAreaElement) return
       if (e.key === 'Enter') {
-        if (e.shiftKey) { e.preventDefault(); started ? goPrev() : undefined }
-        else { e.preventDefault(); started ? goNext() : setStarted(true) }
+        if (e.shiftKey) {
+          e.preventDefault()
+          if (started) hasPageBreaks ? goPrevPage() : goPrev()
+        } else {
+          e.preventDefault()
+          if (!started) { setStarted(true); return }
+          hasPageBreaks ? goNextPage() : goNext()
+        }
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [started, index, answers])
+  }, [started, index, pageIndex, answers, hasPageBreaks])
 
   // Fetch a reCAPTCHA v3 token if a site key is configured and the script loaded.
   // Returns undefined when dormant / unavailable so the submit still proceeds.
@@ -437,6 +513,114 @@ export default function FormPlayer({
     )
   }
 
+  // ---- PAGE MODE — render every question of the current page together ----
+  // Gated entirely behind hasPageBreaks so forms with no page breaks never reach
+  // this branch and keep the byte-for-byte original single-question behaviour.
+  if (hasPageBreaks) {
+    // Clamp against a stale restored pageIndex (form structure may have changed).
+    const safePageIndex = Math.min(Math.max(pageIndex, 0), pages.length - 1)
+    const page = pages[safePageIndex] || []
+    const onLastPage = safePageIndex >= pages.length - 1
+    const pageProgress = pages.length > 0 ? Math.round(((safePageIndex + 1) / pages.length) * 100) : 0
+    return (
+      <div className="min-h-screen flex flex-col" style={{ background: bg, fontFamily: ff }}>
+        {showProgressBar && (
+          <div className="fixed top-0 left-0 right-0 h-1.5 z-50" style={{ backgroundColor: `${c.text}14` }}>
+            <div className="h-full transition-all duration-300" style={{ width: `${pageProgress}%`, backgroundColor: c.primary }} />
+          </div>
+        )}
+
+        <div className="flex-1 flex items-center justify-center px-6 py-16">
+          <div
+            key={safePageIndex}
+            className="w-full max-w-2xl"
+            style={{ animation: `${anim === 'in' ? 'sf-in' : anim === 'out-up' ? 'sf-out-up' : 'sf-out-down'} 0.22s ease` }}
+          >
+            <div className="flex items-center gap-2 mb-5 text-sm font-medium" style={{ color: c.primary }}>
+              <span>Page {safePageIndex + 1}</span>
+              <span className="opacity-50">of {pages.length}</span>
+            </div>
+
+            {draftRestored && (
+              <div
+                className="flex items-center justify-between gap-3 mb-5 px-3 py-2 rounded-lg text-sm"
+                style={{ backgroundColor: `${c.primary}12`, color: c.text }}
+              >
+                <span className="opacity-80">We restored your progress on this form.</span>
+                <button
+                  onClick={() => {
+                    clearDraft()
+                    setDraftRestored(false)
+                    setHistory([])
+                    setErrors({})
+                    setCurrentId(orderedIds[0] || '')
+                    setPageIndex(0)
+                    setAnswers((prev) => {
+                      const kept: Record<string, any> = {}
+                      questions.filter((q) => q.type === 'hidden').forEach((q) => {
+                        if (prev[q.id] !== undefined) kept[q.id] = prev[q.id]
+                      })
+                      return kept
+                    })
+                  }}
+                  className="text-xs font-medium underline opacity-70 hover:opacity-100"
+                >
+                  Start over
+                </button>
+              </div>
+            )}
+
+            <div className="space-y-12">
+              {page.map((q) => (
+                <QuestionRenderer
+                  key={q.id}
+                  question={q}
+                  value={answers[q.id]}
+                  error={errors[q.id]}
+                  onChange={(v) => setAnswer(q.id, v)}
+                  allAnswers={answers}
+                  theme={{ primaryColor: c.primary, backgroundColor: c.background, textColor: c.text }}
+                />
+              ))}
+            </div>
+
+            {submitError && (
+              <div className="mt-5 p-3 rounded-lg text-sm" style={{ backgroundColor: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca' }}>
+                {submitError}
+              </div>
+            )}
+
+            <div className="flex items-center gap-4 mt-9">
+              {primaryBtn(
+                submitting ? 'Submitting…' : onLastPage ? <>Submit <Check className="w-5 h-5" /></> : <>Next <ArrowRight className="w-5 h-5" /></>,
+                goNextPage, submitting
+              )}
+              {safePageIndex > 0 && (
+                <button onClick={goPrevPage} className="inline-flex items-center gap-1.5 px-4 py-2 text-sm opacity-60 hover:opacity-100 transition-opacity" style={{ color: c.text }}>
+                  <ArrowLeft className="w-4 h-4" /> Back
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {!hideBranding && (
+          <div className="text-center pb-6">
+            <p className="text-xs opacity-40" style={{ color: c.text }}>
+              Powered by <span className="font-semibold">Stoneforms</span>
+            </p>
+          </div>
+        )}
+
+        <style jsx global>{`
+          @keyframes sf-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+          @keyframes sf-out-up { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-16px); } }
+          @keyframes sf-out-down { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(16px); } }
+        `}</style>
+      </div>
+    )
+  }
+
   if (!current) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6" style={{ background: bg, fontFamily: ff }}>
@@ -478,6 +662,7 @@ export default function FormPlayer({
                   setHistory([])
                   setErrors({})
                   setCurrentId(orderedIds[0] || '')
+                  setPageIndex(0)
                   // Keep hidden/URL-captured fields, drop respondent-entered answers.
                   setAnswers((prev) => {
                     const kept: Record<string, any> = {}
