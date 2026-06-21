@@ -1,11 +1,12 @@
 'use client'
+import { useParams } from 'next/navigation'
 
 import { use } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Copy, Eye, Download, Star } from 'lucide-react'
 
 export default function TemplateDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+  const { id } = (useParams() as any)
   
   const templates = [
     { id: '1', name: 'Contact Form', category: 'lead-generation', description: 'Simple contact form for your website', uses: 5420, fields: 4 },

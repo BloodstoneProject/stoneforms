@@ -1,4 +1,5 @@
 'use client'
+import { useParams } from 'next/navigation'
 
 import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -20,7 +21,7 @@ interface Theme {
 }
 
 export default function FormThemesPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+  const { id } = (useParams() as any)
   const [form, setForm] = useState<{ id: string; title: string; theme?: any } | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)

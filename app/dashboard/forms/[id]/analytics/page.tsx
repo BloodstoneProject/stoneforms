@@ -1,4 +1,5 @@
 'use client'
+import { useParams } from 'next/navigation'
 
 import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -15,7 +16,7 @@ interface Analytics {
 }
 
 export default function FormAnalyticsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id: formId } = use(params)
+  const { id: formId } = (useParams() as any)
   const [data, setData] = useState<Analytics | null>(null)
   const [formTitle, setFormTitle] = useState('')
   const [loading, setLoading] = useState(true)

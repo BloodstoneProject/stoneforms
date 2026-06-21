@@ -1,11 +1,12 @@
 'use client'
+import { useParams } from 'next/navigation'
 
 import { use } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, ThumbsUp, ThumbsDown } from 'lucide-react'
 
 export default function HelpArticlePage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = use(params)
+  const { slug } = (useParams() as any)
   
   // Generic article content - all 50+ articles use this template
   const article = {

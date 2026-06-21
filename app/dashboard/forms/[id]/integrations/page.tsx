@@ -1,4 +1,5 @@
 'use client'
+import { useParams } from 'next/navigation'
 
 import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -16,7 +17,7 @@ interface WebhookRow {
 }
 
 export default function IntegrationsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id: formId } = use(params)
+  const { id: formId } = (useParams() as any)
 
   const [title, setTitle] = useState('')
   const [settings, setSettings] = useState<any>({})

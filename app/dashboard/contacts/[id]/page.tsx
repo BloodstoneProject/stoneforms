@@ -1,4 +1,5 @@
 'use client'
+import { useParams } from 'next/navigation'
 
 import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -28,7 +29,7 @@ interface Deal {
 }
 
 export default function ContactDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+  const { id } = (useParams() as any)
   const router = useRouter()
   const [contact, setContact] = useState<Contact | null>(null)
   const [deals, setDeals] = useState<Deal[]>([])

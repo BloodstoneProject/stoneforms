@@ -1,4 +1,5 @@
 'use client'
+import { useParams } from 'next/navigation'
 
 import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -11,7 +12,7 @@ interface NotificationSettings {
 }
 
 export default function NotificationSettingsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id: formId } = use(params)
+  const { id: formId } = (useParams() as any)
   
   const [settings, setSettings] = useState<NotificationSettings>({
     notify_on_submission: true,

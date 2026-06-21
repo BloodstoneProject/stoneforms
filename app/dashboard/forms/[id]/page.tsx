@@ -1,4 +1,5 @@
 'use client'
+import { useParams } from 'next/navigation'
 
 import { use, useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
@@ -50,7 +51,7 @@ interface Field {
 type SaveState = 'saved' | 'saving' | 'unsaved'
 
 export default function FormBuilderPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id: formId } = use(params)
+  const { id: formId } = (useParams() as any)
   const router = useRouter()
 
   const [form, setForm] = useState<Form | null>(null)

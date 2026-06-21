@@ -1,4 +1,5 @@
 'use client'
+import { useParams } from 'next/navigation'
 
 import { use, useState, useEffect } from 'react'
 import { Loader2 } from 'lucide-react'
@@ -18,7 +19,7 @@ interface PublicForm {
 }
 
 export default function PublicFormPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id: formId } = use(params)
+  const { id: formId } = (useParams() as any)
 
   const [form, setForm] = useState<PublicForm | null>(null)
   const [fields, setFields] = useState<DbField[]>([])

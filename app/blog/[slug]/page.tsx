@@ -1,11 +1,12 @@
 'use client'
+import { useParams } from 'next/navigation'
 
 import { use } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Calendar, User, Clock } from 'lucide-react'
 
 export default function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = use(params)
+  const { slug } = (useParams() as any)
   
   const posts = [
     {
