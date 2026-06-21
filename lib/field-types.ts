@@ -14,8 +14,10 @@ export type FieldType =
   | 'dropdown'
   | 'yes_no'
   | 'rating'
+  | 'opinion_scale'
   | 'date'
   | 'file_upload'
+  | 'statement'
 
 export interface FieldTypeMeta {
   value: FieldType
@@ -24,8 +26,8 @@ export interface FieldTypeMeta {
   // true when the field needs a list of choices (options[])
   hasOptions: boolean
   // value shape produced by the player for this field
-  valueKind: 'string' | 'number' | 'boolean' | 'string[]' | 'file'
-  category: 'text' | 'choice' | 'number' | 'date' | 'media'
+  valueKind: 'string' | 'number' | 'boolean' | 'string[]' | 'file' | 'none'
+  category: 'text' | 'choice' | 'number' | 'date' | 'media' | 'display'
 }
 
 export const FIELD_TYPES: FieldTypeMeta[] = [
@@ -40,8 +42,10 @@ export const FIELD_TYPES: FieldTypeMeta[] = [
   { value: 'dropdown', label: 'Dropdown', icon: '▼', hasOptions: true, valueKind: 'string', category: 'choice' },
   { value: 'yes_no', label: 'Yes / No', icon: '🔘', hasOptions: false, valueKind: 'boolean', category: 'choice' },
   { value: 'rating', label: 'Rating', icon: '⭐', hasOptions: false, valueKind: 'number', category: 'number' },
+  { value: 'opinion_scale', label: 'Opinion Scale', icon: '📊', hasOptions: false, valueKind: 'number', category: 'number' },
   { value: 'date', label: 'Date', icon: '📅', hasOptions: false, valueKind: 'string', category: 'date' },
   { value: 'file_upload', label: 'File Upload', icon: '📎', hasOptions: false, valueKind: 'file', category: 'media' },
+  { value: 'statement', label: 'Statement', icon: '💬', hasOptions: false, valueKind: 'none', category: 'display' },
 ]
 
 const BY_VALUE: Record<string, FieldTypeMeta> = Object.fromEntries(

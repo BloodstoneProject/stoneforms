@@ -20,6 +20,8 @@ import {
   Phone,
   Link as LinkIcon,
   ListChecks,
+  BarChart3,
+  MessageSquare,
   Copy,
   Trash2
 } from 'lucide-react'
@@ -47,8 +49,10 @@ const questionTypeIcons: Record<QuestionType, any> = {
   checkboxes: ListChecks,
   dropdown: ChevronDown,
   rating: Star,
+  opinion_scale: BarChart3,
   yes_no: CheckSquare,
   date: Calendar,
+  statement: MessageSquare,
   file_upload: FileUp,
   video: Video,
   audio: Mic,

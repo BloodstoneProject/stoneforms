@@ -84,6 +84,7 @@ export default function FormPlayer({
 
   const validate = (): boolean => {
     if (!current) return true
+    if (current.type === 'statement') return true // informational, no answer
     const a = answers[current.id]
     const empty = a === undefined || a === null || a === '' || (Array.isArray(a) && a.length === 0)
     if (current.required && empty) { setErrors({ [current.id]: 'This question is required' }); return false }

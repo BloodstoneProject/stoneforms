@@ -274,7 +274,7 @@ function renderQuestionInput(
                   : { borderColor: '#e8e4db' }
                 }
               >
-                <Star 
+                <Star
                   className={cn('w-8 h-8', isSelected && 'fill-current')}
                   style={{ color: isSelected ? theme.primaryColor : '#3d5948' }}
                 />
@@ -283,6 +283,41 @@ function renderQuestionInput(
           })}
         </div>
       )
+
+    case 'opinion_scale':
+      return (
+        <div>
+          <div className="flex flex-wrap gap-2">
+            {Array.from({ length: 11 }, (_, n) => {
+              const isSelected = value === n
+              return (
+                <button
+                  key={n}
+                  onClick={() => onChange(n)}
+                  className={cn(
+                    'w-12 h-12 rounded-lg border-2 flex items-center justify-center font-semibold transition-all hover:scale-105',
+                    isSelected && 'ring-2'
+                  )}
+                  style={isSelected
+                    ? { borderColor: theme.primaryColor, backgroundColor: theme.primaryColor, color: '#fff' }
+                    : { borderColor: `${theme.textColor}33`, color: theme.textColor }
+                  }
+                >
+                  {n}
+                </button>
+              )
+            })}
+          </div>
+          <div className="flex justify-between mt-2 text-sm opacity-60" style={{ color: theme.textColor }}>
+            <span>Not likely</span>
+            <span>Very likely</span>
+          </div>
+        </div>
+      )
+
+    case 'statement':
+      // Informational block — no input. The label/description carry the message.
+      return null
 
     case 'yes_no':
       return (

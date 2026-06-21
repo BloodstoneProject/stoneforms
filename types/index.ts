@@ -10,9 +10,11 @@ export type QuestionType =
   | 'checkboxes'
   | 'dropdown'
   | 'rating'
+  | 'opinion_scale'
   | 'yes_no'
   | 'date'
   | 'file_upload'
+  | 'statement'
   | 'video'
   | 'audio';
 
