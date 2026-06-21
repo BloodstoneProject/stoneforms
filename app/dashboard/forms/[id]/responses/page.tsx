@@ -8,6 +8,7 @@ import { ArrowLeft, Download, Upload, Trash2, Eye, Search, Calendar, TrendingUp 
 interface Response {
   id: string
   answers: Record<string, any>
+  metadata?: Record<string, any> | null
   created_at: string
 }
 
@@ -17,17 +18,37 @@ interface Field {
   field_type: string
 }
 
-// Safely turn any answer value (string, number, boolean, string[]) into display text.
-function formatAnswer(value: any): string {
+// Render a composite address object as a readable comma string.
+function formatAddress(value: any): string {
+  if (!value || typeof value !== 'object') return ''
+  const parts = [value.line1, value.line2, value.city, value.state, value.postal, value.country]
+  return parts.filter((p) => typeof p === 'string' && p.trim()).join(', ')
+}
+
+// Safely turn any answer value (string, number, boolean, string[], address
+// object, signature data-URL) into display text.
+function formatAnswer(value: any, fieldType?: string): string {
   if (value === null || value === undefined) return ''
+  if (fieldType === 'address' || (value && typeof value === 'object' && !Array.isArray(value) && ('line1' in value || 'city' in value || 'postal' in value))) {
+    return formatAddress(value)
+  }
+  // Signature: never dump the giant data URL.
+  if (fieldType === 'signature' || (typeof value === 'string' && value.startsWith('data:image'))) {
+    return typeof value === 'string' && value.trim() ? '[signature]' : ''
+  }
   if (Array.isArray(value)) return value.join(', ')
   if (typeof value === 'boolean') return value ? 'Yes' : 'No'
   return String(value)
 }
 
 // Escape a value for safe CSV output (RFC 4180): wrap in quotes, double inner quotes.
-function csvCell(value: any): string {
-  return `"${formatAnswer(value).replace(/"/g, '""')}"`
+function csvCell(value: any, fieldType?: string): string {
+  return `"${formatAnswer(value, fieldType).replace(/"/g, '""')}"`
+}
+
+// Escape an already-formatted plain string for CSV.
+function csvText(text: string): string {
+  return `"${(text ?? '').replace(/"/g, '""')}"`
 }
 
 export default function ResponsesPage({ params }: { params: Promise<{ id: string }> }) {
@@ -67,19 +88,29 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
       return
     }
 
-    // Create CSV headers
-    const headers = ['Submitted At', ...fields.map(f => f.label)]
+    const hasQuiz = responses.some(r => r.metadata?.quiz)
 
-    // Create CSV rows (every cell escaped; arrays/booleans/numbers handled)
-    const rows = responses.map(response => [
-      new Date(response.created_at).toLocaleString(),
-      ...fields.map(field => response.answers[field.id]),
-    ])
+    // Create CSV headers
+    const headers = ['Submitted At', ...fields.map(f => f.label), ...(hasQuiz ? ['Score'] : [])]
+
+    // Build each row as already-CSV-escaped cells (handles arrays/booleans/
+    // numbers/address objects/signatures, plus quiz score).
+    const rowCells = responses.map(response => {
+      const cells = [
+        csvText(new Date(response.created_at).toLocaleString()),
+        ...fields.map(field => csvCell(response.answers[field.id], field.field_type)),
+      ]
+      if (hasQuiz) {
+        const q = response.metadata?.quiz
+        cells.push(csvText(q ? `${q.total}${q.max ? ` / ${q.max}` : ''}` : ''))
+      }
+      return cells
+    })
 
     // Combine into CSV string
     const csvContent = [
-      headers.map(csvCell).join(','),
-      ...rows.map(row => row.map(csvCell).join(',')),
+      headers.map(csvText).join(','),
+      ...rowCells.map(cells => cells.join(',')),
     ].join('\r\n')
 
     // Download
@@ -176,11 +207,13 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
     }
   }
 
+  const hasQuizScores = responses.some(r => r.metadata?.quiz)
+
   const filteredResponses = responses.filter(response => {
     if (!searchTerm) return true
     
     return fields.some(field => {
-      const value = formatAnswer(response.answers[field.id])
+      const value = formatAnswer(response.answers[field.id], field.field_type)
       return value.toLowerCase().includes(searchTerm.toLowerCase())
     })
   })
@@ -344,6 +377,9 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
                         {field.label}
                       </th>
                     ))}
+                    {hasQuizScores && (
+                      <th className="text-left px-6 py-4 text-sm font-medium text-stone-900">Score</th>
+                    )}
                     <th className="text-right px-6 py-4 text-sm font-medium text-stone-900">Actions</th>
                   </tr>
                 </thead>
@@ -354,7 +390,7 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
                         {new Date(response.created_at).toLocaleString()}
                       </td>
                       {fields.slice(0, 3).map(field => {
-                        const text = formatAnswer(response.answers[field.id])
+                        const text = formatAnswer(response.answers[field.id], field.field_type)
                         return (
                           <td key={field.id} className="px-6 py-4 text-sm text-stone-900">
                             {text ? text.slice(0, 50) : '-'}
@@ -362,6 +398,13 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
                           </td>
                         )
                       })}
+                      {hasQuizScores && (
+                        <td className="px-6 py-4 text-sm font-medium text-stone-900">
+                          {response.metadata?.quiz
+                            ? `${response.metadata.quiz.total}${response.metadata.quiz.max ? ` / ${response.metadata.quiz.max}` : ''}`
+                            : '-'}
+                        </td>
+                      )}
                       <td className="px-6 py-4 text-right">
                         <button
                           onClick={() => setSelectedResponse(response)}
@@ -398,15 +441,35 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
             <p className="text-sm text-stone-600 mb-6">
               Submitted: {new Date(selectedResponse.created_at).toLocaleString()}
             </p>
+            {selectedResponse.metadata?.quiz && (
+              <div className="mb-6 p-4 rounded-lg bg-blue-50 border border-blue-200">
+                <p className="text-sm text-blue-700 font-medium">Quiz score</p>
+                <p className="text-2xl font-bold text-blue-900">
+                  {selectedResponse.metadata.quiz.total}
+                  {selectedResponse.metadata.quiz.max ? ` / ${selectedResponse.metadata.quiz.max}` : ''}
+                </p>
+              </div>
+            )}
             <div className="space-y-6">
-              {fields.map(field => (
-                <div key={field.id}>
-                  <label className="block text-sm font-medium text-stone-900 mb-2">{field.label}</label>
-                  <div className="p-4 bg-stone-50 rounded-lg text-stone-900 whitespace-pre-wrap break-words">
-                    {formatAnswer(selectedResponse.answers[field.id]) || '(No answer)'}
+              {fields.map(field => {
+                const raw = selectedResponse.answers[field.id]
+                const isSignature = field.field_type === 'signature' || (typeof raw === 'string' && raw.startsWith('data:image'))
+                return (
+                  <div key={field.id}>
+                    <label className="block text-sm font-medium text-stone-900 mb-2">{field.label}</label>
+                    {isSignature && typeof raw === 'string' && raw.trim() ? (
+                      <div className="p-4 bg-stone-50 rounded-lg">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={raw} alt="Signature" className="max-h-32 bg-white border border-stone-200 rounded" />
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-stone-50 rounded-lg text-stone-900 whitespace-pre-wrap break-words">
+                        {formatAnswer(raw, field.field_type) || '(No answer)'}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         </div>

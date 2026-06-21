@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { FileText, Eye, BarChart3, Plus, ArrowRight, Loader2, Inbox } from 'lucide-react'
+import { GettingStarted } from '@/components/dashboard/GettingStarted'
+import type { PlanId } from '@/lib/plan-limits'
 
 interface FormRow {
   id: string
@@ -20,6 +22,7 @@ export default function DashboardHome() {
   const [forms, setForms] = useState<FormRow[]>([])
   const [usage, setUsage] = useState<Usage | null>(null)
   const [planName, setPlanName] = useState('Free')
+  const [planId, setPlanId] = useState<PlanId>('free')
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
 
@@ -31,6 +34,7 @@ export default function DashboardHome() {
       if (Array.isArray(formsData.forms)) setForms(formsData.forms)
       if (planData.usage) setUsage(planData.usage)
       if (planData.plan?.name) setPlanName(planData.plan.name)
+      if (planData.plan?.id) setPlanId(planData.plan.id as PlanId)
       setLoading(false)
     })
   }, [])
@@ -65,6 +69,29 @@ export default function DashboardHome() {
     return (
       <div className="min-h-screen bg-stone-50 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
+      </div>
+    )
+  }
+
+  // First-run / empty state: a friendly getting-started experience until the
+  // user has created their first form. Afterwards we show the normal dashboard.
+  if (forms.length === 0) {
+    return (
+      <div className="min-h-screen bg-stone-50">
+        <div className="max-w-4xl mx-auto px-6 py-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-stone-900">Dashboard</h1>
+            <p className="text-stone-600 mt-1">You're on the {planName} plan.</p>
+          </div>
+          <GettingStarted
+            hasForm={false}
+            hasPublished={false}
+            hasResponse={(usage?.responses.current ?? 0) > 0}
+            plan={planId}
+            onCreateForm={createForm}
+            creating={creating}
+          />
+        </div>
       </div>
     )
   }

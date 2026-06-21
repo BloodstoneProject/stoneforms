@@ -21,6 +21,20 @@ import ShareModal from '@/components/forms/share-modal'
 import FieldOptionsEditor from '@/components/forms/field-options-editor'
 import { FIELD_TYPES, fieldHasOptions, getFieldMeta } from '@/lib/field-types'
 
+interface QuizOutcome {
+  id: string
+  minScore: number
+  maxScore: number
+  title: string
+  message: string
+}
+
+interface QuizConfig {
+  enabled?: boolean
+  showResults?: boolean
+  outcomes?: QuizOutcome[]
+}
+
 interface FormSettings {
   showProgressBar?: boolean
   allowMultipleSubmissions?: boolean
@@ -29,6 +43,7 @@ interface FormSettings {
   customEndingMessage?: string
   welcome?: { enabled?: boolean; title?: string; description?: string; buttonText?: string }
   ending?: { title?: string; message?: string }
+  quiz?: QuizConfig
 }
 
 interface Form {
@@ -36,6 +51,7 @@ interface Form {
   title: string
   description: string
   status: string
+  slug?: string | null
   settings?: FormSettings
 }
 
@@ -64,6 +80,8 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
   const [expandedSettingsId, setExpandedSettingsId] = useState<string | null>(null)
   const [formSettingsOpen, setFormSettingsOpen] = useState(false)
   const [saveState, setSaveState] = useState<SaveState>('saved')
+  const [slugInput, setSlugInput] = useState('')
+  const [slugStatus, setSlugStatus] = useState<{ kind: 'idle' | 'saving' | 'saved' | 'error'; message?: string }>({ kind: 'idle' })
 
   // refs to drive debounced autosave without re-running on first render
   const metaTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -87,7 +105,10 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
         return
       }
       const formData = await formRes.json()
-      if (formData.form) setForm(formData.form)
+      if (formData.form) {
+        setForm(formData.form)
+        setSlugInput(formData.form.slug || '')
+      }
 
       const fieldsRes = await fetch(`/api/forms/${formId}/fields`)
       const fieldsData = await fieldsRes.json()
@@ -136,6 +157,65 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
       ...prev,
       settings: { ...(prev.settings || {}), [group]: { ...((prev.settings as any)?.[group] || {}), [key]: value } },
     } : prev)
+  }
+
+  // ---- Quiz settings helpers ----
+  const updateQuizSetting = (key: keyof QuizConfig, value: any) => {
+    setForm((prev) => prev ? {
+      ...prev,
+      settings: { ...(prev.settings || {}), quiz: { ...((prev.settings as any)?.quiz || {}), [key]: value } },
+    } : prev)
+  }
+
+  const updateOutcomes = (outcomes: QuizOutcome[]) => updateQuizSetting('outcomes', outcomes)
+
+  const addOutcome = () => {
+    const existing = form?.settings?.quiz?.outcomes || []
+    const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `o_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`
+    updateOutcomes([
+      ...existing,
+      { id, minScore: 0, maxScore: 0, title: '', message: '' },
+    ])
+  }
+
+  const updateOutcome = (id: string, patch: Partial<QuizOutcome>) => {
+    const existing = form?.settings?.quiz?.outcomes || []
+    updateOutcomes(existing.map((o) => (o.id === id ? { ...o, ...patch } : o)))
+  }
+
+  const removeOutcome = (id: string) => {
+    const existing = form?.settings?.quiz?.outcomes || []
+    updateOutcomes(existing.filter((o) => o.id !== id))
+  }
+
+  // ---- Custom slug (separate PATCH so we can surface taken/invalid errors) ----
+  const saveSlug = async () => {
+    if (!form) return
+    const value = slugInput.trim().toLowerCase()
+    if (value && !/^[a-z0-9-]{3,40}$/.test(value)) {
+      setSlugStatus({ kind: 'error', message: 'Use 3-40 lowercase letters, numbers or hyphens.' })
+      return
+    }
+    setSlugStatus({ kind: 'saving' })
+    try {
+      const res = await fetch(`/api/forms/${formId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: value || null }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setSlugStatus({ kind: 'error', message: data.error || 'Could not save link.' })
+        return
+      }
+      setForm((prev) => (prev ? { ...prev, slug: data.form?.slug ?? (value || null) } : prev))
+      setSlugInput(data.form?.slug || '')
+      setSlugStatus({ kind: 'saved' })
+    } catch {
+      setSlugStatus({ kind: 'error', message: 'Could not save link.' })
+    }
   }
 
   const addField = async (fieldType: string) => {
@@ -481,6 +561,87 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                       placeholder="https://example.com/thank-you"
                     />
                   </div>
+
+                  {/* Custom link / slug */}
+                  <div className="pt-3 border-t border-stone-100">
+                    <label className="block text-xs font-medium text-stone-700 mb-1">Custom link / slug (optional)</label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-stone-400 shrink-0">/f/</span>
+                      <input
+                        type="text"
+                        value={slugInput}
+                        onChange={(e) => { setSlugInput(e.target.value.toLowerCase()); setSlugStatus({ kind: 'idle' }) }}
+                        onBlur={saveSlug}
+                        className="flex-1 text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900 font-mono"
+                        placeholder="my-form"
+                      />
+                      <button
+                        type="button"
+                        onClick={saveSlug}
+                        disabled={slugStatus.kind === 'saving'}
+                        className="px-3 py-2 text-sm border border-stone-300 rounded hover:bg-stone-50 disabled:opacity-50 shrink-0"
+                      >
+                        {slugStatus.kind === 'saving' ? 'Saving…' : 'Save'}
+                      </button>
+                    </div>
+                    {slugStatus.kind === 'error' && <p className="text-xs text-red-600 mt-1">{slugStatus.message}</p>}
+                    {slugStatus.kind === 'saved' && <p className="text-xs text-green-600 mt-1">Custom link saved.</p>}
+                    <p className="text-xs text-stone-400 mt-1">3-40 chars: lowercase letters, numbers, hyphens. Leave blank to use the default link.</p>
+                  </div>
+
+                  {/* Quiz mode */}
+                  <div className="pt-3 border-t border-stone-100">
+                    <label className="flex items-center gap-3 cursor-pointer mb-2">
+                      <input
+                        type="checkbox"
+                        checked={!!form.settings?.quiz?.enabled}
+                        onChange={(e) => updateQuizSetting('enabled', e.target.checked)}
+                        className="rounded"
+                      />
+                      <span className="text-sm font-medium text-stone-700">Quiz mode (score answers)</span>
+                    </label>
+                    {form.settings?.quiz?.enabled && (
+                      <div className="space-y-3 pl-6">
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={form.settings?.quiz?.showResults !== false}
+                            onChange={(e) => updateQuizSetting('showResults', e.target.checked)}
+                            className="rounded"
+                          />
+                          <span className="text-sm text-stone-700">Show results screen to respondents</span>
+                        </label>
+
+                        <div>
+                          <p className="text-xs font-medium text-stone-700 mb-2">Outcomes (score ranges)</p>
+                          <div className="space-y-3">
+                            {(form.settings?.quiz?.outcomes || []).map((o) => (
+                              <div key={o.id} className="rounded-lg border border-stone-200 p-3 space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <input type="number" value={o.minScore} onChange={(e) => updateOutcome(o.id, { minScore: Number(e.target.value) })}
+                                    className="w-20 text-sm border border-stone-300 rounded px-2 py-1.5 focus:outline-none focus:border-stone-900" placeholder="Min" />
+                                  <span className="text-stone-400 text-sm">to</span>
+                                  <input type="number" value={o.maxScore} onChange={(e) => updateOutcome(o.id, { maxScore: Number(e.target.value) })}
+                                    className="w-20 text-sm border border-stone-300 rounded px-2 py-1.5 focus:outline-none focus:border-stone-900" placeholder="Max" />
+                                  <button type="button" onClick={() => removeOutcome(o.id)} className="ml-auto text-red-600 hover:text-red-700" aria-label="Remove outcome">
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                                <input type="text" value={o.title} onChange={(e) => updateOutcome(o.id, { title: e.target.value })}
+                                  className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900" placeholder="Outcome title (e.g. Great job!)" />
+                                <textarea value={o.message} onChange={(e) => updateOutcome(o.id, { message: e.target.value })} rows={2}
+                                  className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900 resize-none" placeholder="Message shown for this score range" />
+                              </div>
+                            ))}
+                          </div>
+                          <button type="button" onClick={addOutcome} className="mt-2 flex items-center gap-1.5 text-sm text-stone-600 hover:text-stone-900">
+                            <Plus className="w-4 h-4" /> Add outcome
+                          </button>
+                          <p className="text-xs text-stone-400 mt-2">Set per-question points in each question's Settings panel.</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -501,6 +662,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                         key={field.id}
                         field={field}
                         index={index}
+                        quizEnabled={!!form.settings?.quiz?.enabled}
                         expanded={expandedSettingsId === field.id}
                         onToggleExpand={() =>
                           setExpandedSettingsId(expandedSettingsId === field.id ? null : field.id)
@@ -534,6 +696,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
       <ShareModal
         formId={formId}
         formTitle={form.title}
+        slug={form.slug || undefined}
         isOpen={shareModalOpen}
         onClose={() => setShareModalOpen(false)}
       />
@@ -554,6 +717,7 @@ function SaveIndicator({ state }: { state: SaveState }) {
 interface SortableFieldProps {
   field: Field
   index: number
+  quizEnabled: boolean
   expanded: boolean
   onToggleExpand: () => void
   onUpdate: (id: string, updates: Partial<Field>) => void
@@ -561,13 +725,17 @@ interface SortableFieldProps {
   onDelete: (id: string) => void
 }
 
-function SortableField({ field, index, expanded, onToggleExpand, onUpdate, onUpdateSetting, onDelete }: SortableFieldProps) {
+const SCORABLE_NUMERIC = new Set(['rating', 'opinion_scale', 'number'])
+
+function SortableField({ field, index, quizEnabled, expanded, onToggleExpand, onUpdate, onUpdateSetting, onDelete }: SortableFieldProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: field.id })
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
   const meta = getFieldMeta(field.field_type)
   const settings = field.settings || {}
   const isNumeric = meta?.category === 'number'
   const isText = field.field_type === 'short_text' || field.field_type === 'long_text'
+  const scoring: Record<string, number> = (settings.scoring as Record<string, number>) || {}
+  const showOptionScoring = quizEnabled && (field.field_type === 'multiple_choice' || field.field_type === 'dropdown' || field.field_type === 'picture_choice')
 
   return (
     <div ref={setNodeRef} style={style} className="bg-white rounded-lg border border-stone-200 p-5">
@@ -603,6 +771,10 @@ function SortableField({ field, index, expanded, onToggleExpand, onUpdate, onUpd
                 options={field.options || ['Option 1', 'Option 2', 'Option 3']}
                 onChange={(opts) => onUpdate(field.id, { options: opts })}
                 fieldType={field.field_type as any}
+                images={field.field_type === 'picture_choice' ? (settings.images as Record<string, string>) : undefined}
+                onImagesChange={field.field_type === 'picture_choice' ? (imgs) => onUpdateSetting(field, 'images', imgs) : undefined}
+                scoring={showOptionScoring ? scoring : undefined}
+                onScoringChange={showOptionScoring ? (sc) => onUpdateSetting(field, 'scoring', sc) : undefined}
               />
             </div>
           )}
@@ -701,6 +873,51 @@ function SortableField({ field, index, expanded, onToggleExpand, onUpdate, onUpd
                     className="w-40 text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
                     placeholder="No limit"
                   />
+                </div>
+              )}
+
+              {/* Quiz scoring — yes/no points */}
+              {quizEnabled && field.field_type === 'yes_no' && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-2">
+                  <p className="text-xs font-medium text-amber-800">Quiz scoring</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs text-stone-600 mb-1">Points for "Yes"</label>
+                      <input type="number" value={scoring['true'] ?? ''} onChange={(e) => onUpdateSetting(field, 'scoring', { ...scoring, ...(e.target.value === '' ? (() => { const n = { ...scoring }; delete n['true']; return n })() : { true: Number(e.target.value) }) })}
+                        className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-stone-600 mb-1">Points for "No"</label>
+                      <input type="number" value={scoring['false'] ?? ''} onChange={(e) => onUpdateSetting(field, 'scoring', { ...scoring, ...(e.target.value === '' ? (() => { const n = { ...scoring }; delete n['false']; return n })() : { false: Number(e.target.value) }) })}
+                        className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Quiz scoring — checkbox per-option points */}
+              {quizEnabled && field.field_type === 'checkboxes' && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-2">
+                  <p className="text-xs font-medium text-amber-800">Quiz scoring (points per selected option)</p>
+                  {(field.options || []).map((opt) => (
+                    <div key={opt} className="flex items-center gap-2">
+                      <span className="flex-1 text-sm text-stone-700 truncate">{opt}</span>
+                      <input type="number" value={scoring[opt] ?? ''}
+                        onChange={(e) => { const n = { ...scoring }; if (e.target.value === '') delete n[opt]; else n[opt] = Number(e.target.value); onUpdateSetting(field, 'scoring', n) }}
+                        className="w-24 text-sm border border-stone-300 rounded px-2 py-1.5 focus:outline-none focus:border-stone-900" placeholder="pts" />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Quiz scoring — numeric weight */}
+              {quizEnabled && SCORABLE_NUMERIC.has(field.field_type) && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-2">
+                  <p className="text-xs font-medium text-amber-800">Quiz scoring</p>
+                  <label className="block text-xs text-stone-600 mb-1">Weight (points = answer × weight)</label>
+                  <input type="number" step="any" value={scoring['weight'] ?? ''}
+                    onChange={(e) => { const n = { ...scoring }; if (e.target.value === '') delete n['weight']; else n['weight'] = Number(e.target.value); onUpdateSetting(field, 'scoring', n) }}
+                    className="w-40 text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900" placeholder="1" />
                 </div>
               )}
             </div>

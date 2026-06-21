@@ -6,6 +6,7 @@ import { sendSubmissionNotification, sendAutoResponder } from '@/lib/email-utils
 import { deliverWebhooks } from '@/lib/webhooks'
 import { rateLimit, getClientIp } from '@/lib/rate-limit'
 import { appendSubmissionToSheet } from '@/lib/google-sheets'
+import { computeScore, resolveOutcome, type QuizConfig } from '@/lib/quiz'
 
 // POST /api/forms/[id]/submit - Submit form response
 export async function POST(
@@ -70,20 +71,52 @@ export async function POST(
       .eq('form_id', params.id)
       .order('position')
 
-    // Validate required fields (handles strings, arrays, booleans, numbers)
-    const isEmpty = (v: any) =>
-      v === undefined ||
-      v === null ||
-      (typeof v === 'string' && v.trim() === '') ||
-      (Array.isArray(v) && v.length === 0)
+    // Validate required fields (handles strings, arrays, booleans, numbers,
+    // address objects and signature data-URL strings).
+    const isEmpty = (v: any, fieldType?: string) => {
+      // Address: empty unless line1, city and postal are all present.
+      if (fieldType === 'address') {
+        const a = (v && typeof v === 'object') ? v : {}
+        return !(
+          typeof a.line1 === 'string' && a.line1.trim() &&
+          typeof a.city === 'string' && a.city.trim() &&
+          typeof a.postal === 'string' && a.postal.trim()
+        )
+      }
+      // Signature: empty when the data-URL string is blank.
+      if (fieldType === 'signature') {
+        return typeof v !== 'string' || v.trim() === ''
+      }
+      return (
+        v === undefined ||
+        v === null ||
+        (typeof v === 'string' && v.trim() === '') ||
+        (Array.isArray(v) && v.length === 0)
+      )
+    }
 
     const requiredFields = fields?.filter(f => f.required) || []
     for (const field of requiredFields) {
-      if (isEmpty(responses?.[field.id])) {
+      if (isEmpty(responses?.[field.id], field.field_type)) {
         return NextResponse.json({
           error: `${field.label} is required`
         }, { status: 400 })
       }
+    }
+
+    // ---- Quiz scoring (server is authoritative) ----
+    const quizConfig = (form.settings as any)?.quiz as QuizConfig | undefined
+    let quizMeta: { total: number; max: number; outcomeId: string | null } | null = null
+    let quizResponse: { total: number; max: number; outcome: any } | null = null
+    if (quizConfig?.enabled) {
+      const { total, max } = computeScore(fields || [], responses || {})
+      const outcome = resolveOutcome(quizConfig, total)
+      quizMeta = { total, max, outcomeId: outcome?.id ?? null }
+      quizResponse = { total, max, outcome }
+    }
+
+    if (quizMeta) {
+      safeMetadata = { ...safeMetadata, quiz: quizMeta }
     }
 
     // Create submission. Generate the id ourselves and do NOT .select() it back:
@@ -181,7 +214,8 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      submission_id: submission.id
+      submission_id: submission.id,
+      ...(quizResponse ? { quiz: quizResponse } : {}),
     })
   } catch (error) {
     console.error('Submit error:', error)

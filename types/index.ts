@@ -17,6 +17,9 @@ export type QuestionType =
   | 'file_upload'
   | 'statement'
   | 'hidden'
+  | 'picture_choice'
+  | 'signature'
+  | 'address'
   | 'video'
   | 'audio';
 

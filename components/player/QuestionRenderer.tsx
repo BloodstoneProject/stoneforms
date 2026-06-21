@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { Star, Check } from 'lucide-react'
 import { FileUploadField } from '@/components/player/FileUploadField'
+import { SignatureField } from '@/components/player/SignatureField'
+import { AddressField } from '@/components/player/AddressField'
 
 interface QuestionRendererProps {
   question: Question
@@ -405,6 +407,73 @@ function renderQuestionInput(
       return (
         <FileUploadField
           value={typeof value === 'string' ? value : undefined}
+          onChange={onChange}
+          theme={{ primaryColor: theme.primaryColor, textColor: theme.textColor }}
+        />
+      )
+
+    case 'picture_choice': {
+      const images: Record<string, string> = (question.properties?.images as Record<string, string>) || {}
+      return (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          {question.choices?.map((choice) => {
+            const isSelected = value === choice.value
+            const img = images[choice.value]
+            return (
+              <button
+                key={choice.id}
+                onClick={() => onChange(choice.value)}
+                className={cn(
+                  'group flex flex-col rounded-xl border-2 overflow-hidden transition-all text-left hover:shadow-md',
+                  isSelected && 'ring-2'
+                )}
+                style={isSelected
+                  ? { borderColor: theme.primaryColor, backgroundColor: `${theme.primaryColor}10` }
+                  : { borderColor: `${theme.textColor}22` }
+                }
+              >
+                <div
+                  className="relative w-full aspect-square flex items-center justify-center"
+                  style={{ backgroundColor: `${theme.textColor}08` }}
+                >
+                  {img ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={img} alt={choice.label} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-3xl opacity-30">🖼️</span>
+                  )}
+                  {isSelected && (
+                    <span
+                      className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: theme.primaryColor }}
+                    >
+                      <Check className="w-4 h-4 text-white" />
+                    </span>
+                  )}
+                </div>
+                <span className="px-3 py-2.5 text-sm font-medium" style={{ color: theme.textColor }}>
+                  {choice.label}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      )
+    }
+
+    case 'signature':
+      return (
+        <SignatureField
+          value={typeof value === 'string' ? value : undefined}
+          onChange={onChange}
+          theme={{ primaryColor: theme.primaryColor, textColor: theme.textColor }}
+        />
+      )
+
+    case 'address':
+      return (
+        <AddressField
+          value={value && typeof value === 'object' ? value : undefined}
           onChange={onChange}
           theme={{ primaryColor: theme.primaryColor, textColor: theme.textColor }}
         />

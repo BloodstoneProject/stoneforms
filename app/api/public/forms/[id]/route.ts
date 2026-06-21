@@ -1,8 +1,16 @@
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { createServerSupabaseClient, createAdminClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
+import { getUserPlan } from '@/lib/plan-enforcement'
+import { hasPlanFeature } from '@/lib/plan-limits'
+
+// Matches a canonical v4-style UUID (the shape Supabase generates for form ids).
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 // GET /api/public/forms/[id]
 // Public, unauthenticated read of a PUBLISHED form and its fields.
+// The [id] param may be a UUID *or* a vanity slug. When it isn't a UUID we
+// resolve the form by slug (case-insensitive). This powers /f/{slug} and the
+// subdomain rewrite ({sub}.host -> /f/{sub}).
 // Relies on RLS policies ("Public can view published forms" / "...fields of
 // published forms"), so anonymous respondents can load the form to fill it in.
 export async function GET(
@@ -10,23 +18,49 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   const supabase = createServerSupabaseClient()
+  const idParam = params.id
 
-  const { data: form, error: formError } = await supabase
+  const baseSelect = 'id, title, description, theme, settings, status, logic, user_id'
+
+  let query = supabase
     .from('forms')
-    .select('id, title, description, theme, settings, status, logic')
-    .eq('id', params.id)
+    .select(baseSelect)
     .eq('status', 'published')
-    .single()
 
-  if (formError || !form) {
+  if (UUID_RE.test(idParam)) {
+    query = query.eq('id', idParam)
+  } else {
+    // Vanity slug — unique index is on lower(slug), so match case-insensitively.
+    query = query.ilike('slug', idParam)
+  }
+
+  const { data: formRow, error: formError } = await query.single()
+
+  if (formError || !formRow) {
     return NextResponse.json({ error: 'Form not available' }, { status: 404 })
   }
 
   const { data: fields } = await supabase
     .from('form_fields')
     .select('id, field_type, label, placeholder, required, options, position, settings')
-    .eq('form_id', params.id)
+    .eq('form_id', formRow.id)
     .order('position', { ascending: true })
 
-  return NextResponse.json({ form, fields: fields || [] })
+  // Compute white-label branding from the form owner's plan (privileged read).
+  let hideBranding = false
+  try {
+    const plan = await getUserPlan((formRow as any).user_id)
+    hideBranding = hasPlanFeature(plan, 'remove_branding')
+  } catch {
+    hideBranding = false
+  }
+
+  // Don't leak user_id to the public client.
+  const { user_id, ...form } = formRow as any
+
+  return NextResponse.json({
+    form,
+    fields: fields || [],
+    branding: { hide: hideBranding },
+  })
 }

@@ -5,6 +5,7 @@ import { Check } from 'lucide-react'
 interface ThankYouScreenProps {
   title?: string
   message?: string
+  hideBranding?: boolean
   theme: {
     primaryColor: string
     backgroundColor: string
@@ -14,7 +15,7 @@ interface ThankYouScreenProps {
   }
 }
 
-export function ThankYouScreen({ title, message, theme }: ThankYouScreenProps) {
+export function ThankYouScreen({ title, message, hideBranding = false, theme }: ThankYouScreenProps) {
   return (
     <div
       className="min-h-screen flex items-center justify-center p-6"
@@ -33,9 +34,11 @@ export function ThankYouScreen({ title, message, theme }: ThankYouScreenProps) {
         <p className="text-lg md:text-xl opacity-70" style={{ color: theme.textColor }}>
           {message || 'Your response has been recorded.'}
         </p>
-        <p className="text-xs mt-12 opacity-40" style={{ color: theme.textColor }}>
-          Powered by <span className="font-semibold">Stoneforms</span>
-        </p>
+        {!hideBranding && (
+          <p className="text-xs mt-12 opacity-40" style={{ color: theme.textColor }}>
+            Powered by <span className="font-semibold">Stoneforms</span>
+          </p>
+        )}
       </div>
 
       <style jsx>{`

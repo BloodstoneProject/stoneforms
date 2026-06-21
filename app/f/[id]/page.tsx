@@ -17,6 +17,8 @@ interface PublicForm {
     showProgressBar?: boolean
     redirectUrl?: string
     customEndingMessage?: string
+    quiz?: any
+    [key: string]: any
   }
 }
 
@@ -25,6 +27,7 @@ export default function PublicFormPage({ params }: { params: Promise<{ id: strin
 
   const [form, setForm] = useState<PublicForm | null>(null)
   const [fields, setFields] = useState<DbField[]>([])
+  const [hideBranding, setHideBranding] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -39,6 +42,7 @@ export default function PublicFormPage({ params }: { params: Promise<{ id: strin
         } else {
           setForm(data.form)
           setFields(data.fields || [])
+          setHideBranding(!!data.branding?.hide)
         }
       })
       .catch(() => active && setError('Failed to load form.'))
@@ -79,6 +83,7 @@ export default function PublicFormPage({ params }: { params: Promise<{ id: strin
       settings={form.settings || {}}
       theme={theme}
       logic={form.logic || []}
+      hideBranding={hideBranding}
     />
   )
 }

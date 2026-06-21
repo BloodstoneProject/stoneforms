@@ -4,11 +4,13 @@ import { useState, useEffect, useCallback } from 'react'
 import { Question } from '@/types'
 import { QuestionRenderer } from '@/components/player/QuestionRenderer'
 import { ThankYouScreen } from '@/components/player/ThankYouScreen'
+import { QuizResultScreen } from '@/components/player/QuizResultScreen'
 import { ArrowRight, ArrowLeft, Check } from 'lucide-react'
 import {
   type FormTheme, DEFAULT_THEME, fontStack, googleFontHref, buttonRadius, backgroundCss,
 } from '@/lib/themes'
 import { nextQuestionId, progressFor, type LogicRule } from '@/lib/logic'
+import type { QuizConfig, QuizOutcome } from '@/lib/quiz'
 
 interface FormSettings {
   showProgressBar?: boolean
@@ -16,6 +18,13 @@ interface FormSettings {
   customEndingMessage?: string
   welcome?: { enabled?: boolean; title?: string; description?: string; buttonText?: string }
   ending?: { title?: string; message?: string }
+  quiz?: QuizConfig
+}
+
+interface QuizResultData {
+  total: number
+  max: number
+  outcome: QuizOutcome | null
 }
 
 interface FormPlayerProps {
@@ -26,10 +35,11 @@ interface FormPlayerProps {
   settings?: FormSettings
   theme?: FormTheme
   logic?: LogicRule[]
+  hideBranding?: boolean
 }
 
 export default function FormPlayer({
-  formId, formTitle, formDescription, questions, settings = {}, theme = DEFAULT_THEME, logic = [],
+  formId, formTitle, formDescription, questions, settings = {}, theme = DEFAULT_THEME, logic = [], hideBranding = false,
 }: FormPlayerProps) {
   // Capture URL query params once (for lead tracking + hidden-field prefill).
   const [urlParams] = useState<Record<string, string>>(() =>
@@ -54,6 +64,7 @@ export default function FormPlayer({
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
   const [complete, setComplete] = useState(false)
+  const [quizResult, setQuizResult] = useState<QuizResultData | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [anim, setAnim] = useState<'in' | 'out-up' | 'out-down'>('in')
 
@@ -108,8 +119,23 @@ export default function FormPlayer({
     if (!current) return true
     if (current.type === 'statement') return true // informational, no answer
     const a = answers[current.id]
-    const empty = a === undefined || a === null || a === '' || (Array.isArray(a) && a.length === 0)
+    let empty = a === undefined || a === null || a === '' || (Array.isArray(a) && a.length === 0)
+    // Address is empty unless line1, city and postal are all present.
+    if (current.type === 'address') {
+      const addr = (a && typeof a === 'object') ? a : {}
+      empty = !(addr.line1?.trim() && addr.city?.trim() && addr.postal?.trim())
+    }
+    // Signature is empty when the data-URL string is blank.
+    if (current.type === 'signature') {
+      empty = typeof a !== 'string' || a.trim() === ''
+    }
     if (current.required && empty) { setErrors({ [current.id]: 'This question is required' }); return false }
+    if (current.type === 'address' && !empty) {
+      const addr = (a && typeof a === 'object') ? a : {}
+      if (!(addr.line1?.trim() && addr.city?.trim() && addr.postal?.trim())) {
+        setErrors({ [current.id]: 'Please fill in address line 1, city and postal code' }); return false
+      }
+    }
     if (current.type === 'email' && a && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a)) {
       setErrors({ [current.id]: 'Please enter a valid email address' }); return false
     }
@@ -177,9 +203,14 @@ export default function FormPlayer({
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setSubmitError(data.error || 'Failed to submit. Please try again.'); return }
+      // Redirect takes precedence over any ending / results screen.
       if (settings.redirectUrl) {
         window.location.href = /^https?:\/\//i.test(settings.redirectUrl) ? settings.redirectUrl : `https://${settings.redirectUrl}`
         return
+      }
+      // Trust the server's authoritative score for the results screen.
+      if (settings.quiz?.enabled && settings.quiz?.showResults && data.quiz) {
+        setQuizResult({ total: data.quiz.total, max: data.quiz.max, outcome: data.quiz.outcome ?? null })
       }
       setComplete(true)
     } catch {
@@ -206,10 +237,22 @@ export default function FormPlayer({
   )
 
   if (complete) {
+    if (quizResult) {
+      return (
+        <QuizResultScreen
+          total={quizResult.total}
+          max={quizResult.max}
+          outcome={quizResult.outcome}
+          hideBranding={hideBranding}
+          theme={{ primaryColor: c.primary, backgroundColor: bg, textColor: c.text, font: ff, buttonRadius: radius }}
+        />
+      )
+    }
     return (
       <ThankYouScreen
         title={settings.ending?.title}
         message={settings.ending?.message || settings.customEndingMessage}
+        hideBranding={hideBranding}
         theme={{ primaryColor: c.primary, backgroundColor: c.background, textColor: c.text, font: ff, buttonRadius: radius }}
       />
     )
@@ -294,11 +337,13 @@ export default function FormPlayer({
         </div>
       </div>
 
-      <div className="text-center pb-6">
-        <p className="text-xs opacity-40" style={{ color: c.text }}>
-          Powered by <span className="font-semibold">Stoneforms</span>
-        </p>
-      </div>
+      {!hideBranding && (
+        <div className="text-center pb-6">
+          <p className="text-xs opacity-40" style={{ color: c.text }}>
+            Powered by <span className="font-semibold">Stoneforms</span>
+          </p>
+        </div>
+      )}
 
       <style jsx global>{`
         @keyframes sf-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }

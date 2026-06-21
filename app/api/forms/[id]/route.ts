@@ -44,7 +44,7 @@ export async function PATCH(
   const body = await request.json()
 
   // Whitelist updatable columns (prevents mass-assignment of user_id, timestamps, etc.)
-  const ALLOWED = ['title', 'description', 'theme', 'logic', 'settings', 'status'] as const
+  const ALLOWED = ['title', 'description', 'theme', 'logic', 'settings', 'status', 'slug'] as const
   const updates: Record<string, any> = {}
   for (const key of ALLOWED) {
     if (key in body) updates[key] = body[key]
@@ -52,6 +52,19 @@ export async function PATCH(
 
   if (updates.status && !['draft', 'published', 'archived'].includes(updates.status)) {
     return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
+  }
+
+  // Validate / normalize custom slug. Empty string clears it (-> null).
+  if ('slug' in updates) {
+    const raw = updates.slug
+    if (raw === null || raw === '' || raw === undefined) {
+      updates.slug = null
+    } else if (typeof raw !== 'string' || !/^[a-z0-9-]{3,40}$/.test(raw)) {
+      return NextResponse.json(
+        { error: 'Custom link must be 3-40 characters: lowercase letters, numbers and hyphens only.' },
+        { status: 400 }
+      )
+    }
   }
 
   if (Object.keys(updates).length === 0) {
@@ -67,6 +80,10 @@ export async function PATCH(
     .single()
 
   if (error) {
+    // Unique violation on the slug index -> friendly message.
+    if ((error as any).code === '23505' || /duplicate key|unique/i.test(error.message)) {
+      return NextResponse.json({ error: 'That link is taken. Try another.' }, { status: 409 })
+    }
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 

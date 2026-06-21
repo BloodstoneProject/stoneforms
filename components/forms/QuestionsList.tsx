@@ -57,6 +57,9 @@ const questionTypeIcons: Record<QuestionType, any> = {
   statement: MessageSquare,
   hidden: EyeOff,
   file_upload: FileUp,
+  picture_choice: List,
+  signature: Type,
+  address: Type,
   video: Video,
   audio: Mic,
 }

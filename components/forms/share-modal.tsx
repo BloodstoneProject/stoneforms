@@ -7,23 +7,33 @@ import EmbedCodeGenerator from './embed-code-generator'
 interface ShareModalProps {
   formId: string
   formTitle: string
+  slug?: string
   isOpen: boolean
   onClose: () => void
 }
 
-export default function ShareModal({ formId, formTitle, isOpen, onClose }: ShareModalProps) {
+export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }: ShareModalProps) {
   const [activeTab, setActiveTab] = useState<'link' | 'embed' | 'qr' | 'social'>('link')
   const [copied, setCopied] = useState(false)
+  const [vanityCopied, setVanityCopied] = useState(false)
 
   if (!isOpen) return null
 
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
   const formUrl = `${baseUrl}/f/${formId}`
+  const vanityUrl = slug ? `${baseUrl}/f/${slug}` : null
 
   const copyLink = () => {
     navigator.clipboard.writeText(formUrl)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const copyVanity = () => {
+    if (!vanityUrl) return
+    navigator.clipboard.writeText(vanityUrl)
+    setVanityCopied(true)
+    setTimeout(() => setVanityCopied(false), 2000)
   }
 
   const shareViaEmail = () => {
@@ -128,6 +138,27 @@ export default function ShareModal({ formId, formTitle, isOpen, onClose }: Share
           {/* Link Tab */}
           {activeTab === 'link' && (
             <div className="space-y-6">
+              {vanityUrl && (
+                <div>
+                  <label className="block text-sm font-medium text-stone-900 mb-2">
+                    Custom link
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={vanityUrl}
+                      readOnly
+                      className="flex-1 px-4 py-3 border border-stone-300 rounded-lg bg-stone-50"
+                    />
+                    <button
+                      onClick={copyVanity}
+                      className="flex items-center gap-2 px-6 py-3 bg-stone-900 text-white rounded-lg hover:bg-stone-800"
+                    >
+                      {vanityCopied ? (<><Check className="w-4 h-4" />Copied!</>) : (<><Copy className="w-4 h-4" />Copy</>)}
+                    </button>
+                  </div>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-stone-900 mb-2">
                   Form URL

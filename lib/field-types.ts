@@ -20,6 +20,9 @@ export type FieldType =
   | 'file_upload'
   | 'statement'
   | 'hidden'
+  | 'picture_choice'
+  | 'signature'
+  | 'address'
 
 export interface FieldTypeMeta {
   value: FieldType
@@ -28,7 +31,7 @@ export interface FieldTypeMeta {
   // true when the field needs a list of choices (options[])
   hasOptions: boolean
   // value shape produced by the player for this field
-  valueKind: 'string' | 'number' | 'boolean' | 'string[]' | 'file' | 'none'
+  valueKind: 'string' | 'number' | 'boolean' | 'string[]' | 'object' | 'file' | 'none'
   category: 'text' | 'choice' | 'number' | 'date' | 'media' | 'display'
 }
 
@@ -40,6 +43,7 @@ export const FIELD_TYPES: FieldTypeMeta[] = [
   { value: 'url', label: 'URL', icon: '🔗', hasOptions: false, valueKind: 'string', category: 'text' },
   { value: 'number', label: 'Number', icon: '🔢', hasOptions: false, valueKind: 'number', category: 'number' },
   { value: 'multiple_choice', label: 'Multiple Choice', icon: '☑️', hasOptions: true, valueKind: 'string', category: 'choice' },
+  { value: 'picture_choice', label: 'Picture Choice', icon: '🖼️', hasOptions: true, valueKind: 'string', category: 'choice' },
   { value: 'checkboxes', label: 'Checkboxes', icon: '✅', hasOptions: true, valueKind: 'string[]', category: 'choice' },
   { value: 'dropdown', label: 'Dropdown', icon: '▼', hasOptions: true, valueKind: 'string', category: 'choice' },
   { value: 'yes_no', label: 'Yes / No', icon: '🔘', hasOptions: false, valueKind: 'boolean', category: 'choice' },
@@ -47,6 +51,8 @@ export const FIELD_TYPES: FieldTypeMeta[] = [
   { value: 'opinion_scale', label: 'Opinion Scale', icon: '📊', hasOptions: false, valueKind: 'number', category: 'number' },
   { value: 'ranking', label: 'Ranking', icon: '🔢', hasOptions: true, valueKind: 'string[]', category: 'choice' },
   { value: 'date', label: 'Date', icon: '📅', hasOptions: false, valueKind: 'string', category: 'date' },
+  { value: 'signature', label: 'Signature', icon: '✍️', hasOptions: false, valueKind: 'string', category: 'media' },
+  { value: 'address', label: 'Address', icon: '🏠', hasOptions: false, valueKind: 'object', category: 'text' },
   { value: 'file_upload', label: 'File Upload', icon: '📎', hasOptions: false, valueKind: 'file', category: 'media' },
   { value: 'statement', label: 'Statement', icon: '💬', hasOptions: false, valueKind: 'none', category: 'display' },
   { value: 'hidden', label: 'Hidden Field', icon: '🕵️', hasOptions: false, valueKind: 'string', category: 'display' },
