@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { Star, Check } from 'lucide-react'
+import { FileUploadField } from '@/components/player/FileUploadField'
 
 interface QuestionRendererProps {
   question: Question
@@ -315,6 +316,43 @@ function renderQuestionInput(
         </div>
       )
 
+    case 'ranking': {
+      const allValues = question.choices?.map((c) => c.value) || []
+      const order: string[] = Array.isArray(value) && value.length === allValues.length ? value : allValues
+      const move = (from: number, to: number) => {
+        if (to < 0 || to >= order.length) return
+        const next = [...order]
+        const [item] = next.splice(from, 1)
+        next.splice(to, 0, item)
+        onChange(next)
+      }
+      const labelFor = (val: string) => question.choices?.find((c) => c.value === val)?.label || val
+      return (
+        <div className="space-y-2">
+          {order.map((val, i) => (
+            <div
+              key={val}
+              className="flex items-center gap-3 p-3 rounded-xl border-2"
+              style={{ borderColor: `${theme.textColor}22` }}
+            >
+              <span
+                className="w-7 h-7 rounded-md flex items-center justify-center text-sm font-bold flex-shrink-0"
+                style={{ backgroundColor: theme.primaryColor, color: '#fff' }}
+              >
+                {i + 1}
+              </span>
+              <span className="flex-1 font-medium" style={{ color: theme.textColor }}>{labelFor(val)}</span>
+              <div className="flex flex-col">
+                <button onClick={() => move(i, i - 1)} disabled={i === 0} className="px-2 leading-none disabled:opacity-30" style={{ color: theme.textColor }} aria-label="Move up">▲</button>
+                <button onClick={() => move(i, i + 1)} disabled={i === order.length - 1} className="px-2 leading-none disabled:opacity-30" style={{ color: theme.textColor }} aria-label="Move down">▼</button>
+              </div>
+            </div>
+          ))}
+          <p className="text-sm opacity-50" style={{ color: theme.textColor }}>Order them from most to least preferred.</p>
+        </div>
+      )
+    }
+
     case 'statement':
       // Informational block — no input. The label/description carry the message.
       return null
@@ -365,45 +403,11 @@ function renderQuestionInput(
 
     case 'file_upload':
       return (
-        <div>
-          <input
-            type="file"
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              if (file) onChange(file)
-            }}
-            className="hidden"
-            id="file-upload"
-          />
-          <label
-            htmlFor="file-upload"
-            className="flex flex-col items-center justify-center w-full p-12 border-2 border-dashed rounded-xl cursor-pointer hover:bg-gray-50 transition-colors"
-            style={{ borderColor: '#e8e4db' }}
-          >
-            <svg className="w-16 h-16 mb-4" style={{ color: theme.primaryColor }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-            </svg>
-            {value ? (
-              <div className="text-center">
-                <p className="text-lg font-medium" style={{ color: theme.textColor }}>
-                  {value.name}
-                </p>
-                <p className="text-sm mt-1" style={{ color: theme.textColor, opacity: 0.6 }}>
-                  Click to change file
-                </p>
-              </div>
-            ) : (
-              <div className="text-center">
-                <p className="text-lg font-medium" style={{ color: theme.textColor }}>
-                  Click to upload or drag and drop
-                </p>
-                <p className="text-sm mt-1" style={{ color: theme.textColor, opacity: 0.6 }}>
-                  Max file size: 10MB
-                </p>
-              </div>
-            )}
-          </label>
-        </div>
+        <FileUploadField
+          value={typeof value === 'string' ? value : undefined}
+          onChange={onChange}
+          theme={{ primaryColor: theme.primaryColor, textColor: theme.textColor }}
+        />
       )
 
     default:

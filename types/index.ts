@@ -11,6 +11,7 @@ export type QuestionType =
   | 'dropdown'
   | 'rating'
   | 'opinion_scale'
+  | 'ranking'
   | 'yes_no'
   | 'date'
   | 'file_upload'

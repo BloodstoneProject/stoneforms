@@ -15,6 +15,7 @@ export type FieldType =
   | 'yes_no'
   | 'rating'
   | 'opinion_scale'
+  | 'ranking'
   | 'date'
   | 'file_upload'
   | 'statement'
@@ -44,6 +45,7 @@ export const FIELD_TYPES: FieldTypeMeta[] = [
   { value: 'yes_no', label: 'Yes / No', icon: '🔘', hasOptions: false, valueKind: 'boolean', category: 'choice' },
   { value: 'rating', label: 'Rating', icon: '⭐', hasOptions: false, valueKind: 'number', category: 'number' },
   { value: 'opinion_scale', label: 'Opinion Scale', icon: '📊', hasOptions: false, valueKind: 'number', category: 'number' },
+  { value: 'ranking', label: 'Ranking', icon: '🔢', hasOptions: true, valueKind: 'string[]', category: 'choice' },
   { value: 'date', label: 'Date', icon: '📅', hasOptions: false, valueKind: 'string', category: 'date' },
   { value: 'file_upload', label: 'File Upload', icon: '📎', hasOptions: false, valueKind: 'file', category: 'media' },
   { value: 'statement', label: 'Statement', icon: '💬', hasOptions: false, valueKind: 'none', category: 'display' },

@@ -5,6 +5,7 @@ import { checkCanAcceptResponse } from '@/lib/plan-enforcement'
 import { sendSubmissionNotification, sendAutoResponder } from '@/lib/email-utils'
 import { deliverWebhooks } from '@/lib/webhooks'
 import { rateLimit, getClientIp } from '@/lib/rate-limit'
+import { appendSubmissionToSheet } from '@/lib/google-sheets'
 
 // POST /api/forms/[id]/submit - Submit form response
 export async function POST(
@@ -116,6 +117,13 @@ export async function POST(
       })
     } catch (eventError) {
       console.error('Analytics event error:', eventError)
+    }
+
+    // Append to a connected Google Sheet (best-effort; no-ops if not connected).
+    try {
+      await appendSubmissionToSheet(params.id, responses, fields || [])
+    } catch (sheetError) {
+      console.error('Google Sheets append error:', sheetError)
     }
 
     // Deliver signed webhooks (logs delivery status). Best-effort; never fails the submit.

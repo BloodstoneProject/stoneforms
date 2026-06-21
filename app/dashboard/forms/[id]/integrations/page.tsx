@@ -7,6 +7,7 @@ import {
   ArrowLeft, Loader2, Plus, Trash2, Mail, Webhook, Copy, Check,
   Power, Bell, Reply,
 } from 'lucide-react'
+import GoogleSheetsConnect from '@/components/forms/GoogleSheetsConnect'
 
 interface WebhookRow {
   id: string
@@ -303,6 +304,8 @@ export default function IntegrationsPage({ params }: { params: Promise<{ id: str
             </div>
           )}
         </section>
+
+        <GoogleSheetsConnect formId={formId} />
       </div>
     </div>
   )

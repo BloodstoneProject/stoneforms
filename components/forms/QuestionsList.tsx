@@ -51,6 +51,7 @@ const questionTypeIcons: Record<QuestionType, any> = {
   dropdown: ChevronDown,
   rating: Star,
   opinion_scale: BarChart3,
+  ranking: ListChecks,
   yes_no: CheckSquare,
   date: Calendar,
   statement: MessageSquare,
