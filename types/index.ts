@@ -15,6 +15,7 @@ export type QuestionType =
   | 'date'
   | 'file_upload'
   | 'statement'
+  | 'hidden'
   | 'video'
   | 'audio';
 

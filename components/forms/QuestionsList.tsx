@@ -22,6 +22,7 @@ import {
   ListChecks,
   BarChart3,
   MessageSquare,
+  EyeOff,
   Copy,
   Trash2
 } from 'lucide-react'
@@ -53,6 +54,7 @@ const questionTypeIcons: Record<QuestionType, any> = {
   yes_no: CheckSquare,
   date: Calendar,
   statement: MessageSquare,
+  hidden: EyeOff,
   file_upload: FileUp,
   video: Video,
   audio: Mic,

@@ -15,6 +15,7 @@ interface FormSettings {
   redirectUrl?: string
   customEndingMessage?: string
   welcome?: { enabled?: boolean; title?: string; description?: string; buttonText?: string }
+  ending?: { title?: string; message?: string }
 }
 
 interface FormPlayerProps {
@@ -30,11 +31,26 @@ interface FormPlayerProps {
 export default function FormPlayer({
   formId, formTitle, formDescription, questions, settings = {}, theme = DEFAULT_THEME, logic = [],
 }: FormPlayerProps) {
-  const orderedIds = questions.map((q) => q.id)
+  // Capture URL query params once (for lead tracking + hidden-field prefill).
+  const [urlParams] = useState<Record<string, string>>(() =>
+    typeof window !== 'undefined' ? Object.fromEntries(new URLSearchParams(window.location.search)) : {}
+  )
+  // Hidden fields are prefilled from URL params and never shown in the flow.
+  const flowQuestions = questions.filter((q) => q.type !== 'hidden')
+  const orderedIds = flowQuestions.map((q) => q.id)
   const [started, setStarted] = useState(false)
   const [currentId, setCurrentId] = useState<string>(orderedIds[0] || '')
   const [history, setHistory] = useState<string[]>([])
-  const [answers, setAnswers] = useState<Record<string, any>>({})
+  const [answers, setAnswers] = useState<Record<string, any>>(() => {
+    const init: Record<string, any> = {}
+    const search = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams()
+    questions.filter((q) => q.type === 'hidden').forEach((q) => {
+      const ref = (q.properties?.ref || q.label || '').toString()
+      const val = search.get(ref)
+      if (ref && val !== null) init[q.id] = val
+    })
+    return init
+  })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
   const [complete, setComplete] = useState(false)
@@ -153,7 +169,11 @@ export default function FormPlayer({
     try {
       const res = await fetch(`/api/forms/${formId}/submit`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ responses: answers, session_id: sessionId }),
+        body: JSON.stringify({
+          responses: answers,
+          session_id: sessionId,
+          metadata: Object.keys(urlParams).length ? { url_params: urlParams } : {},
+        }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setSubmitError(data.error || 'Failed to submit. Please try again.'); return }
@@ -186,7 +206,13 @@ export default function FormPlayer({
   )
 
   if (complete) {
-    return <ThankYouScreen formTitle={formTitle} theme={{ primaryColor: c.primary, backgroundColor: c.background, textColor: c.text }} customMessage={settings.customEndingMessage} />
+    return (
+      <ThankYouScreen
+        title={settings.ending?.title}
+        message={settings.ending?.message || settings.customEndingMessage}
+        theme={{ primaryColor: c.primary, backgroundColor: c.background, textColor: c.text, font: ff, buttonRadius: radius }}
+      />
+    )
   }
 
   // Welcome screen

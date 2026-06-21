@@ -27,6 +27,8 @@ interface FormSettings {
   requireEmail?: boolean
   redirectUrl?: string
   customEndingMessage?: string
+  welcome?: { enabled?: boolean; title?: string; description?: string; buttonText?: string }
+  ending?: { title?: string; message?: string }
 }
 
 interface Form {
@@ -127,6 +129,13 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
 
   const updateSetting = (key: keyof FormSettings, value: any) => {
     setForm((prev) => (prev ? { ...prev, settings: { ...(prev.settings || {}), [key]: value } } : prev))
+  }
+
+  const updateNestedSetting = (group: 'welcome' | 'ending', key: string, value: any) => {
+    setForm((prev) => prev ? {
+      ...prev,
+      settings: { ...(prev.settings || {}), [group]: { ...((prev.settings as any)?.[group] || {}), [key]: value } },
+    } : prev)
   }
 
   const addField = async (fieldType: string) => {
@@ -428,18 +437,42 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                     />
                     <span className="text-sm text-stone-700">Allow multiple submissions per visitor</span>
                   </label>
-                  <div>
-                    <label className="block text-xs font-medium text-stone-700 mb-1">Custom thank-you message</label>
-                    <input
-                      type="text"
-                      value={form.settings?.customEndingMessage || ''}
-                      onChange={(e) => updateSetting('customEndingMessage', e.target.value)}
-                      className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
-                      placeholder="Your response has been recorded successfully."
-                    />
+                  {/* Welcome screen */}
+                  <div className="pt-3 border-t border-stone-100">
+                    <label className="flex items-center gap-3 cursor-pointer mb-2">
+                      <input
+                        type="checkbox"
+                        checked={form.settings?.welcome?.enabled !== false}
+                        onChange={(e) => updateNestedSetting('welcome', 'enabled', e.target.checked)}
+                        className="rounded"
+                      />
+                      <span className="text-sm font-medium text-stone-700">Show welcome screen</span>
+                    </label>
+                    {form.settings?.welcome?.enabled !== false && (
+                      <div className="space-y-2 pl-6">
+                        <input type="text" value={form.settings?.welcome?.title || ''} onChange={(e) => updateNestedSetting('welcome', 'title', e.target.value)}
+                          className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900" placeholder="Welcome title (defaults to form title)" />
+                        <input type="text" value={form.settings?.welcome?.description || ''} onChange={(e) => updateNestedSetting('welcome', 'description', e.target.value)}
+                          className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900" placeholder="Welcome subtitle" />
+                        <input type="text" value={form.settings?.welcome?.buttonText || ''} onChange={(e) => updateNestedSetting('welcome', 'buttonText', e.target.value)}
+                          className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900" placeholder="Start button text (default: Start)" />
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    <label className="block text-xs font-medium text-stone-700 mb-1">Redirect URL after submit (optional)</label>
+
+                  {/* Ending screen */}
+                  <div className="pt-3 border-t border-stone-100">
+                    <p className="text-sm font-medium text-stone-700 mb-2">Ending screen</p>
+                    <div className="space-y-2">
+                      <input type="text" value={form.settings?.ending?.title || ''} onChange={(e) => updateNestedSetting('ending', 'title', e.target.value)}
+                        className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900" placeholder="Ending title (default: Thank you!)" />
+                      <textarea value={form.settings?.ending?.message || ''} onChange={(e) => updateNestedSetting('ending', 'message', e.target.value)} rows={2}
+                        className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900 resize-none" placeholder="Ending message" />
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-stone-100">
+                    <label className="block text-xs font-medium text-stone-700 mb-1">Redirect URL after submit (overrides ending screen)</label>
                     <input
                       type="text"
                       value={form.settings?.redirectUrl || ''}
@@ -618,6 +651,20 @@ function SortableField({ field, index, expanded, onToggleExpand, onUpdate, onUpd
                     className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
                     placeholder="Placeholder text…"
                   />
+                </div>
+              )}
+
+              {field.field_type === 'hidden' && (
+                <div>
+                  <label className="block text-xs font-medium text-stone-700 mb-1">URL parameter name</label>
+                  <input
+                    type="text"
+                    value={settings.ref || ''}
+                    onChange={(e) => onUpdateSetting(field, 'ref', e.target.value)}
+                    className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900 font-mono"
+                    placeholder="e.g. utm_source"
+                  />
+                  <p className="text-xs text-stone-400 mt-1">Captured from <code>?{settings.ref || 'param'}=value</code> in the form URL.</p>
                 </div>
               )}
 

@@ -25,7 +25,16 @@ export async function POST(
 
   try {
     const body = await request.json()
-    const { responses, session_id } = body
+    const { responses, session_id, metadata } = body
+
+    // Sanitize incoming metadata (URL params / hidden tracking) — cap size.
+    let safeMetadata: Record<string, any> = {}
+    if (metadata && typeof metadata === 'object') {
+      try {
+        const trimmed = JSON.stringify(metadata).slice(0, 8000)
+        safeMetadata = JSON.parse(trimmed)
+      } catch { safeMetadata = {} }
+    }
 
     // Get form to verify it exists and is published
     const { data: form, error: formError } = await supabase
@@ -86,6 +95,7 @@ export async function POST(
         id: submissionId,
         form_id: params.id,
         answers: responses,
+        metadata: safeMetadata,
         status: 'completed',
       })
 

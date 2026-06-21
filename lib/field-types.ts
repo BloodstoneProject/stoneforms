@@ -18,6 +18,7 @@ export type FieldType =
   | 'date'
   | 'file_upload'
   | 'statement'
+  | 'hidden'
 
 export interface FieldTypeMeta {
   value: FieldType
@@ -46,6 +47,7 @@ export const FIELD_TYPES: FieldTypeMeta[] = [
   { value: 'date', label: 'Date', icon: '📅', hasOptions: false, valueKind: 'string', category: 'date' },
   { value: 'file_upload', label: 'File Upload', icon: '📎', hasOptions: false, valueKind: 'file', category: 'media' },
   { value: 'statement', label: 'Statement', icon: '💬', hasOptions: false, valueKind: 'none', category: 'display' },
+  { value: 'hidden', label: 'Hidden Field', icon: '🕵️', hasOptions: false, valueKind: 'string', category: 'display' },
 ]
 
 const BY_VALUE: Record<string, FieldTypeMeta> = Object.fromEntries(
