@@ -12,6 +12,7 @@ interface PublicForm {
   title: string
   description?: string
   theme?: any
+  logic?: any[]
   settings?: {
     showProgressBar?: boolean
     redirectUrl?: string
@@ -77,6 +78,7 @@ export default function PublicFormPage({ params }: { params: Promise<{ id: strin
       questions={questions}
       settings={form.settings || {}}
       theme={theme}
+      logic={form.logic || []}
     />
   )
 }

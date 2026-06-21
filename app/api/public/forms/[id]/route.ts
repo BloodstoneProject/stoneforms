@@ -13,7 +13,7 @@ export async function GET(
 
   const { data: form, error: formError } = await supabase
     .from('forms')
-    .select('id, title, description, theme, settings, status')
+    .select('id, title, description, theme, settings, status, logic')
     .eq('id', params.id)
     .eq('status', 'published')
     .single()

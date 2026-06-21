@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, Plus, Trash2, GripVertical, Eye, Share2,
-  Settings2, ChevronDown, ChevronUp, Check, Loader2, Globe, Pencil, BarChart3, Webhook, Palette,
+  Settings2, ChevronDown, ChevronUp, Check, Loader2, Globe, Pencil, BarChart3, Webhook, Palette, GitBranch,
 } from 'lucide-react'
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor,
@@ -295,6 +295,13 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                 className="flex items-center gap-2 px-3 py-2 border border-stone-300 rounded-lg hover:bg-stone-50 text-sm"
               >
                 <Palette className="w-4 h-4" /> Design
+              </Link>
+
+              <Link
+                href={`/dashboard/forms/${formId}/logic`}
+                className="flex items-center gap-2 px-3 py-2 border border-stone-300 rounded-lg hover:bg-stone-50 text-sm"
+              >
+                <GitBranch className="w-4 h-4" /> Logic
               </Link>
 
               <Link

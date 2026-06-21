@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Plus, Search, Eye, Users, TrendingUp, Calendar, ExternalLink, Trash2 } from 'lucide-react'
+import { Plus, Search, Eye, Users, TrendingUp, Calendar, ExternalLink, Trash2, Copy } from 'lucide-react'
 
 interface Form {
   id: string
@@ -81,6 +81,17 @@ export default function FormsPage() {
       console.error('Failed to create form:', error)
       alert(`Network error: ${error.message}`)
       setCreating(false)
+    }
+  }
+
+  const duplicateForm = async (id: string) => {
+    try {
+      const res = await fetch(`/api/forms/${id}/duplicate`, { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) { alert(data.error || 'Failed to duplicate'); return }
+      if (data.form) setForms([data.form, ...forms])
+    } catch (error) {
+      console.error('Failed to duplicate:', error)
     }
   }
 
@@ -227,18 +238,28 @@ export default function FormsPage() {
                 </div>
                 <p className="text-stone-600 text-sm mb-6 line-clamp-2">{form.description || 'No description'}</p>
                 <div className="flex items-center justify-between pt-4 border-t border-stone-100">
-                  <Link 
+                  <Link
                     href={`/dashboard/forms/${form.id}`}
                     className="text-stone-900 hover:text-stone-700 font-medium text-sm"
                   >
                     Edit Form →
                   </Link>
-                  <button
-                    onClick={() => deleteForm(form.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => duplicateForm(form.id)}
+                      title="Duplicate"
+                      className="p-1.5 text-stone-400 hover:text-stone-900"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => deleteForm(form.id)}
+                      title="Delete"
+                      className="p-1.5 text-stone-400 hover:text-red-600"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

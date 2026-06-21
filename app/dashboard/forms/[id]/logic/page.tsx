@@ -1,37 +1,21 @@
 'use client'
 import { useParams } from 'next/navigation'
 
-import { use, useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Plus, Trash2, Save, Eye, Zap, Loader } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, Save, Eye, Zap, Loader2, ArrowRight } from 'lucide-react'
+import { LOGIC_OPERATORS, type LogicRule, type LogicOperator } from '@/lib/logic'
 
-interface LogicRule {
-  id: string
-  condition: {
-    field: string
-    operator: string
-    value: string
-  }
-  action: {
-    type: 'show' | 'hide' | 'skip' | 'calculate'
-    target: string
-    value?: string
-  }
-}
+interface QuestionRef { id: string; label: string; type: string }
 
-interface QuestionRef {
-  id: string
-  label: string
-  type: string
-}
-
-export default function ConditionalLogicPage({ params }: { params: Promise<{ id: string }> }) {
+export default function ConditionalLogicPage() {
   const { id } = (useParams() as any)
   const [form, setForm] = useState<{ id: string; title: string } | null>(null)
   const [questions, setQuestions] = useState<QuestionRef[]>([])
+  const [rules, setRules] = useState<LogicRule[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [rules, setRules] = useState<LogicRule[]>([])
+  const [saved, setSaved] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -45,9 +29,7 @@ export default function ConditionalLogicPage({ params }: { params: Promise<{ id:
           if (Array.isArray(formRes.form.logic)) setRules(formRes.form.logic)
         }
         if (Array.isArray(fieldsRes.fields)) {
-          setQuestions(
-            fieldsRes.fields.map((f: any) => ({ id: f.id, label: f.label, type: f.field_type }))
-          )
+          setQuestions(fieldsRes.fields.map((f: any) => ({ id: f.id, label: f.label, type: f.field_type })))
         }
       } finally {
         setLoading(false)
@@ -56,298 +38,114 @@ export default function ConditionalLogicPage({ params }: { params: Promise<{ id:
     load()
   }, [id])
 
-  const saveLogic = async () => {
-    setSaving(true)
-    try {
-      await fetch(`/api/forms/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ logic: rules }),
-      })
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-stone-50">
-        <Loader className="w-6 h-6 animate-spin text-stone-400" />
-      </div>
-    )
-  }
-
-  if (!form) return <div className="p-8">Form not found</div>
-
-  const operators = [
-    { value: 'equals', label: 'equals' },
-    { value: 'not_equals', label: 'does not equal' },
-    { value: 'contains', label: 'contains' },
-    { value: 'greater_than', label: 'is greater than' },
-    { value: 'less_than', label: 'is less than' },
-    { value: 'is_filled', label: 'is filled' },
-    { value: 'is_empty', label: 'is empty' },
-  ]
-
-  const actions = [
-    { value: 'show', label: 'Show field' },
-    { value: 'hide', label: 'Hide field' },
-    { value: 'skip', label: 'Skip to field' },
-    { value: 'calculate', label: 'Calculate value' },
-  ]
+  const label = (qid: string) => questions.find((q) => q.id === qid)?.label || 'a question'
 
   const addRule = () => {
-    if (questions.length < 1) return
-    const newRule: LogicRule = {
-      id: Date.now().toString(),
-      condition: { field: questions[0].id, operator: 'equals', value: '' },
-      action: { type: 'show', target: questions[questions.length > 1 ? 1 : 0].id }
-    }
-    setRules([...rules, newRule])
+    if (questions.length === 0) return
+    setRules([...rules, {
+      id: `${Date.now()}`,
+      field: questions[0].id,
+      operator: 'equals',
+      value: '',
+      jumpTo: questions[questions.length - 1].id,
+    }])
+  }
+  const update = (id: string, patch: Partial<LogicRule>) =>
+    setRules(rules.map((r) => (r.id === id ? { ...r, ...patch } : r)))
+  const remove = (id: string) => setRules(rules.filter((r) => r.id !== id))
+
+  const save = async () => {
+    setSaving(true); setSaved(false)
+    const res = await fetch(`/api/forms/${id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ logic: rules }),
+    })
+    setSaving(false)
+    if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2000) }
   }
 
-  const updateRule = (ruleId: string, updates: Partial<LogicRule>) => {
-    setRules(rules.map(rule => 
-      rule.id === ruleId ? { ...rule, ...updates } : rule
-    ))
-  }
-
-  const deleteRule = (ruleId: string) => {
-    setRules(rules.filter(rule => rule.id !== ruleId))
-  }
+  if (loading) return <div className="min-h-screen bg-stone-50 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-stone-400" /></div>
+  if (!form) return <div className="p-8">Form not found</div>
 
   return (
     <div className="min-h-screen bg-stone-50">
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
-        * { font-family: 'DM Sans', sans-serif; }
-      `}</style>
-
-      {/* Header */}
-      <div className="bg-white border-b border-stone-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href={`/dashboard/forms/${id}`} className="p-2 hover:bg-stone-100 rounded-lg">
-                <ArrowLeft className="w-5 h-5" />
-              </Link>
-              <div>
-                <h1 className="text-2xl font-bold text-stone-900">Conditional Logic</h1>
-                <p className="text-sm text-stone-600">{form.title}</p>
-              </div>
+      <div className="bg-white border-b border-stone-200 sticky top-0 z-30">
+        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href={`/dashboard/forms/${id}`} className="text-stone-600 hover:text-stone-900"><ArrowLeft className="w-5 h-5" /></Link>
+            <div>
+              <h1 className="text-xl font-bold text-stone-900">Logic</h1>
+              <p className="text-sm text-stone-500">{form.title}</p>
             </div>
-            <div className="flex items-center gap-3">
-              <Link
-                href={`/f/${id}`}
-                target="_blank"
-                className="flex items-center gap-2 px-4 py-2 border border-stone-300 rounded-lg hover:bg-stone-50"
-              >
-                <Eye className="w-4 h-4" />
-                Preview
-              </Link>
-              <button
-                onClick={saveLogic}
-                disabled={saving}
-                className="flex items-center gap-2 px-6 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800 font-medium disabled:opacity-50"
-              >
-                <Save className="w-4 h-4" />
-                {saving ? 'Saving…' : 'Save Logic'}
-              </button>
-            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link href={`/f/${id}`} target="_blank" className="flex items-center gap-2 px-4 py-2 border border-stone-300 rounded-lg hover:bg-stone-50 text-sm"><Eye className="w-4 h-4" /> Preview</Link>
+            <button onClick={save} disabled={saving} className="flex items-center gap-2 px-5 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800 text-sm font-medium disabled:opacity-50">
+              <Save className="w-4 h-4" /> {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save logic'}
+            </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Info Banner */}
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-8">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Zap className="w-6 h-6 text-blue-600" />
-            </div>
-            <div>
-              <h3 className="font-bold text-blue-900 mb-2">Create Dynamic Forms</h3>
-              <p className="text-blue-800 mb-3">
-                Show or hide fields based on user responses. Create personalized form experiences that adapt in real-time.
-              </p>
-              <div className="flex gap-4 text-sm text-blue-800">
-                <span>• Improve completion rates</span>
-                <span>• Reduce form length</span>
-                <span>• Collect better data</span>
-              </div>
-            </div>
+      <div className="max-w-4xl mx-auto px-6 py-8">
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-6 flex items-start gap-3">
+          <Zap className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+          <p className="text-sm text-blue-800">
+            Jump logic skips respondents to a later question (or ends the form) based on their answers.
+            Rules are checked in order; the first match wins. This runs live in the player.
+          </p>
+        </div>
+
+        {questions.length === 0 ? (
+          <div className="bg-white rounded-xl border border-stone-200 p-10 text-center text-stone-500">
+            Add some fields to your form first, then come back to set up logic.
           </div>
-        </div>
-
-        {/* Rules List */}
-        <div className="space-y-6 mb-8">
-          {rules.map((rule, idx) => (
-            <div key={rule.id} className="bg-white rounded-xl border-2 border-stone-200 p-6">
-              <div className="flex items-start justify-between mb-6">
-                <h3 className="font-bold text-stone-900 flex items-center gap-2">
-                  <span className="w-8 h-8 bg-stone-900 text-white rounded-lg flex items-center justify-center text-sm">
-                    {idx + 1}
-                  </span>
-                  Logic Rule
-                </h3>
-                <button
-                  onClick={() => deleteRule(rule.id)}
-                  className="p-2 hover:bg-red-50 rounded-lg text-red-600"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* IF Section */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-lg font-semibold text-sm">
-                    IF
-                  </span>
-                  <div className="flex-1 grid grid-cols-3 gap-3">
-                    {/* Field Select */}
-                    <select
-                      value={rule.condition.field}
-                      onChange={(e) => updateRule(rule.id, {
-                        condition: { ...rule.condition, field: e.target.value }
-                      })}
-                      className="px-4 py-3 border-2 border-stone-300 rounded-lg focus:outline-none focus:ring-4 focus:ring-stone-200 focus:border-stone-900"
-                    >
-                      {questions.map(q => (
-                        <option key={q.id} value={q.id}>{q.label}</option>
-                      ))}
-                    </select>
-
-                    {/* Operator Select */}
-                    <select
-                      value={rule.condition.operator}
-                      onChange={(e) => updateRule(rule.id, {
-                        condition: { ...rule.condition, operator: e.target.value }
-                      })}
-                      className="px-4 py-3 border-2 border-stone-300 rounded-lg focus:outline-none focus:ring-4 focus:ring-stone-200 focus:border-stone-900"
-                    >
-                      {operators.map(op => (
-                        <option key={op.value} value={op.value}>{op.label}</option>
-                      ))}
-                    </select>
-
-                    {/* Value Input */}
-                    {!['is_filled', 'is_empty'].includes(rule.condition.operator) && (
-                      <input
-                        type="text"
-                        value={rule.condition.value}
-                        onChange={(e) => updateRule(rule.id, {
-                          condition: { ...rule.condition, value: e.target.value }
-                        })}
-                        placeholder="Value..."
-                        className="px-4 py-3 border-2 border-stone-300 rounded-lg focus:outline-none focus:ring-4 focus:ring-stone-200 focus:border-stone-900"
-                      />
-                    )}
+        ) : (
+          <>
+            <div className="space-y-4">
+              {rules.map((rule, idx) => {
+                const op = LOGIC_OPERATORS.find((o) => o.value === rule.operator)
+                return (
+                  <div key={rule.id} className="bg-white rounded-xl border border-stone-200 p-5">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-xs font-semibold text-stone-400">RULE {idx + 1}</span>
+                      <button onClick={() => remove(rule.id)} className="text-stone-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                    </div>
+                    <div className="space-y-3 text-sm">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="px-2.5 py-1 bg-purple-100 text-purple-700 rounded font-semibold">IF</span>
+                        <select value={rule.field} onChange={(e) => update(rule.id, { field: e.target.value })} className="px-3 py-2 border border-stone-300 rounded-lg flex-1 min-w-[140px]">
+                          {questions.map((q) => <option key={q.id} value={q.id}>{q.label}</option>)}
+                        </select>
+                        <select value={rule.operator} onChange={(e) => update(rule.id, { operator: e.target.value as LogicOperator })} className="px-3 py-2 border border-stone-300 rounded-lg">
+                          {LOGIC_OPERATORS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        </select>
+                        {op?.needsValue && (
+                          <input type="text" value={rule.value || ''} onChange={(e) => update(rule.id, { value: e.target.value })} placeholder="value" className="px-3 py-2 border border-stone-300 rounded-lg w-32" />
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="px-2.5 py-1 bg-green-100 text-green-700 rounded font-semibold">THEN jump to</span>
+                        <select value={rule.jumpTo} onChange={(e) => update(rule.id, { jumpTo: e.target.value })} className="px-3 py-2 border border-stone-300 rounded-lg flex-1 min-w-[140px]">
+                          {questions.map((q) => <option key={q.id} value={q.id}>{q.label}</option>)}
+                          <option value="end">⏹ End of form</option>
+                        </select>
+                      </div>
+                      <p className="text-xs text-stone-500 flex items-center gap-1.5 pt-1">
+                        When <strong className="text-stone-700">{label(rule.field)}</strong> {op?.label}
+                        {op?.needsValue && <> “<strong className="text-stone-700">{rule.value}</strong>”</>}
+                        <ArrowRight className="w-3 h-3" /> jump to <strong className="text-stone-700">{rule.jumpTo === 'end' ? 'the end' : label(rule.jumpTo)}</strong>
+                      </p>
+                    </div>
                   </div>
-                </div>
-
-                {/* THEN Section */}
-                <div className="flex items-center gap-3">
-                  <span className="px-3 py-1 bg-green-100 text-green-700 rounded-lg font-semibold text-sm">
-                    THEN
-                  </span>
-                  <div className="flex-1 grid grid-cols-2 gap-3">
-                    {/* Action Type */}
-                    <select
-                      value={rule.action.type}
-                      onChange={(e) => updateRule(rule.id, {
-                        action: { ...rule.action, type: e.target.value as any }
-                      })}
-                      className="px-4 py-3 border-2 border-stone-300 rounded-lg focus:outline-none focus:ring-4 focus:ring-stone-200 focus:border-stone-900"
-                    >
-                      {actions.map(action => (
-                        <option key={action.value} value={action.value}>{action.label}</option>
-                      ))}
-                    </select>
-
-                    {/* Target Field */}
-                    <select
-                      value={rule.action.target}
-                      onChange={(e) => updateRule(rule.id, {
-                        action: { ...rule.action, target: e.target.value }
-                      })}
-                      className="px-4 py-3 border-2 border-stone-300 rounded-lg focus:outline-none focus:ring-4 focus:ring-stone-200 focus:border-stone-900"
-                    >
-                      {questions
-                        .filter(q => q.id !== rule.condition.field)
-                        .map(q => (
-                          <option key={q.id} value={q.id}>{q.label}</option>
-                        ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Visual Preview */}
-              <div className="mt-6 p-4 bg-stone-50 rounded-lg border border-stone-200">
-                <p className="text-sm text-stone-600">
-                  <strong>Plain English:</strong> When{' '}
-                  <span className="font-semibold text-stone-900">
-                    {questions.find(q => q.id === rule.condition.field)?.label}
-                  </span>{' '}
-                  {rule.condition.operator.replace('_', ' ')}{' '}
-                  {rule.condition.value && (
-                    <span className="font-semibold text-stone-900">"{rule.condition.value}"</span>
-                  )}, then {rule.action.type}{' '}
-                  <span className="font-semibold text-stone-900">
-                    {questions.find(q => q.id === rule.action.target)?.label}
-                  </span>
-                </p>
-              </div>
+                )
+              })}
             </div>
-          ))}
-        </div>
 
-        {/* Add Rule Button */}
-        <button
-          onClick={addRule}
-          className="w-full py-4 border-2 border-dashed border-stone-300 rounded-xl hover:border-stone-400 hover:bg-stone-50 transition-all flex items-center justify-center gap-2 text-stone-600 hover:text-stone-900 font-medium"
-        >
-          <Plus className="w-5 h-5" />
-          Add Logic Rule
-        </button>
-
-        {/* Example Templates */}
-        <div className="mt-12 bg-white rounded-xl border border-stone-200 p-6">
-          <h3 className="font-bold text-stone-900 mb-4">Common Logic Patterns</h3>
-          <div className="grid md:grid-cols-2 gap-4">
-            {[
-              {
-                name: 'Show follow-up question',
-                desc: 'If answer is "Yes", show additional details field',
-                example: 'IF Q1 equals "Yes" THEN Show Q2'
-              },
-              {
-                name: 'Skip irrelevant sections',
-                desc: 'Skip questions that don\'t apply to the user',
-                example: 'IF Q1 equals "No" THEN Skip to Q5'
-              },
-              {
-                name: 'Calculate totals',
-                desc: 'Automatically calculate based on inputs',
-                example: 'IF Q1 is filled THEN Calculate Q3 = Q1 + Q2'
-              },
-              {
-                name: 'Conditional requirements',
-                desc: 'Make fields required based on other answers',
-                example: 'IF Q1 equals "Business" THEN Show Q4'
-              },
-            ].map((template, i) => (
-              <div key={i} className="p-4 border border-stone-200 rounded-lg hover:bg-stone-50 cursor-pointer">
-                <h4 className="font-semibold text-stone-900 mb-1">{template.name}</h4>
-                <p className="text-sm text-stone-600 mb-2">{template.desc}</p>
-                <code className="text-xs bg-stone-100 text-stone-700 px-2 py-1 rounded">
-                  {template.example}
-                </code>
-              </div>
-            ))}
-          </div>
-        </div>
+            <button onClick={addRule} className="w-full mt-4 py-4 border-2 border-dashed border-stone-300 rounded-xl hover:border-stone-400 hover:bg-white transition-all flex items-center justify-center gap-2 text-stone-600 font-medium">
+              <Plus className="w-5 h-5" /> Add logic rule
+            </button>
+          </>
+        )}
       </div>
     </div>
   )

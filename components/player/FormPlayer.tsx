@@ -8,6 +8,7 @@ import { ArrowRight, ArrowLeft, Check } from 'lucide-react'
 import {
   type FormTheme, DEFAULT_THEME, fontStack, googleFontHref, buttonRadius, backgroundCss,
 } from '@/lib/themes'
+import { nextQuestionId, progressFor, type LogicRule } from '@/lib/logic'
 
 interface FormSettings {
   showProgressBar?: boolean
@@ -23,13 +24,16 @@ interface FormPlayerProps {
   questions: Question[]
   settings?: FormSettings
   theme?: FormTheme
+  logic?: LogicRule[]
 }
 
 export default function FormPlayer({
-  formId, formTitle, formDescription, questions, settings = {}, theme = DEFAULT_THEME,
+  formId, formTitle, formDescription, questions, settings = {}, theme = DEFAULT_THEME, logic = [],
 }: FormPlayerProps) {
+  const orderedIds = questions.map((q) => q.id)
   const [started, setStarted] = useState(false)
-  const [index, setIndex] = useState(0)
+  const [currentId, setCurrentId] = useState<string>(orderedIds[0] || '')
+  const [history, setHistory] = useState<string[]>([])
   const [answers, setAnswers] = useState<Record<string, any>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
@@ -39,10 +43,12 @@ export default function FormPlayer({
 
   const showProgressBar = settings.showProgressBar !== false
   const welcomeEnabled = settings.welcome?.enabled !== false
-  const current = questions[index]
-  const isFirst = index === 0
-  const isLast = index === questions.length - 1
-  const progress = questions.length ? ((index + 1) / questions.length) * 100 : 0
+  const current = questions.find((q) => q.id === currentId)
+  const index = orderedIds.indexOf(currentId)
+  const isFirst = history.length === 0
+  // Last when the logic engine would end the form after this question.
+  const isLast = nextQuestionId(currentId, orderedIds, answers, logic) === 'end'
+  const progress = progressFor(currentId, orderedIds)
 
   const [sessionId] = useState(() =>
     typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -75,7 +81,7 @@ export default function FormPlayer({
   useEffect(() => { track('view') }, [track])
   useEffect(() => {
     if (started && current) track('step', { question_id: current.id, position: index })
-  }, [started, index, current, track])
+  }, [started, currentId, current, index, track])
 
   const setAnswer = (qid: string, value: any) => {
     setAnswers((p) => ({ ...p, [qid]: value }))
@@ -108,14 +114,26 @@ export default function FormPlayer({
 
   const goNext = () => {
     if (!validate()) return
-    if (isLast) { handleSubmit(); return }
+    const next = nextQuestionId(currentId, orderedIds, answers, logic)
+    if (next === 'end') { handleSubmit(); return }
     setAnim('out-up')
-    setTimeout(() => { setIndex((i) => i + 1); setAnim('in') }, 180)
+    setTimeout(() => {
+      setHistory((h) => [...h, currentId])
+      setCurrentId(next)
+      setAnim('in')
+    }, 180)
   }
   const goPrev = () => {
-    if (isFirst) return
+    if (history.length === 0) return
     setAnim('out-down')
-    setTimeout(() => { setIndex((i) => i - 1); setAnim('in') }, 180)
+    setTimeout(() => {
+      setHistory((h) => {
+        const prev = h[h.length - 1]
+        setCurrentId(prev)
+        return h.slice(0, -1)
+      })
+      setAnim('in')
+    }, 180)
   }
 
   useEffect(() => {
@@ -209,7 +227,7 @@ export default function FormPlayer({
 
       <div className="flex-1 flex items-center justify-center px-6 py-16">
         <div
-          key={index}
+          key={currentId}
           className="w-full max-w-2xl"
           style={{ animation: `${anim === 'in' ? 'sf-in' : anim === 'out-up' ? 'sf-out-up' : 'sf-out-down'} 0.22s ease` }}
         >
