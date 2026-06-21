@@ -8,11 +8,19 @@ import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
 } from 'recharts'
 
+interface ReactionQuestion {
+  questionId: string
+  label: string
+  total: number
+  emojis: { emoji: string; count: number }[]
+}
+
 interface Analytics {
   totals: { views: number; submissions: number; completionRate: number }
   responsesByDay: { date: string; count: number }[]
   funnel: { questionId: string; label: string; position: number; reached: number }[]
   fieldCount: number
+  reactions?: { total: number; questions: ReactionQuestion[] }
 }
 
 export default function FormAnalyticsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -141,6 +149,37 @@ export default function FormAnalyticsPage({ params }: { params: Promise<{ id: st
             </div>
           )}
         </div>
+
+        {/* Question reactions */}
+        {data?.reactions && data.reactions.questions.length > 0 && (
+          <div className="bg-white rounded-xl border border-stone-200 p-6">
+            <h2 className="font-bold text-stone-900 mb-1">Question reactions</h2>
+            <p className="text-sm text-stone-500 mb-6">
+              How people reacted as they answered · {data.reactions.total} total
+            </p>
+            <div className="space-y-4">
+              {data.reactions.questions.map((q, i) => (
+                <div key={q.questionId} className="flex items-start justify-between gap-4">
+                  <span className="text-sm text-stone-700 truncate pr-2 min-w-0">
+                    <span className="text-stone-400 mr-2">{i + 1}.</span>{q.label || 'Untitled'}
+                  </span>
+                  <div className="flex items-center gap-3 flex-wrap justify-end shrink-0">
+                    {q.emojis.map((e) => (
+                      <span
+                        key={e.emoji}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-stone-50 border border-stone-200 rounded-full text-sm"
+                        title={`${e.count} ${e.count === 1 ? 'reaction' : 'reactions'}`}
+                      >
+                        <span className="text-base leading-none">{e.emoji}</span>
+                        <span className="text-stone-600 tabular-nums">{e.count}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

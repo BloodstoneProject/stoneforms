@@ -53,6 +53,7 @@ interface FormSettings {
   quiz?: QuizConfig
   schedule?: FormSchedule
   recaptcha?: { enabled?: boolean }
+  gamify?: { enabled?: boolean; reactions?: boolean; milestones?: boolean }
   // Unknown keys written by other features (emailBranding, integrations, …) are
   // preserved on save — see persistMeta / updateSetting spreads.
   [key: string]: any
@@ -185,6 +186,16 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
     setForm((prev) => prev ? {
       ...prev,
       settings: { ...(prev.settings || {}), recaptcha: { ...((prev.settings as any)?.recaptcha || {}), enabled } },
+    } : prev)
+  }
+
+  // ---- Gamification settings ----
+  // Spread prev.settings so other keys (quiz, schedule, recaptcha, emailBranding,
+  // …) are never dropped when the PATCH replaces settings wholesale.
+  const updateGamifySetting = (key: 'enabled' | 'reactions' | 'milestones', value: boolean) => {
+    setForm((prev) => prev ? {
+      ...prev,
+      settings: { ...(prev.settings || {}), gamify: { ...((prev.settings as any)?.gamify || {}), [key]: value } },
     } : prev)
   }
 
@@ -733,6 +744,44 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                     <p className="text-xs text-stone-400 mt-1 pl-6">
                       Only active once the <code>NEXT_PUBLIC_RECAPTCHA_SITE_KEY</code> and <code>RECAPTCHA_SECRET_KEY</code> env vars are configured.
                     </p>
+                  </div>
+
+                  {/* Gamified experience */}
+                  <div className="pt-3 border-t border-stone-100">
+                    <label className="flex items-center gap-3 cursor-pointer mb-2">
+                      <input
+                        type="checkbox"
+                        checked={form.settings?.gamify?.enabled !== false}
+                        onChange={(e) => updateGamifySetting('enabled', e.target.checked)}
+                        className="rounded"
+                      />
+                      <span className="text-sm font-medium text-stone-700">Gamified experience</span>
+                    </label>
+                    <p className="text-xs text-stone-400 mb-2 pl-6">
+                      Adds playful touches as people answer — celebratory confetti at milestones and an emoji reaction bar on each question.
+                    </p>
+                    {form.settings?.gamify?.enabled !== false && (
+                      <div className="space-y-2 pl-6">
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={form.settings?.gamify?.reactions !== false}
+                            onChange={(e) => updateGamifySetting('reactions', e.target.checked)}
+                            className="rounded"
+                          />
+                          <span className="text-sm text-stone-700">Emoji reactions on each question</span>
+                        </label>
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={form.settings?.gamify?.milestones !== false}
+                            onChange={(e) => updateGamifySetting('milestones', e.target.checked)}
+                            className="rounded"
+                          />
+                          <span className="text-sm text-stone-700">Milestone celebrations (confetti)</span>
+                        </label>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

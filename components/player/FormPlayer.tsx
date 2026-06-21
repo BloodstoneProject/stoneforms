@@ -5,6 +5,11 @@ import { Question } from '@/types'
 import { QuestionRenderer } from '@/components/player/QuestionRenderer'
 import { ThankYouScreen } from '@/components/player/ThankYouScreen'
 import { QuizResultScreen } from '@/components/player/QuizResultScreen'
+import { Confetti, type ConfettiHandle } from '@/components/player/Confetti'
+import { ReactionBar } from '@/components/player/ReactionBar'
+import { GamifyHud } from '@/components/player/GamifyHud'
+import { MilestoneBanner } from '@/components/player/MilestoneBanner'
+import { RewardBadge } from '@/components/player/RewardScreen'
 import { ArrowRight, ArrowLeft, Check } from 'lucide-react'
 import {
   type FormTheme, DEFAULT_THEME, fontStack, googleFontHref, buttonRadius, backgroundCss,
@@ -13,6 +18,16 @@ import { nextQuestionId, progressFor, type LogicRule } from '@/lib/logic'
 import type { QuizConfig, QuizOutcome } from '@/lib/quiz'
 import { computeCalc } from '@/lib/calc'
 import type { FormAvailability } from '@/lib/form-controls'
+import {
+  XP_PER_ANSWER, MILESTONE_BONUS, COMPLETION_BONUS,
+  milestonesCrossed, milestoneLabel, bumpStreak, type ReactionEmoji,
+} from '@/lib/gamify'
+
+interface GamifySettings {
+  enabled?: boolean
+  reactions?: boolean
+  milestones?: boolean
+}
 
 interface FormSettings {
   showProgressBar?: boolean
@@ -21,6 +36,10 @@ interface FormSettings {
   welcome?: { enabled?: boolean; title?: string; description?: string; buttonText?: string }
   ending?: { title?: string; message?: string }
   quiz?: QuizConfig
+  // Gamification config (owned by the other agent's builder toggle). When the
+  // whole `gamify` object is undefined we DEFAULT TO ON (showcase the feature).
+  // Set `gamify.enabled === false` for the plain, original experience.
+  gamify?: GamifySettings
 }
 
 declare global {
@@ -152,6 +171,35 @@ export default function FormPlayer({
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [anim, setAnim] = useState<'in' | 'out-up' | 'out-down'>('in')
 
+  // ---- Gamification ----------------------------------------------------
+  // Default ON when settings.gamify is undefined (showcase). Off entirely when
+  // gamify.enabled === false (then nothing below renders or runs).
+  const gamifyOn = settings.gamify?.enabled !== false
+  const reactionsOn = gamifyOn && settings.gamify?.reactions !== false
+  const milestonesOn = gamifyOn && settings.gamify?.milestones !== false
+  const [reduceMotion, setReduceMotion] = useState(false)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    setReduceMotion(mq.matches)
+    const onChange = (e: MediaQueryListEvent) => setReduceMotion(e.matches)
+    mq.addEventListener?.('change', onChange)
+    return () => mq.removeEventListener?.('change', onChange)
+  }, [])
+
+  // Per-question reactions (👍 ❤️ 😮 🔥). Sent to the submit route as `reactions`.
+  const [reactions, setReactions] = useState<Record<string, ReactionEmoji>>({})
+  // XP, streak, and which questions we've already awarded XP for (so Back/forward
+  // re-visits don't double-count). Milestones celebrated once each.
+  const [xp, setXp] = useState(0)
+  const [streak, setStreak] = useState(0)
+  const answeredXpRef = useRef<Set<string>>(new Set())
+  const celebratedRef = useRef<number[]>([])
+  const [banner, setBanner] = useState<{ token: number; label: string; xp: number } | null>(null)
+  const [celebrating, setCelebrating] = useState(false) // interactive tap-to-pop overlay
+  const celebrateTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const confettiRef = useRef<ConfettiHandle | null>(null)
+
   const showProgressBar = settings.showProgressBar !== false
   const welcomeEnabled = settings.welcome?.enabled !== false
   const current = questions.find((q) => q.id === currentId)
@@ -260,6 +308,81 @@ export default function FormPlayer({
     if (errors[qid]) setErrors((p) => { const n = { ...p }; delete n[qid]; return n })
   }
 
+  // Confetti palette derived from the theme so celebrations feel cohesive, not
+  // bolted-on. Primary + button + a couple of tints for variety.
+  const confettiColors = useMemo(() => {
+    const { primary, button, text } = theme.colors
+    const pal = [primary, button, primary, '#f59e0b', '#10b981']
+    return Array.from(new Set(pal.filter(Boolean).concat(text)))
+  }, [theme.colors])
+
+  // Toggle a reaction for a question + a tiny localized confetti pop at the tap.
+  const handleReaction = useCallback(
+    (qid: string, emoji: ReactionEmoji, point: { x: number; y: number }) => {
+      setReactions((prev) => {
+        const next = { ...prev }
+        if (next[qid] === emoji) delete next[qid]
+        else next[qid] = emoji
+        return next
+      })
+      if (!reduceMotion) confettiRef.current?.pop(point.x, point.y, confettiColors)
+    },
+    [reduceMotion, confettiColors]
+  )
+
+  // Clear any pending celebration timer on unmount.
+  useEffect(() => () => { if (celebrateTimer.current) clearTimeout(celebrateTimer.current) }, [])
+
+  // Start a brief interactive (tap-to-pop) celebration overlay.
+  const startCelebration = useCallback(() => {
+    if (reduceMotion) return
+    setCelebrating(true)
+    if (celebrateTimer.current) clearTimeout(celebrateTimer.current)
+    celebrateTimer.current = setTimeout(() => setCelebrating(false), 2600)
+  }, [reduceMotion])
+
+  // Award XP for advancing past a question (once per question id) and check for
+  // milestone crossings using progress. `prevProgress`/`nextProgress` are percent.
+  const awardForAdvance = useCallback(
+    (questionId: string, prevProgress: number, nextProgress: number) => {
+      if (!gamifyOn) return
+      // XP for a newly-answered question + streak bump.
+      let gained = 0
+      if (questionId && !answeredXpRef.current.has(questionId)) {
+        answeredXpRef.current.add(questionId)
+        gained += XP_PER_ANSWER
+      }
+      setStreak((s) => bumpStreak(s))
+
+      // Milestone detection (fires once per threshold).
+      let bonus = 0
+      if (milestonesOn) {
+        const crossed = milestonesCrossed(prevProgress, nextProgress, celebratedRef.current)
+        if (crossed.length > 0) {
+          const top = crossed[crossed.length - 1]
+          celebratedRef.current = [...celebratedRef.current, ...crossed]
+          bonus = crossed.length * MILESTONE_BONUS
+          setBanner({ token: Date.now(), label: milestoneLabel(top), xp: bonus })
+          if (!reduceMotion) {
+            confettiRef.current?.fire({ count: 110, power: 11, colors: confettiColors })
+            startCelebration()
+          }
+        }
+      }
+      if (gained + bonus > 0) setXp((x) => x + gained + bonus)
+    },
+    [gamifyOn, milestonesOn, reduceMotion, confettiColors, startCelebration]
+  )
+
+  // A question is "reactable" when it's an actual answerable question (not a
+  // structural/display field). Reactions never appear on these.
+  const isReactable = (q: Question): boolean =>
+    q.type !== 'statement' &&
+    q.type !== 'page_break' &&
+    q.type !== 'hidden' &&
+    q.type !== 'calculator' &&
+    q.type !== 'payment'
+
   // Pure validation for a single question — returns an error message, or null
   // when the answer is acceptable. Shared by the single-question path and the
   // paged path (which validates every question on a page).
@@ -318,7 +441,27 @@ export default function FormPlayer({
   const goNext = () => {
     if (!validate()) return
     const next = nextQuestionId(currentId, orderedIds, answers, logic)
-    if (next === 'end') { handleSubmit(); return }
+    // Small celebratory pop on the button as we advance (skipped on submit, which
+    // gets the finale on the reward screen instead).
+    if (gamifyOn && next !== 'end' && !reduceMotion) {
+      confettiRef.current?.fire({ count: 14, power: 7, colors: confettiColors })
+    }
+    if (next === 'end') {
+      // Award the final question + completion bonus before submitting.
+      if (gamifyOn) {
+        if (currentId && !answeredXpRef.current.has(currentId)) {
+          answeredXpRef.current.add(currentId)
+          setXp((x) => x + XP_PER_ANSWER + COMPLETION_BONUS)
+        } else {
+          setXp((x) => x + COMPLETION_BONUS)
+        }
+        setStreak((s) => bumpStreak(s))
+      }
+      handleSubmit(); return
+    }
+    const prevP = progressFor(currentId, orderedIds)
+    const nextP = progressFor(next, orderedIds)
+    awardForAdvance(currentId, prevP, nextP)
     setAnim('out-up')
     setTimeout(() => {
       setHistory((h) => [...h, currentId])
@@ -328,6 +471,7 @@ export default function FormPlayer({
   }
   const goPrev = () => {
     if (history.length === 0) return
+    if (gamifyOn) setStreak(0) // going Back breaks the streak
     setAnim('out-down')
     setTimeout(() => {
       setHistory((h) => {
@@ -357,7 +501,46 @@ export default function FormPlayer({
   }
   const goNextPage = () => {
     if (!validatePage()) return
-    if (isLastPage) { handleSubmit(); return }
+    // Award XP for each answerable question on the page (once each) + streak.
+    const awardPageXp = () => {
+      if (!gamifyOn) return 0
+      let gained = 0
+      for (const q of pages[safePage] || []) {
+        if (q.type === 'statement' || q.type === 'page_break') continue
+        if (!answeredXpRef.current.has(q.id)) {
+          answeredXpRef.current.add(q.id)
+          gained += XP_PER_ANSWER
+        }
+      }
+      setStreak((s) => bumpStreak(s))
+      return gained
+    }
+    if (isLastPage) {
+      if (gamifyOn) setXp((x) => x + awardPageXp() + COMPLETION_BONUS)
+      handleSubmit(); return
+    }
+    if (gamifyOn && !reduceMotion) {
+      confettiRef.current?.fire({ count: 14, power: 7, colors: confettiColors })
+    }
+    // Page-based milestone progress: percent through the pages.
+    const prevP = Math.round(((safePage + 1) / pages.length) * 100)
+    const nextP = Math.round(((safePage + 2) / pages.length) * 100)
+    const pageGained = awardPageXp()
+    let bonus = 0
+    if (milestonesOn) {
+      const crossed = milestonesCrossed(prevP, nextP, celebratedRef.current)
+      if (crossed.length > 0) {
+        const top = crossed[crossed.length - 1]
+        celebratedRef.current = [...celebratedRef.current, ...crossed]
+        bonus = crossed.length * MILESTONE_BONUS
+        setBanner({ token: Date.now(), label: milestoneLabel(top), xp: bonus })
+        if (!reduceMotion) {
+          confettiRef.current?.fire({ count: 110, power: 11, colors: confettiColors })
+          startCelebration()
+        }
+      }
+    }
+    if (gamifyOn && pageGained + bonus > 0) setXp((x) => x + pageGained + bonus)
     setAnim('out-up')
     setTimeout(() => {
       setPageIndex(Math.min(safePage + 1, pages.length - 1))
@@ -367,6 +550,7 @@ export default function FormPlayer({
   }
   const goPrevPage = () => {
     if (safePage === 0) return
+    if (gamifyOn) setStreak(0)
     setAnim('out-down')
     setTimeout(() => {
       setPageIndex(Math.max(safePage - 1, 0))
@@ -421,6 +605,8 @@ export default function FormPlayer({
           responses: answers,
           session_id: sessionId,
           metadata: Object.keys(urlParams).length ? { url_params: urlParams } : {},
+          // Per-question reactions (👍 ❤️ 😮 🔥). The submit route reads body.reactions.
+          ...(Object.keys(reactions).length ? { reactions } : {}),
           ...(recaptchaToken ? { recaptchaToken } : {}),
         }),
       })
@@ -464,23 +650,51 @@ export default function FormPlayer({
     <button
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex items-center gap-2 px-7 py-3.5 font-semibold text-lg transition-transform active:scale-95 disabled:opacity-60 shadow-sm hover:shadow-md"
+      className={`sf-cta inline-flex items-center gap-2 px-7 py-3.5 font-semibold text-lg disabled:opacity-60 shadow-sm hover:shadow-md ${gamifyOn && !reduceMotion ? 'sf-cta-spring' : 'transition-transform active:scale-95'}`}
       style={{ backgroundColor: c.button, color: c.buttonText, borderRadius: radius }}
     >
       {label}
     </button>
   )
 
+  // Shared gamification overlay: the celebration confetti canvas (interactive
+  // tap-to-pop only while `celebrating`), the HUD, and the milestone banner.
+  // Rendered in both single-question and page modes. No-op when gamify is off.
+  const gamifyOverlay = gamifyOn ? (
+    <>
+      <Confetti ref={confettiRef} colors={confettiColors} interactive={celebrating && !reduceMotion} zIndex={celebrating ? 60 : 30} />
+      <GamifyHud xp={xp} streak={streak} primary={c.primary} text={c.text} reduceMotion={reduceMotion} />
+      <MilestoneBanner
+        token={banner?.token ?? null}
+        label={banner?.label ?? ''}
+        xpGain={banner?.xp ?? 0}
+        primary={c.primary}
+        buttonText={c.buttonText}
+        reduceMotion={reduceMotion}
+      />
+    </>
+  ) : null
+
   if (complete) {
     if (quizResult) {
+      // Preserve the quiz results screen exactly; layer XP/confetti AROUND it.
       return (
-        <QuizResultScreen
-          total={quizResult.total}
-          max={quizResult.max}
-          outcome={quizResult.outcome}
-          hideBranding={hideBranding}
-          theme={{ primaryColor: c.primary, backgroundColor: bg, textColor: c.text, font: ff, buttonRadius: radius }}
-        />
+        <div className="relative">
+          {gamifyOn && <Confetti ref={confettiRef} colors={confettiColors} zIndex={5} />}
+          {gamifyOn && <QuizFinale fire={() => confettiRef.current?.finale(confettiColors)} />}
+          <QuizResultScreen
+            total={quizResult.total}
+            max={quizResult.max}
+            outcome={quizResult.outcome}
+            hideBranding={hideBranding}
+            theme={{ primaryColor: c.primary, backgroundColor: bg, textColor: c.text, font: ff, buttonRadius: radius }}
+          />
+          {gamifyOn && (
+            <div className="fixed left-0 right-0 bottom-16 flex justify-center px-4 pointer-events-none" style={{ zIndex: 10 }}>
+              <RewardBadge xp={xp} primary={c.primary} text={c.text} reduceMotion={reduceMotion} compact />
+            </div>
+          )}
+        </div>
       )
     }
     return (
@@ -489,6 +703,8 @@ export default function FormPlayer({
         message={settings.ending?.message || settings.customEndingMessage}
         hideBranding={hideBranding}
         theme={{ primaryColor: c.primary, backgroundColor: c.background, textColor: c.text, font: ff, buttonRadius: radius }}
+        gamify={gamifyOn ? { xp } : undefined}
+        confettiColors={confettiColors}
       />
     )
   }
@@ -552,6 +768,7 @@ export default function FormPlayer({
     const pageProgress = pages.length > 0 ? Math.round(((safePageIndex + 1) / pages.length) * 100) : 0
     return (
       <div className="min-h-screen flex flex-col" style={{ background: bg, fontFamily: ff }}>
+        {gamifyOverlay}
         {showProgressBar && (
           <div className="fixed top-0 left-0 right-0 h-1.5 z-50" style={{ backgroundColor: `${c.text}14` }}>
             <div className="h-full transition-all duration-300" style={{ width: `${pageProgress}%`, backgroundColor: c.primary }} />
@@ -600,15 +817,25 @@ export default function FormPlayer({
 
             <div className="space-y-12">
               {page.map((q) => (
-                <QuestionRenderer
-                  key={q.id}
-                  question={q}
-                  value={answers[q.id]}
-                  error={errors[q.id]}
-                  onChange={(v) => setAnswer(q.id, v)}
-                  allAnswers={answers}
-                  theme={{ primaryColor: c.primary, backgroundColor: c.background, textColor: c.text }}
-                />
+                <div key={q.id}>
+                  <QuestionRenderer
+                    question={q}
+                    value={answers[q.id]}
+                    error={errors[q.id]}
+                    onChange={(v) => setAnswer(q.id, v)}
+                    allAnswers={answers}
+                    theme={{ primaryColor: c.primary, backgroundColor: c.background, textColor: c.text }}
+                  />
+                  {reactionsOn && isReactable(q) && (
+                    <ReactionBar
+                      value={reactions[q.id]}
+                      onSelect={(emoji, point) => handleReaction(q.id, emoji, point)}
+                      primary={c.primary}
+                      text={c.text}
+                      reduceMotion={reduceMotion}
+                    />
+                  )}
+                </div>
               ))}
             </div>
 
@@ -644,6 +871,12 @@ export default function FormPlayer({
           @keyframes sf-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
           @keyframes sf-out-up { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-16px); } }
           @keyframes sf-out-down { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(16px); } }
+          .sf-cta { transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease; }
+          .sf-cta-spring:hover:not(:disabled) { transform: translateY(-2px) scale(1.02); }
+          .sf-cta-spring:active:not(:disabled) { transform: translateY(0) scale(0.93); }
+          @media (prefers-reduced-motion: reduce) {
+            .sf-cta, .sf-cta-spring { transition: none !important; transform: none !important; }
+          }
         `}</style>
       </div>
     )
@@ -659,6 +892,7 @@ export default function FormPlayer({
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: bg, fontFamily: ff }}>
+      {gamifyOverlay}
       {showProgressBar && (
         <div className="fixed top-0 left-0 right-0 h-1.5 z-50" style={{ backgroundColor: `${c.text}14` }}>
           <div className="h-full transition-all duration-300" style={{ width: `${progress}%`, backgroundColor: c.primary }} />
@@ -716,6 +950,16 @@ export default function FormPlayer({
             theme={{ primaryColor: c.primary, backgroundColor: c.background, textColor: c.text }}
           />
 
+          {reactionsOn && current && isReactable(current) && (
+            <ReactionBar
+              value={reactions[current.id]}
+              onSelect={(emoji, point) => handleReaction(current.id, emoji, point)}
+              primary={c.primary}
+              text={c.text}
+              reduceMotion={reduceMotion}
+            />
+          )}
+
           {submitError && (
             <div className="mt-5 p-3 rounded-lg text-sm" style={{ backgroundColor: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca' }}>
               {submitError}
@@ -751,7 +995,28 @@ export default function FormPlayer({
         @keyframes sf-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes sf-out-up { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-16px); } }
         @keyframes sf-out-down { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(16px); } }
+        .sf-cta { transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease; }
+        .sf-cta-spring:hover:not(:disabled) { transform: translateY(-2px) scale(1.02); }
+        .sf-cta-spring:active:not(:disabled) { transform: translateY(0) scale(0.93); }
+        @media (prefers-reduced-motion: reduce) {
+          .sf-cta, .sf-cta-spring { transition: none !important; transform: none !important; }
+        }
       `}</style>
     </div>
   )
+}
+
+// Fires the confetti finale once when the quiz result screen mounts. Kept as a
+// tiny component so the effect runs exactly once around the (unchanged)
+// QuizResultScreen without touching it.
+function QuizFinale({ fire }: { fire: () => void }) {
+  const done = useRef(false)
+  useEffect(() => {
+    if (done.current) return
+    done.current = true
+    const t = setTimeout(() => fire(), 320)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  return null
 }

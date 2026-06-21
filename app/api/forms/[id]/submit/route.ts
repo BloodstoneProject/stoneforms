@@ -179,6 +179,29 @@ export async function POST(
       safeMetadata = { ...safeMetadata, quiz: quizMeta }
     }
 
+    // ---- Per-question reactions (gamification feedback, pure analytics) ----
+    // The player may send body.reactions = { [fieldId]: emoji }. Reactions are
+    // optional, never required, never affect validation/scoring. Sanitize hard:
+    // only whitelisted emojis, only keys that match a real field id, capped.
+    // Merge into safeMetadata WITHOUT clobbering quiz / url_params keys.
+    const REACTION_EMOJIS = new Set(['👍', '❤️', '😮', '🔥', '😍', '🎉'])
+    const incomingReactions = (body as any)?.reactions
+    if (incomingReactions && typeof incomingReactions === 'object' && !Array.isArray(incomingReactions)) {
+      const validFieldIds = new Set((fields || []).map((f) => f.id))
+      const cleanReactions: Record<string, string> = {}
+      let count = 0
+      for (const [fieldId, emoji] of Object.entries(incomingReactions)) {
+        if (count >= 200) break // cap to blunt abuse
+        if (validFieldIds.has(fieldId) && typeof emoji === 'string' && REACTION_EMOJIS.has(emoji)) {
+          cleanReactions[fieldId] = emoji
+          count++
+        }
+      }
+      if (count > 0) {
+        safeMetadata = { ...safeMetadata, reactions: cleanReactions }
+      }
+    }
+
     // Detect a payment field — its presence makes this a pay-on-submit form. The
     // submission is stored as 'pending' (awaiting payment) when we'll actually
     // create a Stripe Checkout below; the Connect webhook flips it to 'completed'

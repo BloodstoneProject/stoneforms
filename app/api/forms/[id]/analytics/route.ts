@@ -92,10 +92,51 @@ export async function GET(
     return { questionId: f.id, label: f.label, position: index, reached }
   })
 
+  // ---- Reactions rollup ----
+  // Aggregate metadata.reactions ({ [fieldId]: emoji }) across this form's
+  // submissions into per-question emoji counts. Owner-scoped (this route is
+  // owner-authed) so RLS lets us read the rows. Old submissions without
+  // metadata.reactions simply contribute nothing.
+  const { data: reactionRows } = await supabase
+    .from('submissions')
+    .select('metadata')
+    .eq('form_id', params.id)
+    .limit(20000)
+
+  const labelById: Record<string, string> = {}
+  for (const f of fields || []) labelById[f.id] = f.label || 'Untitled'
+
+  // perQuestion: fieldId -> { emoji -> count }
+  const perQuestionCounts: Record<string, Record<string, number>> = {}
+  let totalReactions = 0
+  for (const row of reactionRows || []) {
+    const reactions = (row?.metadata as any)?.reactions
+    if (!reactions || typeof reactions !== 'object') continue
+    for (const [fieldId, emoji] of Object.entries(reactions)) {
+      if (typeof emoji !== 'string') continue
+      if (!perQuestionCounts[fieldId]) perQuestionCounts[fieldId] = {}
+      perQuestionCounts[fieldId][emoji] = (perQuestionCounts[fieldId][emoji] || 0) + 1
+      totalReactions++
+    }
+  }
+
+  // Shape per question in field order, only including questions that got reactions.
+  const reactionQuestions = (fields || [])
+    .filter((f) => perQuestionCounts[f.id])
+    .map((f) => {
+      const counts = perQuestionCounts[f.id]
+      const emojis = Object.entries(counts)
+        .map(([emoji, count]) => ({ emoji, count }))
+        .sort((a, b) => b.count - a.count)
+      const total = emojis.reduce((sum, e) => sum + e.count, 0)
+      return { questionId: f.id, label: labelById[f.id] || 'Untitled', total, emojis }
+    })
+
   return NextResponse.json({
     totals: { views: totalViews, submissions: totalSubmissions, completionRate },
     responsesByDay,
     funnel,
     fieldCount: (fields || []).length,
+    reactions: { total: totalReactions, questions: reactionQuestions },
   })
 }
