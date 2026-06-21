@@ -4,7 +4,8 @@ import { useParams } from 'next/navigation'
 import { use, useState, useEffect } from 'react'
 import { Loader2 } from 'lucide-react'
 import FormPlayer from '@/components/player/FormPlayer'
-import { dbFieldsToQuestions, dbThemeToPlayerTheme, type DbField } from '@/lib/form-mapping'
+import { dbFieldsToQuestions, type DbField } from '@/lib/form-mapping'
+import { normalizeTheme } from '@/lib/themes'
 
 interface PublicForm {
   id: string
@@ -66,7 +67,7 @@ export default function PublicFormPage({ params }: { params: Promise<{ id: strin
   }
 
   const questions = dbFieldsToQuestions(fields)
-  const playerTheme = dbThemeToPlayerTheme(form.theme)
+  const theme = normalizeTheme(form.theme)
 
   return (
     <FormPlayer
@@ -75,11 +76,7 @@ export default function PublicFormPage({ params }: { params: Promise<{ id: strin
       formDescription={form.description}
       questions={questions}
       settings={form.settings || {}}
-      theme={{
-        primaryColor: playerTheme.primaryColor,
-        backgroundColor: playerTheme.backgroundColor,
-        textColor: playerTheme.textColor,
-      }}
+      theme={theme}
     />
   )
 }

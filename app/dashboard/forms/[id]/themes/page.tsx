@@ -1,420 +1,184 @@
 'use client'
 import { useParams } from 'next/navigation'
 
-import { use, useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Check, Sparkles, Eye, Loader } from 'lucide-react'
+import { ArrowLeft, Eye, Loader2, Check, ArrowRight } from 'lucide-react'
+import {
+  PRESET_THEMES, THEME_FONTS, normalizeTheme, fontStack, googleFontHref,
+  buttonRadius, backgroundCss, type FormTheme, type ButtonStyle,
+} from '@/lib/themes'
 
-interface Theme {
-  id: string
-  name: string
-  description: string
-  gradient: string
-  primaryColor: string
-  accentColor: string
-  backgroundColor: string
-  textColor: string
-  buttonStyle: string
-  fontFamily: string
-  category: 'modern' | 'minimal' | 'vibrant' | 'professional' | 'playful'
-  preview: string
-}
-
-export default function FormThemesPage({ params }: { params: Promise<{ id: string }> }) {
+export default function DesignStudioPage() {
   const { id } = (useParams() as any)
-  const [form, setForm] = useState<{ id: string; title: string; theme?: any } | null>(null)
+  const [theme, setTheme] = useState<FormTheme>(PRESET_THEMES[0])
+  const [formTitle, setFormTitle] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [savedTheme, setSavedTheme] = useState<string>('default')
-  const [selectedTheme, setSelectedTheme] = useState<string>('default')
+  const [saved, setSaved] = useState(false)
 
   useEffect(() => {
-    fetch(`/api/forms/${id}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.form) {
-          setForm(data.form)
-          const themeId = data.form.theme?.id || 'default'
-          setSelectedTheme(themeId)
-          setSavedTheme(themeId)
-        }
-      })
-      .finally(() => setLoading(false))
+    fetch(`/api/forms/${id}`).then((r) => r.json()).then((data) => {
+      if (data.form) { setFormTitle(data.form.title); setTheme(normalizeTheme(data.form.theme)) }
+    }).finally(() => setLoading(false))
   }, [id])
 
-  const themes: Theme[] = [
-    {
-      id: 'default',
-      name: 'Default',
-      description: 'Clean and simple',
-      gradient: 'from-white to-stone-50',
-      primaryColor: '#1c1917',
-      accentColor: '#3b82f6',
-      backgroundColor: '#ffffff',
-      textColor: '#1c1917',
-      buttonStyle: 'rounded-lg',
-      fontFamily: 'DM Sans',
-      category: 'minimal',
-      preview: 'bg-white border-stone-300'
-    },
-    {
-      id: 'midnight',
-      name: 'Midnight',
-      description: 'Dark and elegant',
-      gradient: 'from-slate-900 to-slate-800',
-      primaryColor: '#0f172a',
-      accentColor: '#3b82f6',
-      backgroundColor: '#0f172a',
-      textColor: '#ffffff',
-      buttonStyle: 'rounded-xl',
-      fontFamily: 'DM Sans',
-      category: 'modern',
-      preview: 'bg-slate-900 border-slate-700'
-    },
-    {
-      id: 'ocean',
-      name: 'Ocean Blue',
-      description: 'Calm and professional',
-      gradient: 'from-blue-50 via-cyan-50 to-teal-50',
-      primaryColor: '#0369a1',
-      accentColor: '#06b6d4',
-      backgroundColor: '#f0f9ff',
-      textColor: '#0c4a6e',
-      buttonStyle: 'rounded-2xl',
-      fontFamily: 'DM Sans',
-      category: 'professional',
-      preview: 'bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200'
-    },
-    {
-      id: 'sunset',
-      name: 'Sunset',
-      description: 'Warm and inviting',
-      gradient: 'from-orange-50 via-pink-50 to-purple-50',
-      primaryColor: '#ea580c',
-      accentColor: '#ec4899',
-      backgroundColor: '#fff7ed',
-      textColor: '#7c2d12',
-      buttonStyle: 'rounded-2xl',
-      fontFamily: 'DM Sans',
-      category: 'vibrant',
-      preview: 'bg-gradient-to-br from-orange-50 to-pink-50 border-orange-200'
-    },
-    {
-      id: 'forest',
-      name: 'Forest',
-      description: 'Natural and fresh',
-      gradient: 'from-emerald-50 via-green-50 to-lime-50',
-      primaryColor: '#047857',
-      accentColor: '#84cc16',
-      backgroundColor: '#f0fdf4',
-      textColor: '#064e3b',
-      buttonStyle: 'rounded-xl',
-      fontFamily: 'DM Sans',
-      category: 'professional',
-      preview: 'bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-200'
-    },
-    {
-      id: 'bubblegum',
-      name: 'Bubblegum',
-      description: 'Fun and playful',
-      gradient: 'from-pink-100 via-purple-100 to-blue-100',
-      primaryColor: '#db2777',
-      accentColor: '#a855f7',
-      backgroundColor: '#fdf2f8',
-      textColor: '#831843',
-      buttonStyle: 'rounded-full',
-      fontFamily: 'DM Sans',
-      category: 'playful',
-      preview: 'bg-gradient-to-br from-pink-100 to-purple-100 border-pink-300'
-    },
-    {
-      id: 'corporate',
-      name: 'Corporate',
-      description: 'Professional and trustworthy',
-      gradient: 'from-slate-50 to-stone-100',
-      primaryColor: '#1e293b',
-      accentColor: '#2563eb',
-      backgroundColor: '#f8fafc',
-      textColor: '#0f172a',
-      buttonStyle: 'rounded-lg',
-      fontFamily: 'DM Sans',
-      category: 'professional',
-      preview: 'bg-gradient-to-br from-slate-50 to-stone-100 border-slate-300'
-    },
-    {
-      id: 'neon',
-      name: 'Neon',
-      description: 'Bold and modern',
-      gradient: 'from-purple-900 via-pink-900 to-red-900',
-      primaryColor: '#7c3aed',
-      accentColor: '#ec4899',
-      backgroundColor: '#3b0764',
-      textColor: '#fdf4ff',
-      buttonStyle: 'rounded-2xl',
-      fontFamily: 'DM Sans',
-      category: 'vibrant',
-      preview: 'bg-gradient-to-br from-purple-900 to-pink-900 border-purple-500'
-    },
-    {
-      id: 'lavender',
-      name: 'Lavender Dreams',
-      description: 'Soft and elegant',
-      gradient: 'from-purple-50 via-pink-50 to-rose-50',
-      primaryColor: '#9333ea',
-      accentColor: '#ec4899',
-      backgroundColor: '#faf5ff',
-      textColor: '#581c87',
-      buttonStyle: 'rounded-xl',
-      fontFamily: 'DM Sans',
-      category: 'minimal',
-      preview: 'bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200'
-    },
-    {
-      id: 'monochrome',
-      name: 'Monochrome',
-      description: 'Sleek and minimal',
-      gradient: 'from-gray-50 to-gray-100',
-      primaryColor: '#111827',
-      accentColor: '#4b5563',
-      backgroundColor: '#f9fafb',
-      textColor: '#111827',
-      buttonStyle: 'rounded-lg',
-      fontFamily: 'DM Sans',
-      category: 'minimal',
-      preview: 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300'
-    },
-    {
-      id: 'sunshine',
-      name: 'Sunshine',
-      description: 'Bright and cheerful',
-      gradient: 'from-yellow-50 via-amber-50 to-orange-50',
-      primaryColor: '#d97706',
-      accentColor: '#f59e0b',
-      backgroundColor: '#fffbeb',
-      textColor: '#78350f',
-      buttonStyle: 'rounded-2xl',
-      fontFamily: 'DM Sans',
-      category: 'playful',
-      preview: 'bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200'
-    },
-    {
-      id: 'ice',
-      name: 'Ice',
-      description: 'Cool and crisp',
-      gradient: 'from-cyan-50 via-blue-50 to-indigo-50',
-      primaryColor: '#0891b2',
-      accentColor: '#3b82f6',
-      backgroundColor: '#ecfeff',
-      textColor: '#164e63',
-      buttonStyle: 'rounded-xl',
-      fontFamily: 'DM Sans',
-      category: 'modern',
-      preview: 'bg-gradient-to-br from-cyan-50 to-blue-50 border-cyan-200'
-    },
-  ]
+  // Load the previewed font.
+  useEffect(() => {
+    const href = googleFontHref(theme.font)
+    if (document.querySelector(`link[href="${href}"]`)) return
+    const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = href
+    document.head.appendChild(link)
+  }, [theme.font])
 
-  const categories = [
-    { value: 'all', label: 'All Themes' },
-    { value: 'modern', label: 'Modern' },
-    { value: 'minimal', label: 'Minimal' },
-    { value: 'vibrant', label: 'Vibrant' },
-    { value: 'professional', label: 'Professional' },
-    { value: 'playful', label: 'Playful' },
-  ]
+  const update = (patch: Partial<FormTheme>) => setTheme((t) => ({ ...t, ...patch, id: 'custom', name: 'Custom' }))
+  const updateColor = (key: keyof FormTheme['colors'], val: string) =>
+    setTheme((t) => ({ ...t, id: 'custom', name: 'Custom', colors: { ...t.colors, [key]: val } }))
 
-  const [categoryFilter, setCategoryFilter] = useState('all')
-
-  const filteredThemes = categoryFilter === 'all'
-    ? themes
-    : themes.filter(t => t.category === categoryFilter)
-
-  const applyTheme = async () => {
-    const theme = themes.find((t) => t.id === selectedTheme)
-    if (!theme) return
-    setSaving(true)
-    try {
-      const themePayload = {
-        id: theme.id,
-        name: theme.name,
-        colors: {
-          primary: theme.primaryColor,
-          background: theme.backgroundColor,
-          text: theme.textColor,
-          button: theme.accentColor,
-          buttonText: '#FFFFFF',
-        },
-        fonts: { heading: theme.fontFamily, body: theme.fontFamily },
-      }
-      const res = await fetch(`/api/forms/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ theme: themePayload }),
-      })
-      if (res.ok) setSavedTheme(theme.id)
-    } finally {
-      setSaving(false)
-    }
+  const save = async () => {
+    setSaving(true); setSaved(false)
+    const res = await fetch(`/api/forms/${id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ theme }),
+    })
+    setSaving(false)
+    if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2000) }
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-stone-50">
-        <Loader className="w-6 h-6 animate-spin text-stone-400" />
-      </div>
-    )
+    return <div className="min-h-screen bg-stone-50 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-stone-400" /></div>
   }
 
-  if (!form) return <div className="p-8">Form not found</div>
+  const c = theme.colors
+  const radius = buttonRadius(theme.buttonStyle)
 
   return (
     <div className="min-h-screen bg-stone-50">
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
-        * { font-family: 'DM Sans', sans-serif; }
-      `}</style>
-
-      {/* Header */}
-      <div className="bg-white border-b border-stone-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href={`/dashboard/forms/${id}`} className="p-2 hover:bg-stone-100 rounded-lg">
-                <ArrowLeft className="w-5 h-5" />
-              </Link>
-              <div>
-                <h1 className="text-2xl font-bold text-stone-900">Form Themes</h1>
-                <p className="text-sm text-stone-600">{form.title}</p>
-              </div>
+      <div className="bg-white border-b border-stone-200 sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href={`/dashboard/forms/${id}`} className="text-stone-600 hover:text-stone-900"><ArrowLeft className="w-5 h-5" /></Link>
+            <div>
+              <h1 className="text-xl font-bold text-stone-900">Design</h1>
+              <p className="text-sm text-stone-500">{formTitle}</p>
             </div>
-            <Link
-              href={`/f/${id}`}
-              target="_blank"
-              className="flex items-center gap-2 px-4 py-2 border border-stone-300 rounded-lg hover:bg-stone-50"
-            >
-              <Eye className="w-4 h-4" />
-              Preview
-            </Link>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link href={`/f/${id}`} target="_blank" className="flex items-center gap-2 px-4 py-2 border border-stone-300 rounded-lg hover:bg-stone-50 text-sm"><Eye className="w-4 h-4" /> Preview</Link>
+            <button onClick={save} disabled={saving} className="px-5 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800 text-sm font-medium disabled:opacity-50">
+              {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save design'}
+            </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Info Banner */}
-        <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-6 mb-8">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Sparkles className="w-6 h-6 text-purple-600" />
+      <div className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-5 gap-8">
+        {/* Controls */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Presets */}
+          <section className="bg-white rounded-xl border border-stone-200 p-5">
+            <h2 className="font-bold text-stone-900 mb-3">Presets</h2>
+            <div className="grid grid-cols-2 gap-3">
+              {PRESET_THEMES.map((p) => (
+                <button key={p.id} onClick={() => setTheme(p)}
+                  className="rounded-lg border-2 p-3 text-left transition-all hover:shadow-sm"
+                  style={{ borderColor: theme.id === p.id ? p.colors.primary : '#e7e5e4', background: backgroundCss(p) }}>
+                  <div className="flex gap-1 mb-2">
+                    {[p.colors.primary, p.colors.button, p.colors.text].map((col, i) => (
+                      <span key={i} className="w-4 h-4 rounded-full border border-white/50" style={{ backgroundColor: col }} />
+                    ))}
+                  </div>
+                  <span className="text-sm font-semibold" style={{ color: p.colors.text, fontFamily: fontStack(p.font) }}>{p.name}</span>
+                </button>
+              ))}
             </div>
-            <div>
-              <h3 className="font-bold text-purple-900 mb-2">Beautiful Pre-designed Themes</h3>
-              <p className="text-purple-800 mb-3">
-                Choose from 12 professionally designed themes. Each theme includes custom colors, gradients, and styling. Apply with one click!
-              </p>
-            </div>
-          </div>
-        </div>
+          </section>
 
-        {/* Category Filter */}
-        <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
-          {categories.map(cat => (
-            <button
-              key={cat.value}
-              onClick={() => setCategoryFilter(cat.value)}
-              className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all ${
-                categoryFilter === cat.value
-                  ? 'bg-stone-900 text-white'
-                  : 'bg-white border border-stone-300 text-stone-700 hover:bg-stone-50'
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Themes Grid */}
-        <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {filteredThemes.map((theme) => (
-            <div key={theme.id} className="group">
-              <div 
-                className={`aspect-[3/4] ${theme.preview} border-2 rounded-xl overflow-hidden mb-4 relative cursor-pointer transition-all hover:scale-105 ${
-                  selectedTheme === theme.id ? 'ring-4 ring-stone-900' : ''
-                }`}
-                onClick={() => setSelectedTheme(theme.id)}
-              >
-                {/* Theme Preview */}
-                <div className="absolute inset-0 p-6 flex flex-col">
-                  <div className="flex-1 space-y-3">
-                    <div className="h-3 bg-current opacity-20 rounded w-3/4" />
-                    <div className="h-2 bg-current opacity-15 rounded w-full" />
-                    <div className="h-2 bg-current opacity-15 rounded w-5/6" />
-                    <div className="h-8 bg-current opacity-10 rounded mt-4" />
-                    <div 
-                      className="h-10 rounded-lg mt-4 flex items-center justify-center text-white text-xs font-bold shadow-lg"
-                      style={{ backgroundColor: theme.accentColor }}
-                    >
-                      Button
-                    </div>
+          {/* Colors */}
+          <section className="bg-white rounded-xl border border-stone-200 p-5">
+            <h2 className="font-bold text-stone-900 mb-3">Colors</h2>
+            <div className="space-y-3">
+              {([['primary', 'Primary'], ['background', 'Background'], ['text', 'Text'], ['button', 'Button'], ['buttonText', 'Button text']] as const).map(([key, label]) => (
+                <div key={key} className="flex items-center justify-between">
+                  <span className="text-sm text-stone-700">{label}</span>
+                  <div className="flex items-center gap-2">
+                    <input type="text" value={c[key]} onChange={(e) => updateColor(key, e.target.value)} className="w-24 text-xs border border-stone-200 rounded px-2 py-1 font-mono" />
+                    <input type="color" value={c[key]} onChange={(e) => updateColor(key, e.target.value)} className="w-9 h-9 rounded border border-stone-200 cursor-pointer" />
                   </div>
                 </div>
+              ))}
+            </div>
+          </section>
 
-                {/* Selected Indicator */}
-                {selectedTheme === theme.id && (
-                  <div className="absolute top-3 right-3 w-8 h-8 bg-stone-900 rounded-full flex items-center justify-center">
-                    <Check className="w-5 h-5 text-white" />
-                  </div>
-                )}
+          {/* Font */}
+          <section className="bg-white rounded-xl border border-stone-200 p-5">
+            <h2 className="font-bold text-stone-900 mb-3">Font</h2>
+            <div className="grid grid-cols-2 gap-2">
+              {THEME_FONTS.map((f) => (
+                <button key={f.family} onClick={() => update({ font: f.family })}
+                  className="px-3 py-2 rounded-lg border text-left text-sm transition-all"
+                  style={{ borderColor: theme.font === f.family ? c.primary : '#e7e5e4', fontFamily: f.stack, fontWeight: theme.font === f.family ? 600 : 400 }}>
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </section>
 
-                {/* Hover Overlay */}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all" />
+          {/* Buttons + Background */}
+          <section className="bg-white rounded-xl border border-stone-200 p-5 space-y-4">
+            <div>
+              <h2 className="font-bold text-stone-900 mb-3">Button shape</h2>
+              <div className="flex gap-2">
+                {(['rounded', 'pill', 'sharp'] as ButtonStyle[]).map((s) => (
+                  <button key={s} onClick={() => update({ buttonStyle: s })}
+                    className="flex-1 py-2 text-sm capitalize border-2 transition-all"
+                    style={{ borderColor: theme.buttonStyle === s ? c.primary : '#e7e5e4', borderRadius: buttonRadius(s) }}>
+                    {s}
+                  </button>
+                ))}
               </div>
-
-              <div className="space-y-2">
-                <h3 className="font-bold text-stone-900">{theme.name}</h3>
-                <p className="text-sm text-stone-600">{theme.description}</p>
-                
+            </div>
+            <div>
+              <h2 className="font-bold text-stone-900 mb-3">Background</h2>
+              <div className="flex gap-2 mb-3">
+                {(['solid', 'gradient'] as const).map((s) => (
+                  <button key={s} onClick={() => update({ backgroundStyle: s, backgroundGradient: theme.backgroundGradient || [c.background, c.primary] })}
+                    className="flex-1 py-2 text-sm capitalize rounded-lg border-2"
+                    style={{ borderColor: theme.backgroundStyle === s ? c.primary : '#e7e5e4' }}>{s}</button>
+                ))}
+              </div>
+              {theme.backgroundStyle === 'gradient' && (
                 <div className="flex items-center gap-2">
-                  <div 
-                    className="w-6 h-6 rounded-full border-2 border-white shadow-sm"
-                    style={{ backgroundColor: theme.primaryColor }}
-                  />
-                  <div 
-                    className="w-6 h-6 rounded-full border-2 border-white shadow-sm"
-                    style={{ backgroundColor: theme.accentColor }}
-                  />
-                  <div 
-                    className="w-6 h-6 rounded-full border-2 border-white shadow-sm"
-                    style={{ backgroundColor: theme.backgroundColor }}
-                  />
+                  <input type="color" value={theme.backgroundGradient?.[0] || c.background} onChange={(e) => update({ backgroundGradient: [e.target.value, theme.backgroundGradient?.[1] || c.primary] })} className="w-9 h-9 rounded border cursor-pointer" />
+                  <span className="text-xs text-stone-400">→</span>
+                  <input type="color" value={theme.backgroundGradient?.[1] || c.primary} onChange={(e) => update({ backgroundGradient: [theme.backgroundGradient?.[0] || c.background, e.target.value] })} className="w-9 h-9 rounded border cursor-pointer" />
                 </div>
-
-                {savedTheme === theme.id && (
-                  <div className="w-full mt-3 px-4 py-2 bg-green-600 text-white rounded-lg font-semibold text-center">
-                    Applied ✓
-                  </div>
-                )}
-              </div>
+              )}
             </div>
-          ))}
+          </section>
         </div>
 
-        {/* Apply Button */}
-        <div className="mt-12 bg-white rounded-xl border border-stone-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-stone-900 mb-1">
-                Selected Theme: {themes.find(t => t.id === selectedTheme)?.name}
-              </h3>
-              <p className="text-stone-600">
-                This theme will be applied to your form
-              </p>
+        {/* Live preview */}
+        <div className="lg:col-span-3">
+          <div className="sticky top-24 rounded-2xl border border-stone-200 overflow-hidden shadow-sm">
+            <div className="px-4 py-2 bg-stone-100 text-xs text-stone-500 border-b border-stone-200">Live preview</div>
+            <div className="min-h-[460px] flex items-center justify-center p-10" style={{ background: backgroundCss(theme), fontFamily: fontStack(theme.font) }}>
+              <div className="w-full max-w-md">
+                <div className="text-sm font-medium mb-4" style={{ color: c.primary }}>1 →</div>
+                <h2 className="text-3xl font-bold mb-2" style={{ color: c.text }}>How happy are you with our service?</h2>
+                <p className="mb-6 opacity-60" style={{ color: c.text }}>Pick the option that fits best.</p>
+                <div className="space-y-3 mb-8">
+                  {['Very happy', 'It was fine', 'Could be better'].map((opt, i) => (
+                    <div key={opt} className="flex items-center gap-3 p-4 rounded-xl border-2" style={{ borderColor: i === 0 ? c.primary : `${c.text}22`, backgroundColor: i === 0 ? `${c.primary}14` : 'transparent' }}>
+                      <span className="w-7 h-7 rounded-md border-2 flex items-center justify-center text-sm font-bold" style={i === 0 ? { backgroundColor: c.primary, borderColor: c.primary, color: '#fff' } : { borderColor: `${c.text}33`, color: c.text }}>{String.fromCharCode(65 + i)}</span>
+                      <span className="font-medium" style={{ color: c.text }}>{opt}</span>
+                    </div>
+                  ))}
+                </div>
+                <button className="inline-flex items-center gap-2 px-7 py-3.5 font-semibold text-lg shadow-sm" style={{ backgroundColor: c.button, color: c.buttonText, borderRadius: radius }}>
+                  OK <ArrowRight className="w-5 h-5" />
+                </button>
+              </div>
             </div>
-            <button
-              onClick={applyTheme}
-              disabled={saving || savedTheme === selectedTheme}
-              className="px-8 py-3 bg-stone-900 text-white rounded-lg hover:bg-stone-800 font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {saving ? 'Applying…' : savedTheme === selectedTheme ? 'Applied ✓' : 'Apply Theme'}
-            </button>
           </div>
         </div>
       </div>

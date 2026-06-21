@@ -156,39 +156,34 @@ function renderQuestionInput(
     case 'multiple_choice':
       return (
         <div className="space-y-3">
-          {question.choices?.map((choice) => {
+          {question.choices?.map((choice, i) => {
             const isSelected = value === choice.value
             return (
               <button
                 key={choice.id}
                 onClick={() => onChange(choice.value)}
                 className={cn(
-                  'w-full flex items-center gap-4 p-5 rounded-xl border-2 transition-all text-left group hover:shadow-md',
+                  'w-full flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left hover:shadow-sm',
                   isSelected && 'ring-2'
                 )}
-                style={isSelected 
-                  ? { borderColor: theme.primaryColor, backgroundColor: `${theme.primaryColor}10` }
-                  : { borderColor: '#e8e4db' }
+                style={isSelected
+                  ? { borderColor: theme.primaryColor, backgroundColor: `${theme.primaryColor}14` }
+                  : { borderColor: `${theme.textColor}22` }
                 }
               >
-                <div 
-                  className={cn(
-                    'w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all',
-                    isSelected && 'border-transparent'
-                  )}
-                  style={isSelected 
-                    ? { backgroundColor: theme.primaryColor }
-                    : { borderColor: '#3d5948' }
+                <span
+                  className="w-7 h-7 rounded-md border-2 flex items-center justify-center flex-shrink-0 text-sm font-bold transition-all"
+                  style={isSelected
+                    ? { backgroundColor: theme.primaryColor, borderColor: theme.primaryColor, color: '#fff' }
+                    : { borderColor: `${theme.textColor}33`, color: theme.textColor }
                   }
                 >
-                  {isSelected && <Check className="w-4 h-4 text-white" />}
-                </div>
-                <span 
-                  className="text-lg font-medium"
-                  style={{ color: theme.textColor }}
-                >
+                  {String.fromCharCode(65 + i)}
+                </span>
+                <span className="text-lg font-medium flex-1" style={{ color: theme.textColor }}>
                   {choice.label}
                 </span>
+                {isSelected && <Check className="w-5 h-5 flex-shrink-0" style={{ color: theme.primaryColor }} />}
               </button>
             )
           })}
