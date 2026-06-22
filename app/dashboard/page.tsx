@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { FileText, Eye, BarChart3, Plus, ArrowRight, Loader2, Inbox } from 'lucide-react'
 import { GettingStarted } from '@/components/dashboard/GettingStarted'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
 import type { PlanId } from '@/lib/plan-limits'
 
 interface FormRow {
@@ -67,8 +70,16 @@ export default function DashboardHome() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
+      <div className="min-h-screen bg-background">
+        <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+          <Skeleton className="h-9 w-48" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+          <Skeleton className="h-64 w-full" />
+        </div>
       </div>
     )
   }
@@ -77,11 +88,11 @@ export default function DashboardHome() {
   // user has created their first form. Afterwards we show the normal dashboard.
   if (forms.length === 0) {
     return (
-      <div className="min-h-screen bg-stone-50">
+      <div className="min-h-screen bg-background">
         <div className="max-w-4xl mx-auto px-6 py-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-stone-900">Dashboard</h1>
-            <p className="text-stone-600 mt-1">You're on the {planName} plan.</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">Dashboard</h1>
+            <p className="text-muted-foreground mt-1">You're on the {planName} plan.</p>
           </div>
           <GettingStarted
             hasForm={false}
@@ -97,78 +108,61 @@ export default function DashboardHome() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-stone-900">Dashboard</h1>
-            <p className="text-stone-600 mt-1">You're on the {planName} plan.</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">Dashboard</h1>
+            <p className="text-muted-foreground mt-1">You're on the {planName} plan.</p>
           </div>
-          <button
-            onClick={createForm}
-            disabled={creating}
-            className="flex items-center gap-2 px-5 py-2.5 bg-stone-900 text-white rounded-lg hover:bg-stone-800 font-medium disabled:opacity-50"
-          >
+          <Button onClick={createForm} disabled={creating}>
             <Plus className="w-4 h-4" /> {creating ? 'Creating…' : 'Create form'}
-          </button>
+          </Button>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          <Stat icon={<FileText className="w-5 h-5" />} label="Total forms" value={forms.length} tint="stone" />
-          <Stat icon={<Eye className="w-5 h-5" />} label="Published" value={published} tint="green" />
+          <Stat icon={<FileText className="w-5 h-5" />} label="Total forms" value={forms.length} />
+          <Stat icon={<Eye className="w-5 h-5" />} label="Published" value={published} />
           <Stat
             icon={<BarChart3 className="w-5 h-5" />}
             label="Responses this month"
             value={usage?.responses.current ?? 0}
-            tint="blue"
           />
         </div>
 
         {/* Recent forms */}
-        <div className="bg-white rounded-xl border border-stone-200">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100">
-            <h2 className="font-bold text-stone-900">Recent forms</h2>
-            <Link href="/dashboard/forms" className="text-sm text-stone-600 hover:text-stone-900 flex items-center gap-1">
+        <div className="card-surface">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+            <h2 className="font-semibold tracking-tight text-foreground">Recent forms</h2>
+            <Link href="/dashboard/forms" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
               View all <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
           {recent.length === 0 ? (
             <div className="px-6 py-12 text-center">
-              <Inbox className="w-10 h-10 text-stone-300 mx-auto mb-3" />
-              <p className="text-stone-600 mb-4">No forms yet. Create your first one.</p>
-              <button
-                onClick={createForm}
-                disabled={creating}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800 text-sm disabled:opacity-50"
-              >
+              <Inbox className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
+              <p className="text-muted-foreground mb-4">No forms yet. Create your first one.</p>
+              <Button onClick={createForm} disabled={creating} size="sm">
                 <Plus className="w-4 h-4" /> Create form
-              </button>
+              </Button>
             </div>
           ) : (
-            <div className="divide-y divide-stone-100">
+            <div className="divide-y divide-border">
               {recent.map((form) => (
                 <Link
                   key={form.id}
                   href={`/dashboard/forms/${form.id}`}
-                  className="flex items-center justify-between px-6 py-4 hover:bg-stone-50"
+                  className="flex items-center justify-between px-6 py-4 hover:bg-muted/50 transition-colors"
                 >
                   <div className="min-w-0">
-                    <p className="font-medium text-stone-900 truncate">{form.title}</p>
-                    <p className="text-xs text-stone-500">Updated {new Date(form.updated_at).toLocaleDateString()}</p>
+                    <p className="font-medium text-foreground truncate">{form.title}</p>
+                    <p className="text-xs text-muted-foreground">Updated {new Date(form.updated_at).toLocaleDateString()}</p>
                   </div>
-                  <span
-                    className={`px-2.5 py-1 rounded-full text-xs font-medium shrink-0 ${
-                      form.status === 'published'
-                        ? 'bg-green-100 text-green-700'
-                        : form.status === 'draft'
-                        ? 'bg-yellow-100 text-yellow-700'
-                        : 'bg-stone-100 text-stone-600'
-                    }`}
-                  >
+                  <Badge variant={form.status === 'published' ? 'solid' : form.status === 'draft' ? 'outline' : 'default'} className="shrink-0 capitalize">
                     {form.status}
-                  </span>
+                  </Badge>
                 </Link>
               ))}
             </div>
@@ -179,20 +173,15 @@ export default function DashboardHome() {
   )
 }
 
-function Stat({ icon, label, value, tint }: { icon: React.ReactNode; label: string; value: number; tint: 'stone' | 'green' | 'blue' }) {
-  const tints: Record<string, string> = {
-    stone: 'bg-stone-100 text-stone-600',
-    green: 'bg-green-100 text-green-600',
-    blue: 'bg-blue-100 text-blue-600',
-  }
+function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
-    <div className="bg-white rounded-xl border border-stone-200 p-5">
+    <div className="card-surface p-5">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-stone-500">{label}</p>
-          <p className="text-3xl font-bold text-stone-900 mt-1">{value}</p>
+          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className="text-3xl font-semibold tracking-tight text-foreground mt-1">{value}</p>
         </div>
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${tints[tint]}`}>{icon}</div>
+        <div className="w-10 h-10 rounded-md flex items-center justify-center bg-muted text-muted-foreground">{icon}</div>
       </div>
     </div>
   )

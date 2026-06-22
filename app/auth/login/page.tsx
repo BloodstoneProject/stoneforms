@@ -39,55 +39,55 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fafaf9] flex items-center justify-center p-6">
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
-            <h1 className="text-3xl font-light tracking-tight text-[#0a0a0a]">Stoneforms</h1>
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">Stoneforms</h1>
           </Link>
-          <p className="text-[#0a0a0a]/60 mt-2 font-light">Welcome back</p>
+          <p className="text-muted-foreground mt-2">Welcome back</p>
         </div>
 
-        <div className="bg-white/40 backdrop-blur-sm border border-[#0a0a0a]/5 rounded-3xl p-8">
+        <div className="card-surface rounded-lg p-8">
           {error && (
-            <div className="mb-6 p-4 bg-[#8e1c1c]/10 border border-[#8e1c1c]/20 rounded-2xl flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-[#8e1c1c] flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-[#8e1c1c] font-light">{error}</p>
+            <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-md flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-destructive">{error}</p>
             </div>
           )}
 
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label className="block text-sm font-light text-[#0a0a0a] mb-2">Email</label>
+              <label className="block text-sm font-medium text-foreground mb-2">Email</label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#0a0a0a]/40 w-5 h-5" />
+                <Mail className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   required
-                  className="w-full pl-12 pr-4 py-3 bg-white/60 border border-[#0a0a0a]/10 rounded-2xl focus:outline-none focus:border-[#8e1c1c] transition-colors font-light"
+                  className="w-full pl-11 pr-4 py-2.5 bg-background border border-border rounded-md text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-light text-[#0a0a0a] mb-2">Password</label>
+              <label className="block text-sm font-medium text-foreground mb-2">Password</label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#0a0a0a]/40 w-5 h-5" />
+                <Lock className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   required
-                  className="w-full pl-12 pr-12 py-3 bg-white/60 border border-[#0a0a0a]/10 rounded-2xl focus:outline-none focus:border-[#8e1c1c] transition-colors font-light"
+                  className="w-full pl-11 pr-11 py-2.5 bg-background border border-border rounded-md text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-[#0a0a0a]/40 hover:text-[#0a0a0a]"
+                  className="absolute right-3.5 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -96,10 +96,10 @@ export default function LoginPage() {
 
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="rounded border-[#0a0a0a]/20" />
-                <span className="text-sm text-[#0a0a0a]/60 font-light">Remember me</span>
+                <input type="checkbox" className="rounded border-border" />
+                <span className="text-sm text-muted-foreground">Remember me</span>
               </label>
-              <Link href="/auth/forgot-password" className="text-sm text-[#0a0a0a] hover:text-[#8e1c1c] font-light transition-colors">
+              <Link href="/auth/forgot-password" className="text-sm text-foreground hover:text-muted-foreground transition-colors">
                 Forgot password?
               </Link>
             </div>
@@ -107,28 +107,28 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-[#0a0a0a] text-[#fafaf9] rounded-full hover:bg-[#8e1c1c] font-light text-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-2.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-[#0a0a0a]/60 font-light">
+            <p className="text-muted-foreground">
               Don't have an account?{' '}
-              <Link href="/auth/signup" className="text-[#0a0a0a] font-normal hover:text-[#8e1c1c] transition-colors">
+              <Link href="/auth/signup" className="text-foreground font-medium hover:text-muted-foreground transition-colors">
                 Sign up
               </Link>
             </p>
           </div>
         </div>
 
-        <div className="text-center mt-8 text-sm text-[#0a0a0a]/40 font-light">
+        <div className="text-center mt-8 text-sm text-muted-foreground">
           <p>
             By signing in, you agree to our{' '}
-            <Link href="/legal/terms" className="underline hover:text-[#0a0a0a]">Terms</Link>
+            <Link href="/legal/terms" className="underline hover:text-foreground">Terms</Link>
             {' '}and{' '}
-            <Link href="/legal/privacy" className="underline hover:text-[#0a0a0a]">Privacy</Link>
+            <Link href="/legal/privacy" className="underline hover:text-foreground">Privacy</Link>
           </p>
         </div>
       </div>

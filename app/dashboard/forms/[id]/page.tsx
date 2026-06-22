@@ -361,18 +361,18 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     )
   }
 
   if (!form) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-stone-900 mb-4">Form Not Found</h1>
-          <Link href="/dashboard/forms" className="text-stone-600 hover:text-stone-900">← Back to Forms</Link>
+          <h1 className="text-2xl heading-tight text-foreground mb-4">Form Not Found</h1>
+          <Link href="/dashboard/forms" className="text-muted-foreground hover:text-foreground">← Back to Forms</Link>
         </div>
       </div>
     )
@@ -381,13 +381,13 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
   const isPublished = form.status === 'published'
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-background">
       {/* Top Bar */}
-      <div className="bg-white border-b border-stone-200 sticky top-0 z-10">
+      <div className="bg-card border-b border-border sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4 min-w-0">
-              <Link href="/dashboard/forms" className="text-stone-600 hover:text-stone-900 shrink-0">
+              <Link href="/dashboard/forms" className="text-muted-foreground hover:text-foreground shrink-0">
                 <ArrowLeft className="w-5 h-5" />
               </Link>
               <div className="min-w-0">
@@ -395,11 +395,11 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                   type="text"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  className="text-xl font-bold text-stone-900 border-none focus:outline-none bg-transparent w-full"
+                  className="text-xl heading-tight text-foreground border-none focus:outline-none bg-transparent w-full"
                   placeholder="Form Title"
                 />
-                <div className="flex items-center gap-2 text-sm text-stone-500">
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${isPublished ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-600'}`}>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${isPublished ? 'bg-secondary text-foreground' : 'bg-muted text-muted-foreground'}`}>
                     {isPublished ? <Globe className="w-3 h-3" /> : <Pencil className="w-3 h-3" />}
                     {isPublished ? 'Published' : 'Draft'}
                   </span>
@@ -414,28 +414,28 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
               <Link
                 href={`/f/${formId}`}
                 target="_blank"
-                className="flex items-center gap-2 px-3 py-2 border border-stone-300 rounded-lg hover:bg-stone-50 text-sm"
+                className="flex items-center gap-2 px-3 py-2 border border-border rounded-md hover:bg-secondary text-sm text-foreground transition-colors"
               >
                 <Eye className="w-4 h-4" /> Preview
               </Link>
 
               <Link
                 href={`/dashboard/forms/${formId}/themes`}
-                className="flex items-center gap-2 px-3 py-2 border border-stone-300 rounded-lg hover:bg-stone-50 text-sm"
+                className="flex items-center gap-2 px-3 py-2 border border-border rounded-md hover:bg-secondary text-sm text-foreground transition-colors"
               >
                 <Palette className="w-4 h-4" /> Design
               </Link>
 
               <Link
                 href={`/dashboard/forms/${formId}/logic`}
-                className="flex items-center gap-2 px-3 py-2 border border-stone-300 rounded-lg hover:bg-stone-50 text-sm"
+                className="flex items-center gap-2 px-3 py-2 border border-border rounded-md hover:bg-secondary text-sm text-foreground transition-colors"
               >
                 <GitBranch className="w-4 h-4" /> Logic
               </Link>
 
               <Link
                 href={`/dashboard/forms/${formId}/integrations`}
-                className="flex items-center gap-2 px-3 py-2 border border-stone-300 rounded-lg hover:bg-stone-50 text-sm"
+                className="flex items-center gap-2 px-3 py-2 border border-border rounded-md hover:bg-secondary text-sm text-foreground transition-colors"
               >
                 <Webhook className="w-4 h-4" /> Integrations
               </Link>
@@ -443,7 +443,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
               {isPublished && (
                 <button
                   onClick={() => setShareModalOpen(true)}
-                  className="flex items-center gap-2 px-3 py-2 border border-stone-300 rounded-lg hover:bg-stone-50 text-sm"
+                  className="flex items-center gap-2 px-3 py-2 border border-border rounded-md hover:bg-secondary text-sm text-foreground transition-colors"
                 >
                   <Share2 className="w-4 h-4" /> Share
                 </button>
@@ -453,20 +453,20 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                 <>
                   <Link
                     href={`/dashboard/forms/${formId}/analytics`}
-                    className="flex items-center gap-2 px-3 py-2 border border-stone-300 rounded-lg hover:bg-stone-50 text-sm"
+                    className="flex items-center gap-2 px-3 py-2 border border-border rounded-md hover:bg-secondary text-sm text-foreground transition-colors"
                   >
                     <BarChart3 className="w-4 h-4" /> Analytics
                   </Link>
                   <Link
                     href={`/dashboard/forms/${formId}/responses`}
-                    className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                    className="px-3 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm transition-colors"
                   >
                     Responses
                   </Link>
                   <button
                     onClick={() => setStatus('draft')}
                     disabled={publishing}
-                    className="px-3 py-2 border border-stone-300 rounded-lg hover:bg-stone-50 text-sm disabled:opacity-50"
+                    className="px-3 py-2 border border-border rounded-md hover:bg-secondary text-sm text-foreground disabled:opacity-50 transition-colors"
                   >
                     {publishing ? 'Working…' : 'Unpublish'}
                   </button>
@@ -475,7 +475,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                 <button
                   onClick={() => setStatus('published')}
                   disabled={publishing}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 text-sm font-medium"
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 text-sm font-medium transition-colors"
                 >
                   {publishing ? 'Publishing…' : 'Publish'}
                 </button>
@@ -489,17 +489,17 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Field Types Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg border border-stone-200 p-4 sticky top-24">
-              <h3 className="font-bold text-stone-900 mb-4">Add Fields</h3>
+            <div className="card-surface p-4 sticky top-24">
+              <h3 className="heading-tight text-foreground mb-4">Add Fields</h3>
               <div className="space-y-2">
                 {FIELD_TYPES.map((type) => (
                   <button
                     key={type.value}
                     onClick={() => addField(type.value)}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 border border-stone-200 rounded-lg hover:bg-stone-50 hover:border-stone-300 text-left transition-colors"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 border border-border rounded-md hover:bg-secondary text-left transition-colors"
                   >
                     <span className="text-xl">{type.icon}</span>
-                    <span className="text-sm font-medium text-stone-900">{type.label}</span>
+                    <span className="text-sm font-medium text-foreground">{type.label}</span>
                   </button>
                 ))}
               </div>
@@ -509,36 +509,36 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
           {/* Form Builder */}
           <div className="lg:col-span-3 space-y-6">
             {/* Form Header */}
-            <div className="bg-white rounded-lg border border-stone-200 p-6">
+            <div className="card-surface p-6">
               <input
                 type="text"
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
-                className="text-2xl font-bold text-stone-900 w-full border-none focus:outline-none mb-2"
+                className="text-2xl heading-tight text-foreground w-full border-none focus:outline-none mb-2 bg-transparent"
                 placeholder="Form Title"
               />
               <textarea
                 value={form.description || ''}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
-                className="w-full text-stone-600 border-none focus:outline-none resize-none"
+                className="w-full text-muted-foreground border-none focus:outline-none resize-none bg-transparent"
                 placeholder="Add a description..."
                 rows={2}
               />
             </div>
 
             {/* Form Settings */}
-            <div className="bg-white rounded-lg border border-stone-200">
+            <div className="card-surface">
               <button
                 onClick={() => setFormSettingsOpen((v) => !v)}
                 className="w-full flex items-center justify-between px-6 py-4 text-left"
               >
-                <span className="flex items-center gap-2 font-medium text-stone-900">
+                <span className="flex items-center gap-2 font-medium text-foreground">
                   <Settings2 className="w-4 h-4" /> Form settings
                 </span>
-                {formSettingsOpen ? <ChevronUp className="w-4 h-4 text-stone-500" /> : <ChevronDown className="w-4 h-4 text-stone-500" />}
+                {formSettingsOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
               </button>
               {formSettingsOpen && (
-                <div className="px-6 pb-6 space-y-4 border-t border-stone-100 pt-4">
+                <div className="px-6 pb-6 space-y-4 border-t border-border pt-4">
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input
                       type="checkbox"
@@ -546,7 +546,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                       onChange={(e) => updateSetting('showProgressBar', e.target.checked)}
                       className="rounded"
                     />
-                    <span className="text-sm text-stone-700">Show progress bar</span>
+                    <span className="text-sm text-foreground">Show progress bar</span>
                   </label>
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input
@@ -555,10 +555,10 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                       onChange={(e) => updateSetting('allowMultipleSubmissions', e.target.checked)}
                       className="rounded"
                     />
-                    <span className="text-sm text-stone-700">Allow multiple submissions per visitor</span>
+                    <span className="text-sm text-foreground">Allow multiple submissions per visitor</span>
                   </label>
                   {/* Welcome screen */}
-                  <div className="pt-3 border-t border-stone-100">
+                  <div className="pt-3 border-t border-border">
                     <label className="flex items-center gap-3 cursor-pointer mb-2">
                       <input
                         type="checkbox"
@@ -566,71 +566,71 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                         onChange={(e) => updateNestedSetting('welcome', 'enabled', e.target.checked)}
                         className="rounded"
                       />
-                      <span className="text-sm font-medium text-stone-700">Show welcome screen</span>
+                      <span className="text-sm font-medium text-foreground">Show welcome screen</span>
                     </label>
                     {form.settings?.welcome?.enabled !== false && (
                       <div className="space-y-2 pl-6">
                         <input type="text" value={form.settings?.welcome?.title || ''} onChange={(e) => updateNestedSetting('welcome', 'title', e.target.value)}
-                          className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900" placeholder="Welcome title (defaults to form title)" />
+                          className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground" placeholder="Welcome title (defaults to form title)" />
                         <input type="text" value={form.settings?.welcome?.description || ''} onChange={(e) => updateNestedSetting('welcome', 'description', e.target.value)}
-                          className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900" placeholder="Welcome subtitle" />
+                          className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground" placeholder="Welcome subtitle" />
                         <input type="text" value={form.settings?.welcome?.buttonText || ''} onChange={(e) => updateNestedSetting('welcome', 'buttonText', e.target.value)}
-                          className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900" placeholder="Start button text (default: Start)" />
+                          className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground" placeholder="Start button text (default: Start)" />
                       </div>
                     )}
                   </div>
 
                   {/* Ending screen */}
-                  <div className="pt-3 border-t border-stone-100">
-                    <p className="text-sm font-medium text-stone-700 mb-2">Ending screen</p>
+                  <div className="pt-3 border-t border-border">
+                    <p className="text-sm font-medium text-foreground mb-2">Ending screen</p>
                     <div className="space-y-2">
                       <input type="text" value={form.settings?.ending?.title || ''} onChange={(e) => updateNestedSetting('ending', 'title', e.target.value)}
-                        className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900" placeholder="Ending title (default: Thank you!)" />
+                        className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground" placeholder="Ending title (default: Thank you!)" />
                       <textarea value={form.settings?.ending?.message || ''} onChange={(e) => updateNestedSetting('ending', 'message', e.target.value)} rows={2}
-                        className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900 resize-none" placeholder="Ending message" />
+                        className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground resize-none" placeholder="Ending message" />
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-stone-100">
-                    <label className="block text-xs font-medium text-stone-700 mb-1">Redirect URL after submit (overrides ending screen)</label>
+                  <div className="pt-3 border-t border-border">
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">Redirect URL after submit (overrides ending screen)</label>
                     <input
                       type="text"
                       value={form.settings?.redirectUrl || ''}
                       onChange={(e) => updateSetting('redirectUrl', e.target.value)}
-                      className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+                      className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
                       placeholder="https://example.com/thank-you"
                     />
                   </div>
 
                   {/* Custom link / slug */}
-                  <div className="pt-3 border-t border-stone-100">
-                    <label className="block text-xs font-medium text-stone-700 mb-1">Custom link / slug (optional)</label>
+                  <div className="pt-3 border-t border-border">
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">Custom link / slug (optional)</label>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-stone-400 shrink-0">/f/</span>
+                      <span className="text-sm text-muted-foreground shrink-0">/f/</span>
                       <input
                         type="text"
                         value={slugInput}
                         onChange={(e) => { setSlugInput(e.target.value.toLowerCase()); setSlugStatus({ kind: 'idle' }) }}
                         onBlur={saveSlug}
-                        className="flex-1 text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900 font-mono"
+                        className="flex-1 text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground font-mono"
                         placeholder="my-form"
                       />
                       <button
                         type="button"
                         onClick={saveSlug}
                         disabled={slugStatus.kind === 'saving'}
-                        className="px-3 py-2 text-sm border border-stone-300 rounded hover:bg-stone-50 disabled:opacity-50 shrink-0"
+                        className="px-3 py-2 text-sm border border-input rounded hover:bg-secondary disabled:opacity-50 shrink-0"
                       >
                         {slugStatus.kind === 'saving' ? 'Saving…' : 'Save'}
                       </button>
                     </div>
-                    {slugStatus.kind === 'error' && <p className="text-xs text-red-600 mt-1">{slugStatus.message}</p>}
-                    {slugStatus.kind === 'saved' && <p className="text-xs text-green-600 mt-1">Custom link saved.</p>}
-                    <p className="text-xs text-stone-400 mt-1">3-40 chars: lowercase letters, numbers, hyphens. Leave blank to use the default link.</p>
+                    {slugStatus.kind === 'error' && <p className="text-xs text-destructive mt-1">{slugStatus.message}</p>}
+                    {slugStatus.kind === 'saved' && <p className="text-xs text-muted-foreground mt-1">Custom link saved.</p>}
+                    <p className="text-xs text-muted-foreground mt-1">3-40 chars: lowercase letters, numbers, hyphens. Leave blank to use the default link.</p>
                   </div>
 
                   {/* Quiz mode */}
-                  <div className="pt-3 border-t border-stone-100">
+                  <div className="pt-3 border-t border-border">
                     <label className="flex items-center gap-3 cursor-pointer mb-2">
                       <input
                         type="checkbox"
@@ -638,7 +638,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                         onChange={(e) => updateQuizSetting('enabled', e.target.checked)}
                         className="rounded"
                       />
-                      <span className="text-sm font-medium text-stone-700">Quiz mode (score answers)</span>
+                      <span className="text-sm font-medium text-foreground">Quiz mode (score answers)</span>
                     </label>
                     {form.settings?.quiz?.enabled && (
                       <div className="space-y-3 pl-6">
@@ -649,89 +649,89 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                             onChange={(e) => updateQuizSetting('showResults', e.target.checked)}
                             className="rounded"
                           />
-                          <span className="text-sm text-stone-700">Show results screen to respondents</span>
+                          <span className="text-sm text-foreground">Show results screen to respondents</span>
                         </label>
 
                         <div>
-                          <p className="text-xs font-medium text-stone-700 mb-2">Outcomes (score ranges)</p>
+                          <p className="text-xs font-medium text-foreground mb-2">Outcomes (score ranges)</p>
                           <div className="space-y-3">
                             {(form.settings?.quiz?.outcomes || []).map((o) => (
-                              <div key={o.id} className="rounded-lg border border-stone-200 p-3 space-y-2">
+                              <div key={o.id} className="rounded-lg border border-border p-3 space-y-2">
                                 <div className="flex items-center gap-2">
                                   <input type="number" value={o.minScore} onChange={(e) => updateOutcome(o.id, { minScore: Number(e.target.value) })}
-                                    className="w-20 text-sm border border-stone-300 rounded px-2 py-1.5 focus:outline-none focus:border-stone-900" placeholder="Min" />
-                                  <span className="text-stone-400 text-sm">to</span>
+                                    className="w-20 text-sm border border-input rounded-md px-2 py-1.5 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground" placeholder="Min" />
+                                  <span className="text-muted-foreground text-sm">to</span>
                                   <input type="number" value={o.maxScore} onChange={(e) => updateOutcome(o.id, { maxScore: Number(e.target.value) })}
-                                    className="w-20 text-sm border border-stone-300 rounded px-2 py-1.5 focus:outline-none focus:border-stone-900" placeholder="Max" />
-                                  <button type="button" onClick={() => removeOutcome(o.id)} className="ml-auto text-red-600 hover:text-red-700" aria-label="Remove outcome">
+                                    className="w-20 text-sm border border-input rounded-md px-2 py-1.5 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground" placeholder="Max" />
+                                  <button type="button" onClick={() => removeOutcome(o.id)} className="ml-auto text-destructive hover:text-destructive/80" aria-label="Remove outcome">
                                     <Trash2 className="w-4 h-4" />
                                   </button>
                                 </div>
                                 <input type="text" value={o.title} onChange={(e) => updateOutcome(o.id, { title: e.target.value })}
-                                  className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900" placeholder="Outcome title (e.g. Great job!)" />
+                                  className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground" placeholder="Outcome title (e.g. Great job!)" />
                                 <textarea value={o.message} onChange={(e) => updateOutcome(o.id, { message: e.target.value })} rows={2}
-                                  className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900 resize-none" placeholder="Message shown for this score range" />
+                                  className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground resize-none" placeholder="Message shown for this score range" />
                               </div>
                             ))}
                           </div>
-                          <button type="button" onClick={addOutcome} className="mt-2 flex items-center gap-1.5 text-sm text-stone-600 hover:text-stone-900">
+                          <button type="button" onClick={addOutcome} className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
                             <Plus className="w-4 h-4" /> Add outcome
                           </button>
-                          <p className="text-xs text-stone-400 mt-2">Set per-question points in each question's Settings panel.</p>
+                          <p className="text-xs text-muted-foreground mt-2">Set per-question points in each question's Settings panel.</p>
                         </div>
                       </div>
                     )}
                   </div>
 
                   {/* Schedule + response caps */}
-                  <div className="pt-3 border-t border-stone-100">
-                    <p className="text-sm font-medium text-stone-700 mb-2">Schedule &amp; limits</p>
+                  <div className="pt-3 border-t border-border">
+                    <p className="text-sm font-medium text-foreground mb-2">Schedule &amp; limits</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-medium text-stone-700 mb-1">Opens at</label>
+                        <label className="block text-xs font-medium text-muted-foreground mb-1">Opens at</label>
                         <input
                           type="datetime-local"
                           value={toLocalInput(form.settings?.schedule?.opensAt)}
                           onChange={(e) => updateScheduleSetting('opensAt', fromLocalInput(e.target.value))}
-                          className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+                          className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-stone-700 mb-1">Closes at</label>
+                        <label className="block text-xs font-medium text-muted-foreground mb-1">Closes at</label>
                         <input
                           type="datetime-local"
                           value={toLocalInput(form.settings?.schedule?.closesAt)}
                           onChange={(e) => updateScheduleSetting('closesAt', fromLocalInput(e.target.value))}
-                          className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+                          className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
                         />
                       </div>
                     </div>
                     <div className="mt-3">
-                      <label className="block text-xs font-medium text-stone-700 mb-1">Max responses (leave blank for unlimited)</label>
+                      <label className="block text-xs font-medium text-muted-foreground mb-1">Max responses (leave blank for unlimited)</label>
                       <input
                         type="number"
                         min={1}
                         value={form.settings?.schedule?.maxResponses ?? ''}
                         onChange={(e) => updateScheduleSetting('maxResponses', e.target.value === '' ? '' : Number(e.target.value))}
-                        className="w-40 text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+                        className="w-40 text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
                         placeholder="Unlimited"
                       />
                     </div>
                     <div className="mt-3">
-                      <label className="block text-xs font-medium text-stone-700 mb-1">Closed message</label>
+                      <label className="block text-xs font-medium text-muted-foreground mb-1">Closed message</label>
                       <textarea
                         value={form.settings?.schedule?.closedMessage || ''}
                         onChange={(e) => updateScheduleSetting('closedMessage', e.target.value)}
                         rows={2}
-                        className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900 resize-none"
+                        className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground resize-none"
                         placeholder="Shown when the form isn't open (e.g. Registration is now closed.)"
                       />
                     </div>
-                    <p className="text-xs text-stone-400 mt-1">Times use your local timezone. The window and cap are enforced server-side.</p>
+                    <p className="text-xs text-muted-foreground mt-1">Times use your local timezone. The window and cap are enforced server-side.</p>
                   </div>
 
                   {/* Spam protection (reCAPTCHA v3) */}
-                  <div className="pt-3 border-t border-stone-100">
+                  <div className="pt-3 border-t border-border">
                     <label className="flex items-center gap-3 cursor-pointer">
                       <input
                         type="checkbox"
@@ -739,15 +739,15 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                         onChange={(e) => updateRecaptchaSetting(e.target.checked)}
                         className="rounded"
                       />
-                      <span className="text-sm font-medium text-stone-700">Enable reCAPTCHA v3 spam protection</span>
+                      <span className="text-sm font-medium text-foreground">Enable reCAPTCHA v3 spam protection</span>
                     </label>
-                    <p className="text-xs text-stone-400 mt-1 pl-6">
+                    <p className="text-xs text-muted-foreground mt-1 pl-6">
                       Only active once the <code>NEXT_PUBLIC_RECAPTCHA_SITE_KEY</code> and <code>RECAPTCHA_SECRET_KEY</code> env vars are configured.
                     </p>
                   </div>
 
                   {/* Gamified experience */}
-                  <div className="pt-3 border-t border-stone-100">
+                  <div className="pt-3 border-t border-border">
                     <label className="flex items-center gap-3 cursor-pointer mb-2">
                       <input
                         type="checkbox"
@@ -755,9 +755,9 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                         onChange={(e) => updateGamifySetting('enabled', e.target.checked)}
                         className="rounded"
                       />
-                      <span className="text-sm font-medium text-stone-700">Gamified experience</span>
+                      <span className="text-sm font-medium text-foreground">Gamified experience</span>
                     </label>
-                    <p className="text-xs text-stone-400 mb-2 pl-6">
+                    <p className="text-xs text-muted-foreground mb-2 pl-6">
                       Adds playful touches as people answer — celebratory confetti at milestones and an emoji reaction bar on each question.
                     </p>
                     {form.settings?.gamify?.enabled !== false && (
@@ -769,7 +769,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                             onChange={(e) => updateGamifySetting('reactions', e.target.checked)}
                             className="rounded"
                           />
-                          <span className="text-sm text-stone-700">Emoji reactions on each question</span>
+                          <span className="text-sm text-foreground">Emoji reactions on each question</span>
                         </label>
                         <label className="flex items-center gap-3 cursor-pointer">
                           <input
@@ -778,7 +778,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                             onChange={(e) => updateGamifySetting('milestones', e.target.checked)}
                             className="rounded"
                           />
-                          <span className="text-sm text-stone-700">Milestone celebrations (confetti)</span>
+                          <span className="text-sm text-foreground">Milestone celebrations (confetti)</span>
                         </label>
                       </div>
                     )}
@@ -789,10 +789,10 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
 
             {/* Fields */}
             {fields.length === 0 ? (
-              <div className="bg-white rounded-lg border-2 border-dashed border-stone-200 p-12 text-center">
-                <Plus className="w-12 h-12 text-stone-400 mx-auto mb-4" />
-                <h3 className="text-lg font-bold text-stone-900 mb-2">No fields yet</h3>
-                <p className="text-stone-600">Click a field type on the left to add your first question</p>
+              <div className="card-surface border-dashed border-2 p-12 text-center">
+                <Plus className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg heading-tight text-foreground mb-2">No fields yet</h3>
+                <p className="text-muted-foreground">Click a field type on the left to add your first question</p>
               </div>
             ) : (
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -820,12 +820,12 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
             )}
 
             {isPublished && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                <h3 className="font-bold text-green-900 mb-2">✅ Form Published</h3>
-                <p className="text-sm text-green-700 mb-4">Your form is live and ready to share.</p>
+              <div className="bg-secondary border border-border rounded-lg p-6">
+                <h3 className="heading-tight text-foreground mb-2">✅ Form Published</h3>
+                <p className="text-sm text-muted-foreground mb-4">Your form is live and ready to share.</p>
                 <button
                   onClick={() => setShareModalOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
                 >
                   <Share2 className="w-4 h-4" /> Share Form
                 </button>
@@ -866,12 +866,12 @@ function fromLocalInput(local: string): string {
 
 function SaveIndicator({ state }: { state: SaveState }) {
   if (state === 'saving') {
-    return <span className="inline-flex items-center gap-1 text-stone-500"><Loader2 className="w-3 h-3 animate-spin" /> Saving…</span>
+    return <span className="inline-flex items-center gap-1 text-muted-foreground"><Loader2 className="w-3 h-3 animate-spin" /> Saving…</span>
   }
   if (state === 'unsaved') {
-    return <span className="text-amber-600">Unsaved changes</span>
+    return <span className="text-muted-foreground">Unsaved changes</span>
   }
-  return <span className="inline-flex items-center gap-1 text-stone-500"><Check className="w-3 h-3" /> All changes saved</span>
+  return <span className="inline-flex items-center gap-1 text-muted-foreground"><Check className="w-3 h-3" /> All changes saved</span>
 }
 
 interface SortableFieldProps {
@@ -912,19 +912,19 @@ function SortableField({ field, index, allFields, quizEnabled, expanded, onToggl
         <button
           {...attributes}
           {...listeners}
-          className="text-stone-300 hover:text-stone-500 cursor-grab active:cursor-grabbing touch-none"
+          className="text-muted-foreground/50 hover:text-muted-foreground cursor-grab active:cursor-grabbing touch-none"
           aria-label="Drag to reorder"
         >
           <GripVertical className="w-5 h-5" />
         </button>
         <div className="flex-1 flex items-center gap-3" aria-label="Page break">
-          <div className="flex-1 border-t-2 border-dashed border-stone-300" />
-          <span className="px-3 py-1 bg-stone-100 text-stone-600 text-xs font-medium rounded-full uppercase tracking-wide shrink-0">
+          <div className="flex-1 border-t-2 border-dashed border-input" />
+          <span className="px-3 py-1 bg-muted text-muted-foreground text-xs font-medium rounded-full uppercase tracking-wide shrink-0">
             Page break
           </span>
-          <div className="flex-1 border-t-2 border-dashed border-stone-300" />
+          <div className="flex-1 border-t-2 border-dashed border-input" />
         </div>
-        <button onClick={() => onDelete(field.id)} className="text-stone-400 hover:text-red-600" aria-label="Delete page break">
+        <button onClick={() => onDelete(field.id)} className="text-muted-foreground hover:text-destructive" aria-label="Delete page break">
           <Trash2 className="w-5 h-5" />
         </button>
       </div>
@@ -932,12 +932,12 @@ function SortableField({ field, index, allFields, quizEnabled, expanded, onToggl
   }
 
   return (
-    <div ref={setNodeRef} style={style} className="bg-white rounded-lg border border-stone-200 p-5">
+    <div ref={setNodeRef} style={style} className="card-surface p-5">
       <div className="flex items-start gap-3">
         <button
           {...attributes}
           {...listeners}
-          className="text-stone-300 hover:text-stone-500 mt-1.5 cursor-grab active:cursor-grabbing touch-none"
+          className="text-muted-foreground/50 hover:text-muted-foreground mt-1.5 cursor-grab active:cursor-grabbing touch-none"
           aria-label="Drag to reorder"
         >
           <GripVertical className="w-5 h-5" />
@@ -945,15 +945,15 @@ function SortableField({ field, index, allFields, quizEnabled, expanded, onToggl
 
         <div className="flex-1 space-y-3 min-w-0">
           <div className="flex items-center gap-3">
-            <span className="text-stone-400 text-sm font-medium w-5 shrink-0">{index + 1}</span>
+            <span className="text-muted-foreground text-sm font-medium w-5 shrink-0">{index + 1}</span>
             <input
               type="text"
               value={field.label}
               onChange={(e) => onUpdate(field.id, { label: e.target.value })}
-              className="flex-1 text-lg font-medium text-stone-900 border-b border-transparent hover:border-stone-200 focus:outline-none focus:border-stone-900 pb-1"
+              className="flex-1 text-lg font-medium text-foreground border-b border-transparent hover:border-border focus:outline-none focus:border-foreground pb-1"
               placeholder="Question"
             />
-            <span className="px-2.5 py-1 bg-stone-100 text-stone-600 text-xs rounded-full shrink-0">
+            <span className="px-2.5 py-1 bg-muted text-muted-foreground text-xs rounded-full shrink-0">
               {meta?.icon} {meta?.label || field.field_type}
             </span>
           </div>
@@ -982,11 +982,11 @@ function SortableField({ field, index, allFields, quizEnabled, expanded, onToggl
                 onChange={(e) => onUpdate(field.id, { required: e.target.checked })}
                 className="rounded"
               />
-              <span className="text-sm text-stone-600">Required</span>
+              <span className="text-sm text-muted-foreground">Required</span>
             </label>
             <button
               onClick={onToggleExpand}
-              className="flex items-center gap-1 text-sm text-stone-500 hover:text-stone-900"
+              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
             >
               <Settings2 className="w-4 h-4" /> Settings
               {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -995,55 +995,55 @@ function SortableField({ field, index, allFields, quizEnabled, expanded, onToggl
 
           {/* Expandable per-field settings */}
           {expanded && (
-            <div className="pl-8 pt-3 mt-2 border-t border-stone-100 space-y-4">
+            <div className="pl-8 pt-3 mt-2 border-t border-border space-y-4">
               <div>
-                <label className="block text-xs font-medium text-stone-700 mb-1">Help text</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Help text</label>
                 <input
                   type="text"
                   value={settings.description || ''}
                   onChange={(e) => onUpdateSetting(field, 'description', e.target.value)}
-                  className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+                  className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
                   placeholder="Extra guidance shown under the question"
                 />
               </div>
 
               {/* Consent (GDPR) config */}
               {field.field_type === 'consent' && (
-                <div className="rounded-lg border border-stone-200 p-3 space-y-2">
-                  <p className="text-xs font-medium text-stone-700">Consent</p>
+                <div className="rounded-lg border border-border p-3 space-y-2">
+                  <p className="text-xs font-medium text-foreground">Consent</p>
                   <div>
-                    <label className="block text-xs text-stone-600 mb-1">Consent text</label>
+                    <label className="block text-xs text-muted-foreground mb-1">Consent text</label>
                     <input
                       type="text"
                       value={settings.consentLabel || ''}
                       onChange={(e) => onUpdateSetting(field, 'consentLabel', e.target.value)}
-                      className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+                      className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
                       placeholder="I agree to the terms and conditions"
                     />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-xs text-stone-600 mb-1">Privacy policy URL</label>
+                      <label className="block text-xs text-muted-foreground mb-1">Privacy policy URL</label>
                       <input
                         type="text"
                         value={settings.policyUrl || ''}
                         onChange={(e) => onUpdateSetting(field, 'policyUrl', e.target.value)}
-                        className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+                        className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
                         placeholder="https://example.com/privacy"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-stone-600 mb-1">Link text</label>
+                      <label className="block text-xs text-muted-foreground mb-1">Link text</label>
                       <input
                         type="text"
                         value={settings.policyText || ''}
                         onChange={(e) => onUpdateSetting(field, 'policyText', e.target.value)}
-                        className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+                        className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
                         placeholder="Privacy Policy"
                       />
                     </div>
                   </div>
-                  <p className="text-xs text-stone-400">Mark the field Required to force respondents to tick the box.</p>
+                  <p className="text-xs text-muted-foreground">Mark the field Required to force respondents to tick the box.</p>
                 </div>
               )}
 
@@ -1063,12 +1063,12 @@ function SortableField({ field, index, allFields, quizEnabled, expanded, onToggl
 
               {!fieldHasOptions(field.field_type) && field.field_type !== 'yes_no' && field.field_type !== 'consent' && field.field_type !== 'calculator' && field.field_type !== 'payment' && (
                 <div>
-                  <label className="block text-xs font-medium text-stone-700 mb-1">Placeholder</label>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">Placeholder</label>
                   <input
                     type="text"
                     value={field.placeholder || ''}
                     onChange={(e) => onUpdate(field.id, { placeholder: e.target.value })}
-                    className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+                    className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
                     placeholder="Placeholder text…"
                   />
                 </div>
@@ -1076,36 +1076,36 @@ function SortableField({ field, index, allFields, quizEnabled, expanded, onToggl
 
               {field.field_type === 'hidden' && (
                 <div>
-                  <label className="block text-xs font-medium text-stone-700 mb-1">URL parameter name</label>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">URL parameter name</label>
                   <input
                     type="text"
                     value={settings.ref || ''}
                     onChange={(e) => onUpdateSetting(field, 'ref', e.target.value)}
-                    className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900 font-mono"
+                    className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground font-mono"
                     placeholder="e.g. utm_source"
                   />
-                  <p className="text-xs text-stone-400 mt-1">Captured from <code>?{settings.ref || 'param'}=value</code> in the form URL.</p>
+                  <p className="text-xs text-muted-foreground mt-1">Captured from <code>?{settings.ref || 'param'}=value</code> in the form URL.</p>
                 </div>
               )}
 
               {isNumeric && (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-stone-700 mb-1">Min</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">Min</label>
                     <input
                       type="number"
                       value={settings.min ?? ''}
                       onChange={(e) => onUpdateSetting(field, 'min', e.target.value === '' ? '' : Number(e.target.value))}
-                      className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+                      className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-stone-700 mb-1">Max</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">Max</label>
                     <input
                       type="number"
                       value={settings.max ?? ''}
                       onChange={(e) => onUpdateSetting(field, 'max', e.target.value === '' ? '' : Number(e.target.value))}
-                      className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+                      className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
                     />
                   </div>
                 </div>
@@ -1113,12 +1113,12 @@ function SortableField({ field, index, allFields, quizEnabled, expanded, onToggl
 
               {isText && (
                 <div>
-                  <label className="block text-xs font-medium text-stone-700 mb-1">Max length (characters)</label>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">Max length (characters)</label>
                   <input
                     type="number"
                     value={settings.maxLength ?? ''}
                     onChange={(e) => onUpdateSetting(field, 'maxLength', e.target.value === '' ? '' : Number(e.target.value))}
-                    className="w-40 text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+                    className="w-40 text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
                     placeholder="No limit"
                   />
                 </div>
@@ -1126,18 +1126,18 @@ function SortableField({ field, index, allFields, quizEnabled, expanded, onToggl
 
               {/* Quiz scoring — yes/no points */}
               {quizEnabled && field.field_type === 'yes_no' && (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-2">
-                  <p className="text-xs font-medium text-amber-800">Quiz scoring</p>
+                <div className="rounded-lg border border-border bg-secondary p-3 space-y-2">
+                  <p className="text-xs font-medium text-foreground">Quiz scoring</p>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs text-stone-600 mb-1">Points for "Yes"</label>
+                      <label className="block text-xs text-muted-foreground mb-1">Points for "Yes"</label>
                       <input type="number" value={scoring['true'] ?? ''} onChange={(e) => onUpdateSetting(field, 'scoring', { ...scoring, ...(e.target.value === '' ? (() => { const n = { ...scoring }; delete n['true']; return n })() : { true: Number(e.target.value) }) })}
-                        className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900" />
+                        className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground" />
                     </div>
                     <div>
-                      <label className="block text-xs text-stone-600 mb-1">Points for "No"</label>
+                      <label className="block text-xs text-muted-foreground mb-1">Points for "No"</label>
                       <input type="number" value={scoring['false'] ?? ''} onChange={(e) => onUpdateSetting(field, 'scoring', { ...scoring, ...(e.target.value === '' ? (() => { const n = { ...scoring }; delete n['false']; return n })() : { false: Number(e.target.value) }) })}
-                        className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900" />
+                        className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground" />
                     </div>
                   </div>
                 </div>
@@ -1145,14 +1145,14 @@ function SortableField({ field, index, allFields, quizEnabled, expanded, onToggl
 
               {/* Quiz scoring — checkbox per-option points */}
               {quizEnabled && field.field_type === 'checkboxes' && (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-2">
-                  <p className="text-xs font-medium text-amber-800">Quiz scoring (points per selected option)</p>
+                <div className="rounded-lg border border-border bg-secondary p-3 space-y-2">
+                  <p className="text-xs font-medium text-foreground">Quiz scoring (points per selected option)</p>
                   {(field.options || []).map((opt) => (
                     <div key={opt} className="flex items-center gap-2">
-                      <span className="flex-1 text-sm text-stone-700 truncate">{opt}</span>
+                      <span className="flex-1 text-sm text-foreground truncate">{opt}</span>
                       <input type="number" value={scoring[opt] ?? ''}
                         onChange={(e) => { const n = { ...scoring }; if (e.target.value === '') delete n[opt]; else n[opt] = Number(e.target.value); onUpdateSetting(field, 'scoring', n) }}
-                        className="w-24 text-sm border border-stone-300 rounded px-2 py-1.5 focus:outline-none focus:border-stone-900" placeholder="pts" />
+                        className="w-24 text-sm border border-input rounded-md px-2 py-1.5 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground" placeholder="pts" />
                     </div>
                   ))}
                 </div>
@@ -1160,19 +1160,19 @@ function SortableField({ field, index, allFields, quizEnabled, expanded, onToggl
 
               {/* Quiz scoring — numeric weight */}
               {quizEnabled && SCORABLE_NUMERIC.has(field.field_type) && (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-2">
-                  <p className="text-xs font-medium text-amber-800">Quiz scoring</p>
-                  <label className="block text-xs text-stone-600 mb-1">Weight (points = answer × weight)</label>
+                <div className="rounded-lg border border-border bg-secondary p-3 space-y-2">
+                  <p className="text-xs font-medium text-foreground">Quiz scoring</p>
+                  <label className="block text-xs text-muted-foreground mb-1">Weight (points = answer × weight)</label>
                   <input type="number" step="any" value={scoring['weight'] ?? ''}
                     onChange={(e) => { const n = { ...scoring }; if (e.target.value === '') delete n['weight']; else n['weight'] = Number(e.target.value); onUpdateSetting(field, 'scoring', n) }}
-                    className="w-40 text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900" placeholder="1" />
+                    className="w-40 text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground" placeholder="1" />
                 </div>
               )}
             </div>
           )}
         </div>
 
-        <button onClick={() => onDelete(field.id)} className="text-stone-400 hover:text-red-600 mt-1.5" aria-label="Delete field">
+        <button onClick={() => onDelete(field.id)} className="text-muted-foreground hover:text-destructive mt-1.5" aria-label="Delete field">
           <Trash2 className="w-5 h-5" />
         </button>
       </div>
@@ -1215,10 +1215,10 @@ function CalculatorConfig({
   }
 
   return (
-    <div className="rounded-lg border border-stone-200 p-3 space-y-3">
-      <p className="text-xs font-medium text-stone-700">Calculation</p>
+    <div className="rounded-lg border border-border p-3 space-y-3">
+      <p className="text-xs font-medium text-foreground">Calculation</p>
       {sources.length === 0 && (
-        <p className="text-xs text-stone-400">
+        <p className="text-xs text-muted-foreground">
           Add Number, Rating, Opinion Scale, Yes/No or Consent fields above to reference them here.
         </p>
       )}
@@ -1229,7 +1229,7 @@ function CalculatorConfig({
             <select
               value={t.fieldId}
               onChange={(e) => updateTerm(i, { fieldId: e.target.value })}
-              className="flex-1 text-sm border border-stone-300 rounded px-2 py-1.5 focus:outline-none focus:border-stone-900"
+              className="flex-1 text-sm border border-input rounded-md px-2 py-1.5 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
             >
               {!sources.some((s) => s.id === t.fieldId) && (
                 <option value={t.fieldId}>{labelFor(t.fieldId)}</option>
@@ -1238,16 +1238,16 @@ function CalculatorConfig({
                 <option key={s.id} value={s.id}>{s.label || 'Untitled'}</option>
               ))}
             </select>
-            <span className="text-xs text-stone-400">×</span>
+            <span className="text-xs text-muted-foreground">×</span>
             <input
               type="number"
               step="any"
               value={t.weight}
               onChange={(e) => updateTerm(i, { weight: e.target.value === '' ? 0 : Number(e.target.value) })}
-              className="w-20 text-sm border border-stone-300 rounded px-2 py-1.5 focus:outline-none focus:border-stone-900"
+              className="w-20 text-sm border border-input rounded-md px-2 py-1.5 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
               placeholder="1"
             />
-            <button type="button" onClick={() => removeTerm(i)} className="text-red-600 hover:text-red-700" aria-label="Remove term">
+            <button type="button" onClick={() => removeTerm(i)} className="text-destructive hover:text-destructive/80" aria-label="Remove term">
               <Trash2 className="w-4 h-4" />
             </button>
           </div>
@@ -1258,45 +1258,45 @@ function CalculatorConfig({
         type="button"
         onClick={addTerm}
         disabled={sources.length === 0}
-        className="flex items-center gap-1.5 text-sm text-stone-600 hover:text-stone-900 disabled:opacity-40"
+        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground disabled:opacity-40"
       >
         <Plus className="w-4 h-4" /> Add field to formula
       </button>
 
-      <div className="grid grid-cols-3 gap-2 pt-2 border-t border-stone-100">
+      <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border">
         <div>
-          <label className="block text-xs text-stone-600 mb-1">Constant (+)</label>
+          <label className="block text-xs text-muted-foreground mb-1">Constant (+)</label>
           <input
             type="number"
             step="any"
             value={calc.constant ?? ''}
             onChange={(e) => write({ ...calc, constant: e.target.value === '' ? undefined : Number(e.target.value) })}
-            className="w-full text-sm border border-stone-300 rounded px-2 py-1.5 focus:outline-none focus:border-stone-900"
+            className="w-full text-sm border border-input rounded-md px-2 py-1.5 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
             placeholder="0"
           />
         </div>
         <div>
-          <label className="block text-xs text-stone-600 mb-1">Prefix</label>
+          <label className="block text-xs text-muted-foreground mb-1">Prefix</label>
           <input
             type="text"
             value={calc.prefix ?? ''}
             onChange={(e) => write({ ...calc, prefix: e.target.value || undefined })}
-            className="w-full text-sm border border-stone-300 rounded px-2 py-1.5 focus:outline-none focus:border-stone-900"
+            className="w-full text-sm border border-input rounded-md px-2 py-1.5 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
             placeholder="£"
           />
         </div>
         <div>
-          <label className="block text-xs text-stone-600 mb-1">Suffix</label>
+          <label className="block text-xs text-muted-foreground mb-1">Suffix</label>
           <input
             type="text"
             value={calc.suffix ?? ''}
             onChange={(e) => write({ ...calc, suffix: e.target.value || undefined })}
-            className="w-full text-sm border border-stone-300 rounded px-2 py-1.5 focus:outline-none focus:border-stone-900"
+            className="w-full text-sm border border-input rounded-md px-2 py-1.5 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
             placeholder=" pts"
           />
         </div>
       </div>
-      <p className="text-xs text-stone-400">Value = sum(field × weight) + constant. Computed live and recomputed on submit.</p>
+      <p className="text-xs text-muted-foreground">Value = sum(field × weight) + constant. Computed live and recomputed on submit.</p>
     </div>
   )
 }
@@ -1324,10 +1324,10 @@ function PaymentConfig({
     onUpdateSetting(field, 'payment', { ...pay, ...patch })
 
   return (
-    <div className="rounded-lg border border-stone-200 p-3 space-y-3">
-      <p className="text-xs font-medium text-stone-700">Payment (fixed amount)</p>
+    <div className="rounded-lg border border-border p-3 space-y-3">
+      <p className="text-xs font-medium text-foreground">Payment (fixed amount)</p>
 
-      <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+      <div className="rounded-lg border border-border bg-secondary p-3 text-xs text-muted-foreground">
         Connect a Stripe account to actually collect this payment.{' '}
         <Link href="/dashboard/settings/payments" className="underline font-medium">
           Set up payments
@@ -1337,23 +1337,23 @@ function PaymentConfig({
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs text-stone-600 mb-1">Amount</label>
+          <label className="block text-xs text-muted-foreground mb-1">Amount</label>
           <input
             type="number"
             min={0}
             step="0.01"
             value={pay.amount ?? ''}
             onChange={(e) => write({ amount: e.target.value === '' ? undefined : Number(e.target.value) })}
-            className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+            className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
             placeholder="25.00"
           />
         </div>
         <div>
-          <label className="block text-xs text-stone-600 mb-1">Currency</label>
+          <label className="block text-xs text-muted-foreground mb-1">Currency</label>
           <select
             value={pay.currency || 'gbp'}
             onChange={(e) => write({ currency: e.target.value as PaymentConfigShape['currency'] })}
-            className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+            className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
           >
             <option value="gbp">GBP (£)</option>
             <option value="usd">USD ($)</option>
@@ -1363,17 +1363,17 @@ function PaymentConfig({
       </div>
 
       <div>
-        <label className="block text-xs text-stone-600 mb-1">Payment description (optional)</label>
+        <label className="block text-xs text-muted-foreground mb-1">Payment description (optional)</label>
         <input
           type="text"
           value={pay.description || ''}
           onChange={(e) => write({ description: e.target.value || undefined })}
-          className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+          className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
           placeholder="e.g. Event ticket — General admission"
         />
       </div>
 
-      <p className="text-xs text-stone-400">
+      <p className="text-xs text-muted-foreground">
         Respondents fill the form, then are redirected to a secure Stripe checkout on submit. The amount is enforced
         server-side.
       </p>

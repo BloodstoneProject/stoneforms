@@ -11,6 +11,7 @@ import {
   Sparkles,
   Lock,
 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { hasPlanFeature, type PlanId } from '@/lib/plan-limits'
 
 interface GettingStartedProps {
@@ -45,18 +46,14 @@ export function GettingStarted({
       action: hasForm ? (
         <Link
           href="/dashboard/forms"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-stone-700 hover:text-stone-900"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-muted-foreground"
         >
           View forms <ArrowRight className="w-4 h-4" />
         </Link>
       ) : (
-        <button
-          onClick={onCreateForm}
-          disabled={creating}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-stone-900 text-white text-sm rounded-lg hover:bg-stone-800 disabled:opacity-50"
-        >
+        <Button onClick={onCreateForm} disabled={creating} size="sm">
           {creating ? 'Creating…' : 'Create form'}
-        </button>
+        </Button>
       ),
     },
     {
@@ -68,7 +65,7 @@ export function GettingStarted({
       action: (
         <Link
           href="/dashboard/forms"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-stone-700 hover:text-stone-900"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-muted-foreground"
         >
           Open builder <ArrowRight className="w-4 h-4" />
         </Link>
@@ -83,7 +80,7 @@ export function GettingStarted({
       action: (
         <Link
           href="/dashboard/forms"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-stone-700 hover:text-stone-900"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-muted-foreground"
         >
           Go to forms <ArrowRight className="w-4 h-4" />
         </Link>
@@ -98,7 +95,7 @@ export function GettingStarted({
       action: (
         <Link
           href="/dashboard/forms"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-stone-700 hover:text-stone-900"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-muted-foreground"
         >
           Set up <ArrowRight className="w-4 h-4" />
         </Link>
@@ -111,28 +108,27 @@ export function GettingStarted({
   return (
     <div className="space-y-6">
       {/* Hero / empty-state header */}
-      <div className="relative overflow-hidden bg-white rounded-2xl border border-stone-200 p-8">
-        <div className="absolute -right-12 -top-12 w-48 h-48 bg-stone-100 rounded-full opacity-60" />
+      <div className="relative overflow-hidden card-surface p-8">
         <div className="relative">
-          <div className="w-12 h-12 bg-stone-900 text-white rounded-xl flex items-center justify-center mb-4">
+          <div className="w-12 h-12 bg-primary text-primary-foreground rounded-md flex items-center justify-center mb-4">
             <Sparkles className="w-6 h-6" />
           </div>
-          <h2 className="text-2xl font-bold text-stone-900">
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground">
             {hasForm ? "Let's get your form live" : 'Welcome to Stoneforms'}
           </h2>
-          <p className="text-stone-600 mt-1 max-w-lg">
+          <p className="text-muted-foreground mt-1 max-w-lg">
             {hasResponse
               ? 'Nice work, responses are coming in. Finish setting things up below.'
               : 'A few quick steps to go from zero to collecting responses.'}
           </p>
           <div className="mt-5 flex items-center gap-3">
-            <div className="flex-1 max-w-xs h-2 bg-stone-100 rounded-full overflow-hidden">
+            <div className="flex-1 max-w-xs h-2 bg-muted rounded-full overflow-hidden">
               <div
-                className="h-full bg-stone-900 transition-all duration-500"
+                className="h-full bg-primary transition-all duration-500"
                 style={{ width: `${(completed / steps.length) * 100}%` }}
               />
             </div>
-            <span className="text-sm text-stone-500 font-medium">
+            <span className="text-sm text-muted-foreground font-medium">
               {completed}/{steps.length} done
             </span>
           </div>
@@ -140,17 +136,17 @@ export function GettingStarted({
       </div>
 
       {/* Checklist */}
-      <div className="bg-white rounded-2xl border border-stone-200 divide-y divide-stone-100">
+      <div className="card-surface divide-y divide-border">
         {steps.map((step) => (
           <div
             key={step.id}
             className="flex items-center gap-4 px-6 py-4"
           >
             <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+              className={`w-10 h-10 rounded-md flex items-center justify-center shrink-0 ${
                 step.done
-                  ? 'bg-green-100 text-green-600'
-                  : 'bg-stone-100 text-stone-500'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground'
               }`}
             >
               {step.done ? <Check className="w-5 h-5" /> : step.icon}
@@ -158,12 +154,12 @@ export function GettingStarted({
             <div className="min-w-0 flex-1">
               <p
                 className={`font-medium ${
-                  step.done ? 'text-stone-400 line-through' : 'text-stone-900'
+                  step.done ? 'text-muted-foreground line-through' : 'text-foreground'
                 }`}
               >
                 {step.title}
               </p>
-              <p className="text-sm text-stone-500">{step.description}</p>
+              <p className="text-sm text-muted-foreground">{step.description}</p>
             </div>
             <div className="shrink-0">{step.action}</div>
           </div>
@@ -172,14 +168,14 @@ export function GettingStarted({
 
       {/* Plan-gated features (upgrade hints, read-only) */}
       {plan === 'free' && (
-        <div className="bg-stone-900 rounded-2xl p-6 text-white">
+        <div className="card-surface bg-secondary p-6">
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center shrink-0 text-foreground">
               <Lock className="w-5 h-5" />
             </div>
             <div className="flex-1">
-              <h3 className="font-bold">Unlock more with Pro</h3>
-              <p className="text-stone-300 text-sm mt-1 mb-4">
+              <h3 className="font-semibold tracking-tight text-foreground">Unlock more with Pro</h3>
+              <p className="text-muted-foreground text-sm mt-1 mb-4">
                 Remove Stoneforms branding, get a custom shareable link, file
                 uploads, email notifications and advanced analytics.
               </p>
@@ -191,7 +187,7 @@ export function GettingStarted({
               </div>
               <Link
                 href="/dashboard/settings/billing"
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-stone-900 text-sm font-medium rounded-lg hover:bg-stone-100"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-md hover:bg-primary/90"
               >
                 Upgrade <ArrowRight className="w-4 h-4" />
               </Link>
@@ -206,8 +202,8 @@ export function GettingStarted({
 function Locked({ label, available }: { label: string; available: boolean }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-        available ? 'bg-green-500/20 text-green-300' : 'bg-white/10 text-stone-300'
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${
+        available ? 'border-transparent bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground'
       }`}
     >
       {available ? <Check className="w-3 h-3" /> : <Lock className="w-3 h-3" />}

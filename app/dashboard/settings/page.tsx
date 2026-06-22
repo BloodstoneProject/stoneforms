@@ -26,16 +26,11 @@ export default function SettingsPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-stone-50">
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
-        * { font-family: 'DM Sans', sans-serif; }
-      `}</style>
-
-      <div className="bg-white border-b border-stone-200">
+    <div className="min-h-screen bg-background">
+      <div className="bg-card border-b border-border">
         <div className="max-w-7xl mx-auto px-6 py-6">
-          <h1 className="text-3xl font-bold text-stone-900">Settings</h1>
-          <p className="text-stone-600 mt-1">Manage your account and preferences</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">Settings</h1>
+          <p className="text-muted-foreground mt-1">Manage your account and preferences</p>
         </div>
       </div>
 
@@ -45,17 +40,17 @@ export default function SettingsPage() {
             <Link
               key={i}
               href={section.href}
-              className="bg-white border border-stone-200 rounded-lg p-6 hover:shadow-lg transition-shadow group"
+              className="card-surface p-6 hover:bg-muted/30 transition-colors group"
             >
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-stone-100 rounded-lg flex items-center justify-center group-hover:bg-stone-900 transition-colors">
-                  <section.icon className="w-6 h-6 text-stone-600 group-hover:text-white transition-colors" />
+                <div className="w-12 h-12 bg-muted rounded-md flex items-center justify-center group-hover:bg-primary transition-colors">
+                  <section.icon className="w-6 h-6 text-muted-foreground group-hover:text-primary-foreground transition-colors" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-bold text-stone-900 mb-2 group-hover:text-stone-700">
+                  <h3 className="text-lg font-semibold tracking-tight text-foreground mb-2">
                     {section.title}
                   </h3>
-                  <p className="text-stone-600 text-sm">
+                  <p className="text-muted-foreground text-sm">
                     {section.description}
                   </p>
                 </div>

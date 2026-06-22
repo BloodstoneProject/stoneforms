@@ -135,27 +135,27 @@ export default function FileUploadField({
         <div
           {...getRootProps()}
           className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-            isDragActive 
-              ? 'border-stone-900 bg-stone-50' 
-              : 'border-stone-300 hover:border-stone-400'
+            isDragActive
+              ? 'border-foreground bg-secondary'
+              : 'border-border hover:border-foreground'
           } ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           <input {...getInputProps()} />
-          
-          <Upload className={`w-12 h-12 mx-auto mb-4 ${isDragActive ? 'text-stone-900' : 'text-stone-400'}`} />
-          
+
+          <Upload className={`w-12 h-12 mx-auto mb-4 ${isDragActive ? 'text-foreground' : 'text-muted-foreground'}`} />
+
           {uploading ? (
             <div>
               <Loader className="w-6 h-6 animate-spin mx-auto mb-2" />
-              <p className="text-sm text-stone-600">Uploading... {Math.round(uploadProgress)}%</p>
+              <p className="text-sm text-muted-foreground">Uploading... {Math.round(uploadProgress)}%</p>
             </div>
           ) : (
             <div>
-              <p className="text-stone-900 font-medium mb-1">
+              <p className="text-foreground font-medium mb-1">
                 {isDragActive ? 'Drop files here' : 'Drag & drop files here'}
               </p>
-              <p className="text-sm text-stone-600">or click to browse</p>
-              <p className="text-xs text-stone-500 mt-2">
+              <p className="text-sm text-muted-foreground">or click to browse</p>
+              <p className="text-xs text-muted-foreground mt-2">
                 Maximum {maxFiles} files · {formatFileSize(maxSizeBytes)} per file
               </p>
             </div>
@@ -165,7 +165,7 @@ export default function FileUploadField({
 
       {/* Error Message */}
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
+        <div className="p-3 bg-secondary border border-border rounded-lg text-sm text-destructive">
           {error}
         </div>
       )}
@@ -176,31 +176,31 @@ export default function FileUploadField({
           {value.map((file) => (
             <div
               key={file.id}
-              className="flex items-center gap-3 p-3 bg-stone-50 rounded-lg group"
+              className="flex items-center gap-3 p-3 bg-secondary rounded-lg group"
             >
               {/* File Icon */}
               <div className="flex-shrink-0">
                 {isImageFile(file.name) ? (
-                  <div className="w-12 h-12 rounded overflow-hidden bg-stone-200">
-                    <img 
-                      src={file.url} 
+                  <div className="w-12 h-12 rounded overflow-hidden bg-muted">
+                    <img
+                      src={file.url}
                       alt={file.name}
                       className="w-full h-full object-cover"
                     />
                   </div>
                 ) : (
-                  <div className="w-12 h-12 rounded bg-stone-200 flex items-center justify-center">
-                    <FileText className="w-6 h-6 text-stone-600" />
+                  <div className="w-12 h-12 rounded bg-muted flex items-center justify-center">
+                    <FileText className="w-6 h-6 text-muted-foreground" />
                   </div>
                 )}
               </div>
 
               {/* File Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-stone-900 truncate">
+                <p className="text-sm font-medium text-foreground truncate">
                   {file.name}
                 </p>
-                <p className="text-xs text-stone-600">
+                <p className="text-xs text-muted-foreground">
                   {formatFileSize(file.size)}
                 </p>
               </div>
@@ -209,7 +209,7 @@ export default function FileUploadField({
               <button
                 type="button"
                 onClick={() => removeFile(file)}
-                className="flex-shrink-0 p-2 text-red-600 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="flex-shrink-0 p-2 text-destructive hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -220,7 +220,7 @@ export default function FileUploadField({
 
       {/* Required Indicator */}
       {required && value.length === 0 && (
-        <p className="text-xs text-red-600">* At least one file is required</p>
+        <p className="text-xs text-destructive">* At least one file is required</p>
       )}
     </div>
   )

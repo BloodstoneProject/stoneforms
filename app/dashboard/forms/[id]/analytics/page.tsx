@@ -43,8 +43,8 @@ export default function FormAnalyticsPage({ params }: { params: Promise<{ id: st
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     )
   }
@@ -57,22 +57,22 @@ export default function FormAnalyticsPage({ params }: { params: Promise<{ id: st
   }))
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white border-b border-stone-200">
+      <div className="bg-card border-b border-border">
         <div className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href={`/dashboard/forms/${formId}`} className="text-stone-600 hover:text-stone-900">
+            <Link href={`/dashboard/forms/${formId}`} className="text-muted-foreground hover:text-foreground">
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-stone-900">Analytics</h1>
-              <p className="text-sm text-stone-600">{formTitle}</p>
+              <h1 className="text-2xl heading-tight text-foreground">Analytics</h1>
+              <p className="text-sm text-muted-foreground">{formTitle}</p>
             </div>
           </div>
           <Link
             href={`/dashboard/forms/${formId}/responses`}
-            className="px-4 py-2 border border-stone-300 rounded-lg hover:bg-stone-50 text-sm font-medium"
+            className="px-4 py-2 border border-border rounded-md hover:bg-secondary text-sm font-medium"
           >
             View responses
           </Link>
@@ -88,9 +88,9 @@ export default function FormAnalyticsPage({ params }: { params: Promise<{ id: st
         </div>
 
         {/* Responses over time */}
-        <div className="bg-white rounded-xl border border-stone-200 p-6">
-          <h2 className="font-bold text-stone-900 mb-1">Responses over time</h2>
-          <p className="text-sm text-stone-500 mb-6">Last 30 days</p>
+        <div className="bg-card rounded-lg border border-border p-6">
+          <h2 className="heading-tight text-foreground mb-1">Responses over time</h2>
+          <p className="text-sm text-muted-foreground mb-6">Last 30 days</p>
           {totals.submissions === 0 ? (
             <EmptyChart />
           ) : (
@@ -98,27 +98,27 @@ export default function FormAnalyticsPage({ params }: { params: Promise<{ id: st
               <AreaChart data={chartData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
                 <defs>
                   <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#16a34a" stopOpacity={0.25} />
-                    <stop offset="100%" stopColor="#16a34a" stopOpacity={0} />
+                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.25} />
+                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0eee9" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 12, fill: '#78716c' }} tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={24} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#78716c' }} tickLine={false} axisLine={false} width={32} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={24} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} width={32} />
                 <Tooltip
-                  contentStyle={{ borderRadius: 12, border: '1px solid #e7e5e4', fontSize: 13 }}
-                  labelStyle={{ color: '#1c1917', fontWeight: 600 }}
+                  contentStyle={{ background: 'hsl(var(--card))', borderRadius: 8, border: '1px solid hsl(var(--border))', fontSize: 13, color: 'hsl(var(--foreground))' }}
+                  labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}
                 />
-                <Area type="monotone" dataKey="count" name="Responses" stroke="#16a34a" strokeWidth={2} fill="url(#fill)" />
+                <Area type="monotone" dataKey="count" name="Responses" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#fill)" />
               </AreaChart>
             </ResponsiveContainer>
           )}
         </div>
 
         {/* Drop-off funnel */}
-        <div className="bg-white rounded-xl border border-stone-200 p-6">
-          <h2 className="font-bold text-stone-900 mb-1">Question drop-off</h2>
-          <p className="text-sm text-stone-500 mb-6">How many people reached each question</p>
+        <div className="bg-card rounded-lg border border-border p-6">
+          <h2 className="heading-tight text-foreground mb-1">Question drop-off</h2>
+          <p className="text-sm text-muted-foreground mb-6">How many people reached each question</p>
           {(data?.funnel || []).length === 0 ? (
             <EmptyChart message="No questions to analyze yet." />
           ) : (
@@ -130,18 +130,18 @@ export default function FormAnalyticsPage({ params }: { params: Promise<{ id: st
                 return (
                   <div key={f.questionId}>
                     <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="text-stone-700 truncate pr-4">
-                        <span className="text-stone-400 mr-2">{i + 1}.</span>{f.label || 'Untitled'}
+                      <span className="text-foreground truncate pr-4">
+                        <span className="text-muted-foreground mr-2">{i + 1}.</span>{f.label || 'Untitled'}
                       </span>
-                      <span className="text-stone-500 shrink-0">
+                      <span className="text-muted-foreground shrink-0">
                         {f.reached} reached
                         {i > 0 && dropped > 0 && (
-                          <span className="text-red-500 ml-2">−{dropped}</span>
+                          <span className="text-destructive ml-2">−{dropped}</span>
                         )}
                       </span>
                     </div>
-                    <div className="h-3 bg-stone-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-stone-900 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                    <div className="h-3 bg-secondary rounded-full overflow-hidden">
+                      <div className="h-full bg-foreground rounded-full transition-all" style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 )
@@ -152,26 +152,26 @@ export default function FormAnalyticsPage({ params }: { params: Promise<{ id: st
 
         {/* Question reactions */}
         {data?.reactions && data.reactions.questions.length > 0 && (
-          <div className="bg-white rounded-xl border border-stone-200 p-6">
-            <h2 className="font-bold text-stone-900 mb-1">Question reactions</h2>
-            <p className="text-sm text-stone-500 mb-6">
+          <div className="bg-card rounded-lg border border-border p-6">
+            <h2 className="heading-tight text-foreground mb-1">Question reactions</h2>
+            <p className="text-sm text-muted-foreground mb-6">
               How people reacted as they answered · {data.reactions.total} total
             </p>
             <div className="space-y-4">
               {data.reactions.questions.map((q, i) => (
                 <div key={q.questionId} className="flex items-start justify-between gap-4">
-                  <span className="text-sm text-stone-700 truncate pr-2 min-w-0">
-                    <span className="text-stone-400 mr-2">{i + 1}.</span>{q.label || 'Untitled'}
+                  <span className="text-sm text-foreground truncate pr-2 min-w-0">
+                    <span className="text-muted-foreground mr-2">{i + 1}.</span>{q.label || 'Untitled'}
                   </span>
                   <div className="flex items-center gap-3 flex-wrap justify-end shrink-0">
                     {q.emojis.map((e) => (
                       <span
                         key={e.emoji}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-stone-50 border border-stone-200 rounded-full text-sm"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-secondary border border-border rounded-full text-sm"
                         title={`${e.count} ${e.count === 1 ? 'reaction' : 'reactions'}`}
                       >
                         <span className="text-base leading-none">{e.emoji}</span>
-                        <span className="text-stone-600 tabular-nums">{e.count}</span>
+                        <span className="text-muted-foreground tabular-nums">{e.count}</span>
                       </span>
                     ))}
                   </div>
@@ -187,18 +187,18 @@ export default function FormAnalyticsPage({ params }: { params: Promise<{ id: st
 
 function StatCard({ icon, label, value, tint }: { icon: React.ReactNode; label: string; value: string | number; tint: 'stone' | 'green' | 'blue' }) {
   const tints: Record<string, string> = {
-    stone: 'bg-stone-100 text-stone-600',
-    green: 'bg-green-100 text-green-600',
-    blue: 'bg-blue-100 text-blue-600',
+    stone: 'bg-secondary text-muted-foreground',
+    green: 'bg-secondary text-muted-foreground',
+    blue: 'bg-secondary text-muted-foreground',
   }
   return (
-    <div className="bg-white rounded-xl border border-stone-200 p-5">
+    <div className="bg-card rounded-lg border border-border p-5">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-stone-500">{label}</p>
-          <p className="text-3xl font-bold text-stone-900 mt-1">{value}</p>
+          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className="text-3xl heading-tight text-foreground mt-1">{value}</p>
         </div>
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${tints[tint]}`}>{icon}</div>
+        <div className={`w-10 h-10 rounded-md flex items-center justify-center ${tints[tint]}`}>{icon}</div>
       </div>
     </div>
   )
@@ -207,8 +207,8 @@ function StatCard({ icon, label, value, tint }: { icon: React.ReactNode; label: 
 function EmptyChart({ message = 'No data yet — share your form to start collecting responses.' }: { message?: string }) {
   return (
     <div className="h-[200px] flex flex-col items-center justify-center text-center">
-      <BarChart3 className="w-10 h-10 text-stone-300 mb-3" />
-      <p className="text-sm text-stone-500 max-w-xs">{message}</p>
+      <BarChart3 className="w-10 h-10 text-muted-foreground mb-3" />
+      <p className="text-sm text-muted-foreground max-w-xs">{message}</p>
     </div>
   )
 }

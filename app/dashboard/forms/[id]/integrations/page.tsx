@@ -163,101 +163,101 @@ export default function IntegrationsPage({ params }: { params: Promise<{ id: str
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-stone-50">
-      <div className="bg-white border-b border-stone-200">
+    <div className="min-h-screen bg-background">
+      <div className="bg-card border-b border-border">
         <div className="max-w-4xl mx-auto px-6 py-6 flex items-center gap-4">
-          <Link href={`/dashboard/forms/${formId}`} className="text-stone-600 hover:text-stone-900">
+          <Link href={`/dashboard/forms/${formId}`} className="text-muted-foreground hover:text-foreground">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-stone-900">Integrations</h1>
-            <p className="text-sm text-stone-600">{title}</p>
+            <h1 className="text-2xl heading-tight text-foreground">Integrations</h1>
+            <p className="text-sm text-muted-foreground">{title}</p>
           </div>
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
         {/* Email notifications */}
-        <section className="bg-white rounded-xl border border-stone-200 p-6">
+        <section className="card-surface p-6">
           <div className="flex items-center gap-2 mb-4">
-            <Bell className="w-5 h-5 text-stone-700" />
-            <h2 className="font-bold text-stone-900">Email notifications</h2>
+            <Bell className="w-5 h-5 text-muted-foreground" />
+            <h2 className="heading-tight text-foreground">Email notifications</h2>
           </div>
           <label className="flex items-center gap-3 cursor-pointer mb-4">
             <input type="checkbox" checked={notifyOn} onChange={(e) => setNotifyOn(e.target.checked)} className="rounded" />
-            <span className="text-sm text-stone-700">Email me when someone submits this form</span>
+            <span className="text-sm text-foreground">Email me when someone submits this form</span>
           </label>
-          <label className="block text-xs font-medium text-stone-700 mb-1">Notify these emails (comma-separated)</label>
+          <label className="block text-xs font-medium text-foreground mb-1">Notify these emails (comma-separated)</label>
           <input
             type="text"
             value={notifyEmails}
             onChange={(e) => setNotifyEmails(e.target.value)}
             placeholder="you@example.com, team@example.com"
-            className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900 mb-4"
+            className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground mb-4"
           />
           <button
             onClick={saveNotifications}
             disabled={savingNotif}
-            className="px-4 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800 text-sm disabled:opacity-50"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm disabled:opacity-50"
           >
             {savingNotif ? 'Saving…' : notifSaved ? 'Saved ✓' : 'Save notifications'}
           </button>
         </section>
 
         {/* Auto-responder */}
-        <section className="bg-white rounded-xl border border-stone-200 p-6">
+        <section className="card-surface p-6">
           <div className="flex items-center gap-2 mb-4">
-            <Reply className="w-5 h-5 text-stone-700" />
-            <h2 className="font-bold text-stone-900">Auto-responder</h2>
+            <Reply className="w-5 h-5 text-muted-foreground" />
+            <h2 className="heading-tight text-foreground">Auto-responder</h2>
           </div>
-          <p className="text-sm text-stone-500 mb-4">
+          <p className="text-sm text-muted-foreground mb-4">
             Send a confirmation email to the respondent. Requires an <strong>email</strong> field on the form.
           </p>
           <label className="flex items-center gap-3 cursor-pointer mb-4">
             <input type="checkbox" checked={autoEnabled} onChange={(e) => setAutoEnabled(e.target.checked)} className="rounded" />
-            <span className="text-sm text-stone-700">Send an auto-reply to respondents</span>
+            <span className="text-sm text-foreground">Send an auto-reply to respondents</span>
           </label>
-          <label className="block text-xs font-medium text-stone-700 mb-1">Subject</label>
+          <label className="block text-xs font-medium text-foreground mb-1">Subject</label>
           <input
             type="text"
             value={autoSubject}
             onChange={(e) => setAutoSubject(e.target.value)}
             placeholder={`Thanks for your response to ${title}`}
-            className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900 mb-3"
+            className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground mb-3"
           />
-          <label className="block text-xs font-medium text-stone-700 mb-1">Message</label>
+          <label className="block text-xs font-medium text-foreground mb-1">Message</label>
           <textarea
             value={autoMessage}
             onChange={(e) => setAutoMessage(e.target.value)}
             rows={3}
             placeholder="Thanks for your submission. We'll be in touch shortly."
-            className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900 mb-4 resize-none"
+            className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground mb-4 resize-none"
           />
           <button
             onClick={saveAutoResponder}
             disabled={savingAuto}
-            className="px-4 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800 text-sm disabled:opacity-50"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm disabled:opacity-50"
           >
             {savingAuto ? 'Saving…' : autoSaved ? 'Saved ✓' : 'Save auto-responder'}
           </button>
         </section>
 
         {/* Webhooks */}
-        <section className="bg-white rounded-xl border border-stone-200 p-6">
+        <section className="card-surface p-6">
           <div className="flex items-center gap-2 mb-4">
-            <Webhook className="w-5 h-5 text-stone-700" />
-            <h2 className="font-bold text-stone-900">Webhooks</h2>
+            <Webhook className="w-5 h-5 text-muted-foreground" />
+            <h2 className="heading-tight text-foreground">Webhooks</h2>
           </div>
-          <p className="text-sm text-stone-500 mb-4">
+          <p className="text-sm text-muted-foreground mb-4">
             POST each submission to an HTTPS endpoint. Payloads are signed with HMAC-SHA256 in the
-            <code className="mx-1 px-1.5 py-0.5 bg-stone-100 rounded text-xs">X-Stoneforms-Signature</code> header.
+            <code className="mx-1 px-1.5 py-0.5 bg-muted rounded text-xs">X-Stoneforms-Signature</code> header.
           </p>
 
           <div className="flex gap-2 mb-4">
@@ -266,49 +266,49 @@ export default function IntegrationsPage({ params }: { params: Promise<{ id: str
               value={newUrl}
               onChange={(e) => setNewUrl(e.target.value)}
               placeholder="https://your-endpoint.com/webhook"
-              className="flex-1 text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+              className="flex-1 text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
             />
             <button
               onClick={addWebhook}
               disabled={addingHook || !newUrl.trim()}
-              className="flex items-center gap-2 px-4 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800 text-sm disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm disabled:opacity-50"
             >
               <Plus className="w-4 h-4" /> Add
             </button>
           </div>
-          {hookError && <p className="text-sm text-red-600 mb-4">{hookError}</p>}
+          {hookError && <p className="text-sm text-destructive mb-4">{hookError}</p>}
 
           {webhooks.length === 0 ? (
-            <p className="text-sm text-stone-500 py-4 text-center border border-dashed border-stone-200 rounded-lg">
+            <p className="text-sm text-muted-foreground py-4 text-center border border-dashed border-border rounded-md">
               No webhooks yet.
             </p>
           ) : (
             <div className="space-y-3">
               {webhooks.map((hook) => (
-                <div key={hook.id} className="border border-stone-200 rounded-lg p-4">
+                <div key={hook.id} className="border border-border rounded-md p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-stone-900 truncate">{hook.url}</p>
-                      <p className="text-xs text-stone-500 mt-0.5">{(hook.events || []).join(', ')}</p>
+                      <p className="text-sm font-medium text-foreground truncate">{hook.url}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{(hook.events || []).join(', ')}</p>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                       <button
                         onClick={() => toggleWebhook(hook)}
                         title={hook.is_active ? 'Active — click to pause' : 'Paused — click to activate'}
-                        className={`p-2 rounded-lg ${hook.is_active ? 'text-green-600 hover:bg-green-50' : 'text-stone-400 hover:bg-stone-50'}`}
+                        className={`p-2 rounded-md ${hook.is_active ? 'text-foreground hover:bg-secondary' : 'text-muted-foreground hover:bg-secondary'}`}
                       >
                         <Power className="w-4 h-4" />
                       </button>
-                      <button onClick={() => deleteWebhook(hook.id)} className="p-2 rounded-lg text-stone-400 hover:text-red-600 hover:bg-red-50">
+                      <button onClick={() => deleteWebhook(hook.id)} className="p-2 rounded-md text-muted-foreground hover:text-destructive hover:bg-secondary">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
                   {hook.secret && (
-                    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-stone-100">
-                      <span className="text-xs text-stone-500 shrink-0">Signing secret</span>
-                      <code className="flex-1 text-xs bg-stone-50 rounded px-2 py-1 font-mono truncate">{hook.secret}</code>
-                      <button onClick={() => copySecret(hook)} className="p-1.5 text-stone-500 hover:text-stone-900">
+                    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
+                      <span className="text-xs text-muted-foreground shrink-0">Signing secret</span>
+                      <code className="flex-1 text-xs bg-secondary rounded px-2 py-1 font-mono truncate">{hook.secret}</code>
+                      <button onClick={() => copySecret(hook)} className="p-1.5 text-muted-foreground hover:text-foreground">
                         {copiedId === hook.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                       </button>
                     </div>
@@ -327,7 +327,7 @@ export default function IntegrationsPage({ params }: { params: Promise<{ id: str
           type="slack"
           title="Slack"
           description="Post a formatted message to a Slack channel on every submission. Create an Incoming Webhook in Slack and paste its URL below."
-          icon={<MessageSquare className="w-5 h-5 text-stone-700" />}
+          icon={<MessageSquare className="w-5 h-5 text-muted-foreground" />}
           fields={[
             {
               key: 'webhookUrl',
@@ -348,7 +348,7 @@ export default function IntegrationsPage({ params }: { params: Promise<{ id: str
           type="notion"
           title="Notion"
           description="Create a Notion database page for each submission. Answers are matched to database properties by label; everything is also written into the page body."
-          icon={<FileText className="w-5 h-5 text-stone-700" />}
+          icon={<FileText className="w-5 h-5 text-muted-foreground" />}
           fields={[
             {
               key: 'token',
@@ -381,7 +381,7 @@ export default function IntegrationsPage({ params }: { params: Promise<{ id: str
           type="mailchimp"
           title="Mailchimp"
           description="Add respondents to a Mailchimp audience. Requires an email field on the form; name fields map to FNAME/LNAME automatically."
-          icon={<SendIcon className="w-5 h-5 text-stone-700" />}
+          icon={<SendIcon className="w-5 h-5 text-muted-foreground" />}
           fields={[
             {
               key: 'apiKey',

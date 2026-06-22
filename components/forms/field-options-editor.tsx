@@ -99,7 +99,7 @@ export default function FieldOptionsEditor({
 
   return (
     <div className="space-y-4">
-      <label className="block text-sm font-medium text-stone-900">
+      <label className="block text-sm font-medium text-foreground">
         {getFieldTypeLabel()}
       </label>
 
@@ -110,7 +110,7 @@ export default function FieldOptionsEditor({
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                className="cursor-move text-stone-400 hover:text-stone-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="cursor-move text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <GripVertical className="w-4 h-4" />
               </button>
@@ -118,16 +118,16 @@ export default function FieldOptionsEditor({
               {/* Preview Icon */}
               <div className="flex items-center justify-center w-8 h-8">
                 {fieldType === 'multiple_choice' && (
-                  <div className="w-4 h-4 rounded-full border-2 border-stone-400" />
+                  <div className="w-4 h-4 rounded-full border-2 border-border" />
                 )}
                 {fieldType === 'checkboxes' && (
-                  <div className="w-4 h-4 rounded border-2 border-stone-400" />
+                  <div className="w-4 h-4 rounded border-2 border-border" />
                 )}
                 {fieldType === 'dropdown' && (
-                  <span className="text-stone-400 text-sm">{index + 1}.</span>
+                  <span className="text-muted-foreground text-sm">{index + 1}.</span>
                 )}
                 {fieldType === 'picture_choice' && (
-                  <span className="text-stone-400 text-sm">🖼️</span>
+                  <span className="text-muted-foreground text-sm">🖼️</span>
                 )}
               </div>
 
@@ -135,7 +135,7 @@ export default function FieldOptionsEditor({
                 type="text"
                 value={option}
                 onChange={(e) => updateOption(index, e.target.value)}
-                className="flex-1 px-3 py-2 border border-stone-300 rounded focus:outline-none focus:border-stone-900"
+                className="flex-1 px-3 py-2 border border-input rounded bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
                 placeholder={`Option ${index + 1}`}
               />
 
@@ -144,7 +144,7 @@ export default function FieldOptionsEditor({
                   type="number"
                   value={scoring?.[option] ?? ''}
                   onChange={(e) => setScore(option, e.target.value)}
-                  className="w-20 px-2 py-2 border border-stone-300 rounded focus:outline-none focus:border-stone-900 text-sm"
+                  className="w-20 px-2 py-2 border border-input rounded bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground text-sm"
                   placeholder="pts"
                   title="Points awarded when this option is chosen"
                 />
@@ -155,7 +155,7 @@ export default function FieldOptionsEditor({
                   type="button"
                   onClick={() => moveOption(index, 'up')}
                   disabled={index === 0}
-                  className="p-2 text-stone-600 hover:text-stone-900 disabled:opacity-30"
+                  className="p-2 text-muted-foreground hover:text-foreground disabled:opacity-30"
                   title="Move up"
                 >
                   ↑
@@ -164,7 +164,7 @@ export default function FieldOptionsEditor({
                   type="button"
                   onClick={() => moveOption(index, 'down')}
                   disabled={index === options.length - 1}
-                  className="p-2 text-stone-600 hover:text-stone-900 disabled:opacity-30"
+                  className="p-2 text-muted-foreground hover:text-foreground disabled:opacity-30"
                   title="Move down"
                 >
                   ↓
@@ -174,7 +174,7 @@ export default function FieldOptionsEditor({
               <button
                 type="button"
                 onClick={() => deleteOption(index)}
-                className="p-2 text-red-600 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="p-2 text-destructive hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -187,12 +187,12 @@ export default function FieldOptionsEditor({
                   type="url"
                   value={images?.[option] || ''}
                   onChange={(e) => setImage(option, e.target.value)}
-                  className="flex-1 px-3 py-1.5 border border-stone-200 rounded text-sm focus:outline-none focus:border-stone-900"
+                  className="flex-1 px-3 py-1.5 border border-input rounded text-sm bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
                   placeholder="Image URL (https://…)"
                 />
                 {images?.[option] && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={images[option]} alt={option} className="w-9 h-9 object-cover rounded border border-stone-200" />
+                  <img src={images[option]} alt={option} className="w-9 h-9 object-cover rounded border border-border" />
                 )}
               </div>
             )}
@@ -208,12 +208,12 @@ export default function FieldOptionsEditor({
           onChange={(e) => setNewOption(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && addOption()}
           placeholder="Add new option..."
-          className="flex-1 px-3 py-2 border border-stone-300 rounded focus:outline-none focus:border-stone-900"
+          className="flex-1 px-3 py-2 border border-input rounded bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
         />
         <button
           type="button"
           onClick={addOption}
-          className="flex items-center gap-2 px-4 py-2 bg-stone-900 text-white rounded hover:bg-stone-800"
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
         >
           <Plus className="w-4 h-4" />
           Add
@@ -222,7 +222,7 @@ export default function FieldOptionsEditor({
 
       {/* Quick Add Common Options */}
       <div className="flex flex-wrap gap-2">
-        <span className="text-xs text-stone-600">Quick add:</span>
+        <span className="text-xs text-muted-foreground">Quick add:</span>
         {['Yes', 'No', 'Maybe', 'Not sure', 'N/A', 'Other'].map((quick) => (
           <button
             key={quick}
@@ -232,14 +232,14 @@ export default function FieldOptionsEditor({
                 onChange([...options, quick])
               }
             }}
-            className="text-xs px-2 py-1 border border-stone-300 rounded hover:bg-stone-50"
+            className="text-xs px-2 py-1 border border-input rounded hover:bg-secondary"
           >
             + {quick}
           </button>
         ))}
       </div>
 
-      <p className="text-xs text-stone-600">
+      <p className="text-xs text-muted-foreground">
         💡 Tip: Drag options to reorder, or use arrow buttons
       </p>
     </div>

@@ -83,30 +83,30 @@ export default function NotificationSettingsPage({ params }: { params: Promise<{
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <p>Loading...</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-stone-50">
-      <div className="bg-white border-b border-stone-200">
+    <div className="min-h-screen bg-background">
+      <div className="bg-card text-card-foreground border-b border-border">
         <div className="max-w-4xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link href={`/dashboard/forms/${formId}`} className="text-stone-600 hover:text-stone-900">
+              <Link href={`/dashboard/forms/${formId}`} className="text-muted-foreground hover:text-foreground">
                 <ArrowLeft className="w-5 h-5" />
               </Link>
               <div>
-                <h1 className="text-3xl font-bold text-stone-900">Email Notifications</h1>
-                <p className="text-stone-600 mt-1">Get notified when someone submits this form</p>
+                <h1 className="text-3xl heading-tight text-foreground">Email Notifications</h1>
+                <p className="text-muted-foreground mt-1">Get notified when someone submits this form</p>
               </div>
             </div>
             <button
               onClick={saveSettings}
               disabled={saving}
-              className="flex items-center gap-2 px-6 py-3 bg-stone-900 text-white rounded-lg hover:bg-stone-800 disabled:opacity-50"
+              className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
               {saving ? 'Saving...' : 'Save Settings'}
@@ -116,7 +116,7 @@ export default function NotificationSettingsPage({ params }: { params: Promise<{
       </div>
 
       <div className="max-w-4xl mx-auto px-6 py-8">
-        <div className="bg-white rounded-lg border border-stone-200 p-8 space-y-8">
+        <div className="card-surface p-8 space-y-8">
           {/* Enable/Disable */}
           <div>
             <label className="flex items-center gap-3 cursor-pointer">
@@ -127,8 +127,8 @@ export default function NotificationSettingsPage({ params }: { params: Promise<{
                 className="w-5 h-5 rounded"
               />
               <div>
-                <span className="font-medium text-stone-900">Send email notifications</span>
-                <p className="text-sm text-stone-600">Receive an email whenever someone submits this form</p>
+                <span className="font-medium text-foreground">Send email notifications</span>
+                <p className="text-sm text-muted-foreground">Receive an email whenever someone submits this form</p>
               </div>
             </label>
           </div>
@@ -137,40 +137,40 @@ export default function NotificationSettingsPage({ params }: { params: Promise<{
             <>
               {/* Email Subject */}
               <div>
-                <label className="block text-sm font-medium text-stone-900 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Email Subject
                 </label>
                 <input
                   type="text"
                   value={settings.email_subject}
                   onChange={(e) => setSettings({ ...settings, email_subject: e.target.value })}
-                  className="w-full px-4 py-3 border border-stone-300 rounded-lg"
+                  className="w-full border border-input rounded-md px-4 py-3 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
                   placeholder="New form submission"
                 />
               </div>
 
               {/* Notification Emails */}
               <div>
-                <label className="block text-sm font-medium text-stone-900 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   <Mail className="w-4 h-4 inline mr-2" />
                   Send notifications to
                 </label>
-                
+
                 {/* Email List */}
                 <div className="space-y-2 mb-4">
                   {settings.notification_emails.map((email) => (
-                    <div key={email} className="flex items-center justify-between p-3 bg-stone-50 rounded-lg">
-                      <span className="text-stone-900">{email}</span>
+                    <div key={email} className="flex items-center justify-between p-3 bg-secondary rounded-md">
+                      <span className="text-foreground">{email}</span>
                       <button
                         onClick={() => removeEmail(email)}
-                        className="text-red-600 hover:text-red-700"
+                        className="text-destructive hover:text-destructive"
                       >
                         <X className="w-4 h-4" />
                       </button>
                     </div>
                   ))}
                   {settings.notification_emails.length === 0 && (
-                    <p className="text-stone-600 text-sm">No notification emails added yet</p>
+                    <p className="text-muted-foreground text-sm">No notification emails added yet</p>
                   )}
                 </div>
 
@@ -182,34 +182,34 @@ export default function NotificationSettingsPage({ params }: { params: Promise<{
                     onChange={(e) => setNewEmail(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && addEmail()}
                     placeholder="email@example.com"
-                    className="flex-1 px-4 py-3 border border-stone-300 rounded-lg"
+                    className="flex-1 border border-input rounded-md px-4 py-3 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
                   />
                   <button
                     onClick={addEmail}
-                    className="flex items-center gap-2 px-6 py-3 border border-stone-300 rounded-lg hover:bg-stone-50"
+                    className="flex items-center gap-2 px-6 py-3 border border-border rounded-md hover:bg-secondary"
                   >
                     <Plus className="w-4 h-4" />
                     Add
                   </button>
                 </div>
-                <p className="text-sm text-stone-600 mt-2">
+                <p className="text-sm text-muted-foreground mt-2">
                   Add multiple email addresses to notify different people
                 </p>
               </div>
 
               {/* Preview */}
-              <div className="pt-6 border-t border-stone-200">
-                <h3 className="font-medium text-stone-900 mb-4">Email Preview</h3>
-                <div className="border border-stone-200 rounded-lg p-6 bg-stone-50">
-                  <div className="text-sm text-stone-600 mb-2">Subject:</div>
-                  <div className="font-medium text-stone-900 mb-4">{settings.email_subject}</div>
-                  
-                  <div className="bg-white p-4 rounded border border-stone-200">
-                    <p className="text-stone-900">New Form Submission</p>
-                    <p className="text-sm text-stone-600 mt-2">You have a new response to [Form Name]</p>
+              <div className="pt-6 border-t border-border">
+                <h3 className="font-medium text-foreground mb-4">Email Preview</h3>
+                <div className="border border-border rounded-md p-6 bg-secondary">
+                  <div className="text-sm text-muted-foreground mb-2">Subject:</div>
+                  <div className="font-medium text-foreground mb-4">{settings.email_subject}</div>
+
+                  <div className="bg-card text-card-foreground p-4 rounded-md border border-border">
+                    <p className="text-foreground">New Form Submission</p>
+                    <p className="text-sm text-muted-foreground mt-2">You have a new response to [Form Name]</p>
                     <div className="mt-4 text-sm">
                       <strong>Response Details</strong>
-                      <p className="text-stone-600 mt-1">All form field answers will appear here...</p>
+                      <p className="text-muted-foreground mt-1">All form field answers will appear here...</p>
                     </div>
                   </div>
                 </div>

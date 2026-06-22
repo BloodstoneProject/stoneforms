@@ -80,29 +80,29 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+        className="bg-card text-card-foreground rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between z-10">
           <div>
-            <h2 className="text-2xl font-bold text-stone-900">Share Form</h2>
-            <p className="text-sm text-stone-600 mt-1">{formTitle}</p>
+            <h2 className="text-2xl heading-tight text-foreground">Share Form</h2>
+            <p className="text-sm text-muted-foreground mt-1">{formTitle}</p>
           </div>
-          <button onClick={onClose} className="text-stone-600 hover:text-stone-900">
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <X className="w-6 h-6" />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-stone-200">
+        <div className="border-b border-border">
           <div className="flex gap-1 px-6">
             <button
               onClick={() => setActiveTab('link')}
               className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
                 activeTab === 'link'
-                  ? 'border-stone-900 text-stone-900'
-                  : 'border-transparent text-stone-600 hover:text-stone-900'
+                  ? 'border-foreground text-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
               <LinkIcon className="w-4 h-4" />
@@ -112,8 +112,8 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
               onClick={() => setActiveTab('embed')}
               className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
                 activeTab === 'embed'
-                  ? 'border-stone-900 text-stone-900'
-                  : 'border-transparent text-stone-600 hover:text-stone-900'
+                  ? 'border-foreground text-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
               <Code className="w-4 h-4" />
@@ -123,8 +123,8 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
               onClick={() => setActiveTab('qr')}
               className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
                 activeTab === 'qr'
-                  ? 'border-stone-900 text-stone-900'
-                  : 'border-transparent text-stone-600 hover:text-stone-900'
+                  ? 'border-foreground text-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
               <QrCode className="w-4 h-4" />
@@ -134,8 +134,8 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
               onClick={() => setActiveTab('social')}
               className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
                 activeTab === 'social'
-                  ? 'border-stone-900 text-stone-900'
-                  : 'border-transparent text-stone-600 hover:text-stone-900'
+                  ? 'border-foreground text-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
               <MessageSquare className="w-4 h-4" />
@@ -151,17 +151,17 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
             <div className="space-y-6">
               {vanityUrl && (
                 <div>
-                  <label className="block text-sm font-medium text-stone-900 mb-2">Custom link</label>
+                  <label className="block text-sm font-medium text-foreground mb-2">Custom link</label>
                   <div className="flex gap-2">
                     <input
                       type="text"
                       value={vanityUrl}
                       readOnly
-                      className="flex-1 px-4 py-3 border border-stone-300 rounded-lg bg-stone-50"
+                      className="flex-1 px-4 py-3 border border-input rounded-md bg-secondary text-foreground"
                     />
                     <button
                       onClick={copyVanity}
-                      className="flex items-center gap-2 px-6 py-3 bg-stone-900 text-white rounded-lg hover:bg-stone-800"
+                      className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
                     >
                       {vanityCopied ? (
                         <>
@@ -179,17 +179,17 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
                 </div>
               )}
               <div>
-                <label className="block text-sm font-medium text-stone-900 mb-2">Form URL</label>
+                <label className="block text-sm font-medium text-foreground mb-2">Form URL</label>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={formUrl}
                     readOnly
-                    className="flex-1 px-4 py-3 border border-stone-300 rounded-lg bg-stone-50"
+                    className="flex-1 px-4 py-3 border border-input rounded-md bg-secondary text-foreground"
                   />
                   <button
                     onClick={copyLink}
-                    className="flex items-center gap-2 px-6 py-3 bg-stone-900 text-white rounded-lg hover:bg-stone-800"
+                    className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
                   >
                     {copied ? (
                       <>
@@ -207,47 +207,47 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
               </div>
 
               {/* UTM / link builder */}
-              <div className="border border-stone-200 rounded-lg p-4 space-y-4">
+              <div className="border border-border rounded-lg p-4 space-y-4">
                 <div>
-                  <h4 className="font-medium text-stone-900">Campaign tracking (UTM)</h4>
-                  <p className="text-xs text-stone-600 mt-1">
+                  <h4 className="font-medium text-foreground">Campaign tracking (UTM)</h4>
+                  <p className="text-xs text-muted-foreground mt-1">
                     Tag this link so you can see where responses came from in your analytics.
                   </p>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-stone-700 mb-1">Source</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">Source</label>
                     <input
                       type="text"
                       value={utm.source || ''}
                       onChange={(e) => setUtm((u) => ({ ...u, source: e.target.value }))}
                       placeholder="newsletter"
-                      className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm"
+                      className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:border-foreground"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-stone-700 mb-1">Medium</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">Medium</label>
                     <input
                       type="text"
                       value={utm.medium || ''}
                       onChange={(e) => setUtm((u) => ({ ...u, medium: e.target.value }))}
                       placeholder="email"
-                      className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm"
+                      className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:border-foreground"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-stone-700 mb-1">Campaign</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">Campaign</label>
                     <input
                       type="text"
                       value={utm.campaign || ''}
                       onChange={(e) => setUtm((u) => ({ ...u, campaign: e.target.value }))}
                       placeholder="spring_launch"
-                      className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm"
+                      className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:border-foreground"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-stone-700 mb-1">
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">
                     Shareable link {hasUtm ? '(with tracking)' : ''}
                   </label>
                   <div className="flex gap-2">
@@ -255,11 +255,11 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
                       type="text"
                       value={shareUrl}
                       readOnly
-                      className="flex-1 px-4 py-2 border border-stone-300 rounded-lg bg-stone-50 text-sm"
+                      className="flex-1 px-4 py-2 border border-input rounded-md bg-secondary text-foreground text-sm"
                     />
                     <button
                       onClick={copyShareUrl}
-                      className="flex items-center gap-2 px-4 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800 text-sm"
+                      className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm"
                     >
                       {utmCopied ? (
                         <>
@@ -280,23 +280,23 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
               <div className="grid grid-cols-2 gap-4">
                 <button
                   onClick={shareViaEmail}
-                  className="flex items-center gap-3 px-4 py-3 border border-stone-300 rounded-lg hover:bg-stone-50"
+                  className="flex items-center gap-3 px-4 py-3 border border-border rounded-md hover:bg-secondary text-foreground"
                 >
                   <Mail className="w-5 h-5" />
                   <div className="text-left">
                     <div className="font-medium">Email</div>
-                    <div className="text-xs text-stone-600">Send via email</div>
+                    <div className="text-xs text-muted-foreground">Send via email</div>
                   </div>
                 </button>
 
                 <button
                   onClick={shareViaSMS}
-                  className="flex items-center gap-3 px-4 py-3 border border-stone-300 rounded-lg hover:bg-stone-50"
+                  className="flex items-center gap-3 px-4 py-3 border border-border rounded-md hover:bg-secondary text-foreground"
                 >
                   <MessageSquare className="w-5 h-5" />
                   <div className="text-left">
                     <div className="font-medium">SMS</div>
-                    <div className="text-xs text-stone-600">Send via text</div>
+                    <div className="text-xs text-muted-foreground">Send via text</div>
                   </div>
                 </button>
               </div>
@@ -309,7 +309,7 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
           {/* QR Code Tab */}
           {activeTab === 'qr' && (
             <div className="space-y-6 text-center">
-              <div className="inline-block p-8 bg-white border-2 border-stone-200 rounded-lg">
+              <div className="inline-block p-8 bg-white border-2 border-border rounded-lg">
                 <img
                   src={getQrImageUrl(shareUrl, 300)}
                   alt="QR Code"
@@ -317,11 +317,11 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
                 />
               </div>
               <div>
-                <p className="text-sm text-stone-600 mb-1">Scan this QR code to open the form</p>
+                <p className="text-sm text-muted-foreground mb-1">Scan this QR code to open the form</p>
                 {hasUtm && (
-                  <p className="text-xs text-stone-500 mb-3">Includes your campaign tracking tags.</p>
+                  <p className="text-xs text-muted-foreground mb-3">Includes your campaign tracking tags.</p>
                 )}
-                <p className="text-xs text-stone-400 break-all max-w-md mx-auto mb-4">{shareUrl}</p>
+                <p className="text-xs text-muted-foreground break-all max-w-md mx-auto mb-4">{shareUrl}</p>
                 <button
                   onClick={() => {
                     const link = document.createElement('a')
@@ -330,7 +330,7 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
                     link.target = '_blank'
                     link.click()
                   }}
-                  className="px-6 py-3 bg-stone-900 text-white rounded-lg hover:bg-stone-800"
+                  className="px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
                 >
                   Download QR Code
                 </button>
@@ -341,72 +341,72 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
           {/* Social Tab */}
           {activeTab === 'social' && (
             <div className="space-y-4">
-              <p className="text-sm text-stone-600">
+              <p className="text-sm text-muted-foreground">
                 Share your form. Links include any campaign tracking set on the Link tab.
               </p>
 
               <button
                 onClick={shareOnTwitter}
-                className="w-full flex items-center gap-4 px-6 py-4 border border-stone-300 rounded-lg hover:bg-stone-50 transition-colors"
+                className="w-full flex items-center gap-4 px-6 py-4 border border-border rounded-md hover:bg-secondary text-foreground transition-colors"
               >
-                <div className="w-12 h-12 bg-stone-900 rounded-lg flex items-center justify-center text-white text-xl font-bold">
+                <div className="w-12 h-12 bg-foreground rounded-md flex items-center justify-center text-background text-xl font-bold">
                   𝕏
                 </div>
                 <div className="flex-1 text-left">
                   <div className="font-medium">Share on X (Twitter)</div>
-                  <div className="text-sm text-stone-600">Post to your followers</div>
+                  <div className="text-sm text-muted-foreground">Post to your followers</div>
                 </div>
               </button>
 
               <button
                 onClick={shareOnLinkedIn}
-                className="w-full flex items-center gap-4 px-6 py-4 border border-stone-300 rounded-lg hover:bg-stone-50 transition-colors"
+                className="w-full flex items-center gap-4 px-6 py-4 border border-border rounded-md hover:bg-secondary text-foreground transition-colors"
               >
                 <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center text-white text-xl font-bold">
                   in
                 </div>
                 <div className="flex-1 text-left">
                   <div className="font-medium">Share on LinkedIn</div>
-                  <div className="text-sm text-stone-600">Share with your network</div>
+                  <div className="text-sm text-muted-foreground">Share with your network</div>
                 </div>
               </button>
 
               <button
                 onClick={shareOnFacebook}
-                className="w-full flex items-center gap-4 px-6 py-4 border border-stone-300 rounded-lg hover:bg-stone-50 transition-colors"
+                className="w-full flex items-center gap-4 px-6 py-4 border border-border rounded-md hover:bg-secondary text-foreground transition-colors"
               >
                 <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center text-white text-xl font-bold">
                   f
                 </div>
                 <div className="flex-1 text-left">
                   <div className="font-medium">Share on Facebook</div>
-                  <div className="text-sm text-stone-600">Post to your timeline</div>
+                  <div className="text-sm text-muted-foreground">Post to your timeline</div>
                 </div>
               </button>
 
               <button
                 onClick={shareViaWhatsApp}
-                className="w-full flex items-center gap-4 px-6 py-4 border border-stone-300 rounded-lg hover:bg-stone-50 transition-colors"
+                className="w-full flex items-center gap-4 px-6 py-4 border border-border rounded-md hover:bg-secondary text-foreground transition-colors"
               >
                 <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center text-white text-xl font-bold">
                   W
                 </div>
                 <div className="flex-1 text-left">
                   <div className="font-medium">Share on WhatsApp</div>
-                  <div className="text-sm text-stone-600">Send in a chat</div>
+                  <div className="text-sm text-muted-foreground">Send in a chat</div>
                 </div>
               </button>
 
               <button
                 onClick={shareViaEmail}
-                className="w-full flex items-center gap-4 px-6 py-4 border border-stone-300 rounded-lg hover:bg-stone-50 transition-colors"
+                className="w-full flex items-center gap-4 px-6 py-4 border border-border rounded-md hover:bg-secondary text-foreground transition-colors"
               >
-                <div className="w-12 h-12 bg-stone-600 rounded-lg flex items-center justify-center text-white">
+                <div className="w-12 h-12 bg-muted rounded-md flex items-center justify-center text-foreground">
                   <Mail className="w-6 h-6" />
                 </div>
                 <div className="flex-1 text-left">
                   <div className="font-medium">Share via Email</div>
-                  <div className="text-sm text-stone-600">Open your mail client</div>
+                  <div className="text-sm text-muted-foreground">Open your mail client</div>
                 </div>
               </button>
             </div>

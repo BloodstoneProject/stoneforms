@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Plus, Loader2, FileText } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { FORM_TEMPLATES, type FormTemplate } from '@/lib/form-templates'
 import { TEMPLATE_CATEGORIES, CATEGORY_BLURBS } from '@/lib/template-categories'
 
@@ -45,30 +46,31 @@ export default function TemplatesPage() {
     .filter((s) => s.items.length > 0)
 
   const renderCard = (t: FormTemplate) => (
-    <div key={t.id} className="bg-white rounded-xl border border-stone-200 p-6 flex flex-col">
-      <div className="w-11 h-11 rounded-lg bg-stone-100 flex items-center justify-center text-xl mb-4">{t.icon}</div>
-      <h3 className="font-bold text-stone-900">{t.name}</h3>
-      <p className="text-sm text-stone-500 mt-1 flex-1">{t.description}</p>
-      <div className="flex items-center gap-1.5 text-xs text-stone-400 mt-3">
+    <div key={t.id} className="card-surface p-6 flex flex-col">
+      <div className="w-11 h-11 rounded-md bg-muted flex items-center justify-center text-xl mb-4">{t.icon}</div>
+      <h3 className="font-semibold tracking-tight text-foreground">{t.name}</h3>
+      <p className="text-sm text-muted-foreground mt-1 flex-1">{t.description}</p>
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-3">
         <FileText className="w-3.5 h-3.5" /> {t.fields.length} fields
         {t.quiz ? ' · scored quiz' : ''}
       </div>
-      <button
+      <Button
         onClick={() => useTemplate(t)}
         disabled={busyId !== null}
-        className="mt-4 w-full py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800 text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+        className="mt-4 w-full"
+        size="sm"
       >
         {busyId === t.id ? <><Loader2 className="w-4 h-4 animate-spin" /> Creating…</> : 'Use template'}
-      </button>
+      </Button>
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-stone-50">
-      <div className="bg-white border-b border-stone-200">
+    <div className="min-h-screen bg-background">
+      <div className="bg-card border-b border-border">
         <div className="max-w-6xl mx-auto px-6 py-6">
-          <h1 className="text-3xl font-bold text-stone-900">Templates</h1>
-          <p className="text-stone-600 mt-1">Start from a ready-made form or a blank canvas</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">Templates</h1>
+          <p className="text-muted-foreground mt-1">Start from a ready-made form or a blank canvas</p>
         </div>
       </div>
 
@@ -79,8 +81,10 @@ export default function TemplatesPage() {
             <button
               key={c}
               onClick={() => setCategory(c)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                category === c ? 'bg-stone-900 text-white' : 'bg-white border border-stone-200 text-stone-700 hover:bg-stone-50'
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                category === c
+                  ? 'bg-secondary text-foreground'
+                  : 'bg-card border border-border text-muted-foreground hover:bg-muted/50'
               }`}
             >
               {c}
@@ -94,14 +98,14 @@ export default function TemplatesPage() {
             <button
               onClick={() => useTemplate(null)}
               disabled={busyId !== null}
-              className="text-left w-full sm:max-w-sm bg-white rounded-xl border-2 border-dashed border-stone-300 p-6 hover:border-stone-900 transition-colors disabled:opacity-50 flex flex-col"
+              className="text-left w-full sm:max-w-sm bg-card rounded-lg border border-dashed border-border p-6 hover:border-foreground transition-colors disabled:opacity-50 flex flex-col"
             >
-              <div className="w-11 h-11 rounded-lg bg-stone-100 flex items-center justify-center text-xl mb-4">
-                <Plus className="w-5 h-5 text-stone-700" />
+              <div className="w-11 h-11 rounded-md bg-muted flex items-center justify-center text-xl mb-4">
+                <Plus className="w-5 h-5 text-muted-foreground" />
               </div>
-              <h3 className="font-bold text-stone-900">Blank form</h3>
-              <p className="text-sm text-stone-500 mt-1 flex-1">Start from scratch and add your own fields.</p>
-              <span className="text-sm font-medium text-stone-900 mt-4">
+              <h3 className="font-semibold tracking-tight text-foreground">Blank form</h3>
+              <p className="text-sm text-muted-foreground mt-1 flex-1">Start from scratch and add your own fields.</p>
+              <span className="text-sm font-medium text-foreground mt-4">
                 {busyId === 'blank' ? 'Creating…' : 'Start blank →'}
               </span>
             </button>
@@ -113,8 +117,8 @@ export default function TemplatesPage() {
           {sections.map((section) => (
             <section key={section.cat}>
               <div className="mb-4">
-                <h2 className="text-xl font-bold text-stone-900">{section.cat}</h2>
-                <p className="text-sm text-stone-500 mt-0.5">{CATEGORY_BLURBS[section.cat]}</p>
+                <h2 className="text-xl font-semibold tracking-tight text-foreground">{section.cat}</h2>
+                <p className="text-sm text-muted-foreground mt-0.5">{CATEGORY_BLURBS[section.cat]}</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {section.items.map(renderCard)}

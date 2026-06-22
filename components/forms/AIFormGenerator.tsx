@@ -50,8 +50,7 @@ export function AIFormGenerator({ onFormGenerated }: AIFormGeneratorProps) {
       {/* Trigger Button */}
       <Button
         onClick={() => setIsOpen(true)}
-        className="gap-2 text-white"
-        style={{ backgroundColor: '#770a19' }}
+        className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
       >
         <Sparkles className="w-4 h-4" />
         AI Generate Form
@@ -60,21 +59,21 @@ export function AIFormGenerator({ onFormGenerated }: AIFormGeneratorProps) {
       {/* Modal */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-auto" style={{ backgroundColor: 'white', borderColor: '#e8e4db' }}>
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-auto bg-card border-border">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2" style={{ color: '#142c1c' }}>
-                  <Wand2 className="w-6 h-6" style={{ color: '#770a19' }} />
+                <CardTitle className="flex items-center gap-2 text-foreground">
+                  <Wand2 className="w-6 h-6 text-foreground" />
                   AI Form Generator
                 </CardTitle>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-muted-foreground hover:text-foreground"
                 >
                   ✕
                 </button>
               </div>
-              <p className="text-sm" style={{ color: '#3d5948' }}>
+              <p className="text-sm text-muted-foreground">
                 Describe what you want, and AI will create the perfect form for you
               </p>
             </CardHeader>
@@ -90,8 +89,7 @@ export function AIFormGenerator({ onFormGenerated }: AIFormGeneratorProps) {
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder="E.g., A customer satisfaction survey for a SaaS product, or an employee onboarding quiz..."
                         rows={4}
-                        className="w-full rounded-md border p-3"
-                        style={{ borderColor: '#e8e4db' }}
+                        className="w-full rounded-md border border-input p-3 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
                       />
                     </div>
 
@@ -101,8 +99,7 @@ export function AIFormGenerator({ onFormGenerated }: AIFormGeneratorProps) {
                         <select
                           value={formType}
                           onChange={(e) => setFormType(e.target.value as any)}
-                          className="w-full rounded-md border p-3"
-                          style={{ borderColor: '#e8e4db' }}
+                          className="w-full rounded-md border border-input p-3 bg-background text-foreground focus:outline-none focus:border-foreground"
                         >
                           <option value="form">Standard Form</option>
                           <option value="quiz">Quiz (with scoring)</option>
@@ -125,7 +122,7 @@ export function AIFormGenerator({ onFormGenerated }: AIFormGeneratorProps) {
 
                   {/* Examples */}
                   <div className="space-y-3">
-                    <p className="text-sm font-medium" style={{ color: '#142c1c' }}>
+                    <p className="text-sm font-medium text-foreground">
                       Try these examples:
                     </p>
                     <div className="grid gap-2">
@@ -139,8 +136,7 @@ export function AIFormGenerator({ onFormGenerated }: AIFormGeneratorProps) {
                         <button
                           key={example}
                           onClick={() => setDescription(example)}
-                          className="text-left p-3 rounded-lg border hover:bg-gray-50 transition-colors text-sm"
-                          style={{ borderColor: '#e8e4db', color: '#3d5948' }}
+                          className="text-left p-3 rounded-lg border border-border hover:bg-secondary transition-colors text-sm text-muted-foreground"
                         >
                           {example}
                         </button>
@@ -152,8 +148,7 @@ export function AIFormGenerator({ onFormGenerated }: AIFormGeneratorProps) {
                   <Button
                     onClick={handleGenerate}
                     disabled={!description || isGenerating}
-                    className="w-full text-white"
-                    style={{ backgroundColor: '#142c1c' }}
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                     size="lg"
                   >
                     {isGenerating ? (
@@ -173,9 +168,9 @@ export function AIFormGenerator({ onFormGenerated }: AIFormGeneratorProps) {
                 <>
                   {/* Generated Questions Preview */}
                   <div className="space-y-4">
-                    <div className="flex items-center gap-2 p-4 rounded-lg" style={{ backgroundColor: '#e8f5e9' }}>
-                      <CheckCircle2 className="w-5 h-5 text-green-600" />
-                      <p className="text-sm text-green-800">
+                    <div className="flex items-center gap-2 p-4 rounded-lg bg-secondary border border-border">
+                      <CheckCircle2 className="w-5 h-5 text-foreground" />
+                      <p className="text-sm text-foreground">
                         Generated {generatedQuestions.length} questions based on your description
                       </p>
                     </div>
@@ -184,21 +179,19 @@ export function AIFormGenerator({ onFormGenerated }: AIFormGeneratorProps) {
                       {generatedQuestions.map((question, index) => (
                         <div
                           key={index}
-                          className="p-4 rounded-lg border"
-                          style={{ borderColor: '#e8e4db' }}
+                          className="p-4 rounded-lg border border-border"
                         >
                           <div className="flex items-start gap-3">
-                            <span 
-                              className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                              style={{ backgroundColor: '#142c1c' }}
+                            <span
+                              className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-primary-foreground flex-shrink-0 bg-primary"
                             >
                               {index + 1}
                             </span>
                             <div className="flex-1">
-                              <p className="font-medium mb-1" style={{ color: '#142c1c' }}>
+                              <p className="font-medium mb-1 text-foreground">
                                 {question.label}
                               </p>
-                              <p className="text-sm" style={{ color: '#3d5948' }}>
+                              <p className="text-sm text-muted-foreground">
                                 Type: {question.type.replace('_', ' ')}
                                 {question.required && ' • Required'}
                               </p>
@@ -220,8 +213,7 @@ export function AIFormGenerator({ onFormGenerated }: AIFormGeneratorProps) {
                     </Button>
                     <Button
                       onClick={handleUseQuestions}
-                      className="flex-1 text-white gap-2"
-                      style={{ backgroundColor: '#142c1c' }}
+                      className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
                     >
                       Use These Questions
                       <ArrowRight className="w-4 h-4" />

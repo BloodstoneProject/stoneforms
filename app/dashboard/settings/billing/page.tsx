@@ -4,6 +4,8 @@ import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { ArrowLeft, Check, Loader2, ExternalLink } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 
 interface PlanData {
   plan: { id: string; name: string; currency: string; price_gbp: number }
@@ -17,7 +19,7 @@ interface PlanData {
 
 export default function BillingSettingsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-stone-50 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-stone-400" /></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>}>
       <BillingInner />
     </Suspense>
   )
@@ -76,74 +78,70 @@ function BillingInner() {
   const isPaid = data?.plan.id === 'pro' || data?.plan.id === 'business'
 
   return (
-    <div className="min-h-screen bg-stone-50">
-      <div className="bg-white border-b border-stone-200">
+    <div className="min-h-screen bg-background">
+      <div className="bg-card border-b border-border">
         <div className="max-w-4xl mx-auto px-6 py-6 flex items-center gap-4">
-          <Link href="/dashboard/settings" className="text-stone-600 hover:text-stone-900">
+          <Link href="/dashboard/settings" className="text-muted-foreground hover:text-foreground">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-stone-900">Billing & Subscription</h1>
-            <p className="text-stone-600 text-sm mt-1">Manage your plan</p>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Billing & Subscription</h1>
+            <p className="text-muted-foreground text-sm mt-1">Manage your plan</p>
           </div>
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
         {status === 'success' && (
-          <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm">
-            🎉 Your subscription is active. It may take a few seconds to reflect below.
+          <div className="p-4 card-surface bg-secondary text-foreground text-sm">
+            Your subscription is active. It may take a few seconds to reflect below.
           </div>
         )}
         {status === 'cancelled' && (
-          <div className="p-4 bg-stone-100 border border-stone-200 rounded-lg text-stone-700 text-sm">
+          <div className="p-4 card-surface bg-muted text-muted-foreground text-sm">
             Checkout cancelled — no changes were made.
           </div>
         )}
         {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{error}</div>
+          <div className="p-4 card-surface bg-destructive/10 text-destructive text-sm">{error}</div>
         )}
 
         {loading ? (
-          <div className="flex justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-stone-400" /></div>
+          <div className="flex justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
         ) : !data ? (
-          <p className="text-stone-600">Could not load your plan.</p>
+          <p className="text-muted-foreground">Could not load your plan.</p>
         ) : (
           <>
             {/* Current plan */}
-            <div className="bg-white rounded-xl border border-stone-200 p-6">
-              <h2 className="text-lg font-bold text-stone-900 mb-4">Current plan</h2>
+            <div className="card-surface p-6">
+              <h2 className="text-lg font-semibold tracking-tight text-foreground mb-4">Current plan</h2>
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-3 mb-1">
-                    <h3 className="text-2xl font-bold text-stone-900">{data.plan.name}</h3>
-                    <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full capitalize">
+                    <h3 className="text-2xl font-semibold tracking-tight text-foreground">{data.plan.name}</h3>
+                    <Badge variant="solid" className="capitalize">
                       {data.subscription?.status || 'active'}
-                    </span>
+                    </Badge>
                   </div>
                   {data.plan.id !== 'free' && (
-                    <p className="text-stone-600">£{data.plan.price_gbp} / month</p>
+                    <p className="text-muted-foreground">£{data.plan.price_gbp} / month</p>
                   )}
                   {data.subscription?.cancel_at_period_end && data.subscription.current_period_end && (
-                    <p className="text-sm text-amber-600 mt-2">
+                    <p className="text-sm text-muted-foreground mt-2">
                       Cancels on {new Date(data.subscription.current_period_end).toLocaleDateString()}
                     </p>
                   )}
                 </div>
                 {isPaid && (
-                  <button
-                    onClick={openPortal}
-                    disabled={working}
-                    className="flex items-center gap-2 px-4 py-2 border border-stone-300 rounded-lg hover:bg-stone-50 font-medium text-sm disabled:opacity-50"
-                  >
+                  <Button variant="outline" onClick={openPortal} disabled={working} size="sm">
                     {working ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
                     Manage billing
-                  </button>
+                  </Button>
                 )}
               </div>
 
               {/* Usage */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 pt-6 border-t border-stone-100">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 pt-6 border-t border-border">
                 <UsageBar label="Forms" {...data.usage.forms} />
                 <UsageBar label="Responses (mo)" {...data.usage.responses} />
                 <UsageBar label="Storage (MB)" {...data.usage.storage} />
@@ -178,11 +176,11 @@ function UsageBar({ label, current, limit, percentage }: { label: string; curren
   return (
     <div>
       <div className="flex justify-between text-sm mb-1">
-        <span className="text-stone-600">{label}</span>
-        <span className="text-stone-900 font-medium">{current}{unlimited ? '' : ` / ${limit}`}</span>
+        <span className="text-muted-foreground">{label}</span>
+        <span className="text-foreground font-medium">{current}{unlimited ? '' : ` / ${limit}`}</span>
       </div>
-      <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
-        <div className={`h-full rounded-full ${pct > 90 ? 'bg-red-500' : 'bg-stone-900'}`} style={{ width: `${pct}%` }} />
+      <div className="h-2 bg-muted rounded-full overflow-hidden">
+        <div className={`h-full rounded-full ${pct > 90 ? 'bg-destructive' : 'bg-primary'}`} style={{ width: `${pct}%` }} />
       </div>
     </div>
   )
@@ -192,24 +190,25 @@ function PlanCard({ name, price, tagline, features, onSelect, working, highlight
   name: string; price: string; tagline: string; features: string[]; onSelect: () => void; working: boolean; highlight?: boolean
 }) {
   return (
-    <div className={`bg-white rounded-xl border p-6 ${highlight ? 'border-stone-900 ring-1 ring-stone-900' : 'border-stone-200'}`}>
-      <h3 className="text-xl font-bold text-stone-900">{name}</h3>
-      <p className="text-sm text-stone-500 mb-3">{tagline}</p>
-      <p className="text-3xl font-bold text-stone-900 mb-4">{price}<span className="text-base font-normal text-stone-500"> /mo</span></p>
+    <div className={`card-surface p-6 ${highlight ? 'border-foreground ring-1 ring-foreground' : ''}`}>
+      <h3 className="text-xl font-semibold tracking-tight text-foreground">{name}</h3>
+      <p className="text-sm text-muted-foreground mb-3">{tagline}</p>
+      <p className="text-3xl font-semibold tracking-tight text-foreground mb-4">{price}<span className="text-base font-normal text-muted-foreground"> /mo</span></p>
       <ul className="space-y-2 mb-6">
         {features.map((f) => (
-          <li key={f} className="flex items-center gap-2 text-sm text-stone-700">
-            <Check className="w-4 h-4 text-green-600 shrink-0" /> {f}
+          <li key={f} className="flex items-center gap-2 text-sm text-foreground">
+            <Check className="w-4 h-4 text-muted-foreground shrink-0" /> {f}
           </li>
         ))}
       </ul>
-      <button
+      <Button
         onClick={onSelect}
         disabled={working}
-        className={`w-full py-2.5 rounded-lg font-medium text-sm disabled:opacity-50 ${highlight ? 'bg-stone-900 text-white hover:bg-stone-800' : 'border border-stone-300 hover:bg-stone-50'}`}
+        variant={highlight ? 'default' : 'outline'}
+        className="w-full"
       >
         {working ? 'Working…' : `Upgrade to ${name}`}
-      </button>
+      </Button>
     </div>
   )
 }

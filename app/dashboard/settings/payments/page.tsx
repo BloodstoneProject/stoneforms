@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, CreditCard, CheckCircle2, AlertCircle, Loader2, ExternalLink } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 interface ConnectStatus {
   configured: boolean
@@ -54,31 +55,26 @@ export default function PaymentsSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50">
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
-        * { font-family: 'DM Sans', sans-serif; }
-      `}</style>
-
-      <div className="bg-white border-b border-stone-200">
+    <div className="min-h-screen bg-background">
+      <div className="bg-card border-b border-border">
         <div className="max-w-3xl mx-auto px-6 py-6">
-          <Link href="/dashboard/settings" className="inline-flex items-center gap-2 text-sm text-stone-600 hover:text-stone-900 mb-3">
+          <Link href="/dashboard/settings" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-3">
             <ArrowLeft className="w-4 h-4" /> Settings
           </Link>
-          <h1 className="text-3xl font-bold text-stone-900">Payments</h1>
-          <p className="text-stone-600 mt-1">Collect payments from respondents on your forms via Stripe.</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">Payments</h1>
+          <p className="text-muted-foreground mt-1">Collect payments from respondents on your forms via Stripe.</p>
         </div>
       </div>
 
       <div className="max-w-3xl mx-auto px-6 py-8">
-        <div className="bg-white border border-stone-200 rounded-lg p-6">
+        <div className="card-surface p-6">
           <div className="flex items-start gap-4 mb-5">
-            <div className="w-12 h-12 bg-stone-100 rounded-lg flex items-center justify-center shrink-0">
-              <CreditCard className="w-6 h-6 text-stone-600" />
+            <div className="w-12 h-12 bg-muted rounded-md flex items-center justify-center shrink-0">
+              <CreditCard className="w-6 h-6 text-muted-foreground" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-stone-900">Stripe payments</h2>
-              <p className="text-sm text-stone-600">
+              <h2 className="text-lg font-semibold tracking-tight text-foreground">Stripe payments</h2>
+              <p className="text-sm text-muted-foreground">
                 Add a Payment field to a form to charge a fixed amount. Respondents are redirected to a secure Stripe
                 checkout when they submit.
               </p>
@@ -86,67 +82,59 @@ export default function PaymentsSettingsPage() {
           </div>
 
           {loading ? (
-            <div className="flex items-center gap-2 text-stone-500 py-6">
+            <div className="flex items-center gap-2 text-muted-foreground py-6">
               <Loader2 className="w-5 h-5 animate-spin" /> Loading status…
             </div>
           ) : !status?.configured ? (
             // Dormant: Connect not enabled on the platform yet.
-            <div className="rounded-lg border border-stone-200 bg-stone-50 p-4">
-              <p className="text-sm font-medium text-stone-800">Payments coming soon</p>
-              <p className="text-sm text-stone-600 mt-1">
+            <div className="rounded-md border border-border bg-muted p-4">
+              <p className="text-sm font-medium text-foreground">Payments coming soon</p>
+              <p className="text-sm text-muted-foreground mt-1">
                 Online payment collection isn't enabled on this account yet. Contact support to turn it on.
               </p>
             </div>
           ) : status.connected && status.chargesEnabled ? (
-            <div className="rounded-lg border border-green-200 bg-green-50 p-4">
-              <div className="flex items-center gap-2 text-green-800 font-medium">
+            <div className="rounded-md border border-border bg-secondary p-4">
+              <div className="flex items-center gap-2 text-foreground font-medium">
                 <CheckCircle2 className="w-5 h-5" /> Stripe connected — you can accept payments
               </div>
-              <p className="text-sm text-green-700 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 Payments on your forms will be deposited to your connected Stripe account.
               </p>
               <button
                 onClick={startOnboarding}
                 disabled={starting}
-                className="mt-3 inline-flex items-center gap-2 text-sm text-green-800 underline disabled:opacity-50"
+                className="mt-3 inline-flex items-center gap-2 text-sm text-foreground underline disabled:opacity-50"
               >
                 {starting ? 'Opening…' : 'Update Stripe details'} <ExternalLink className="w-3.5 h-3.5" />
               </button>
             </div>
           ) : status.connected ? (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-              <div className="flex items-center gap-2 text-amber-800 font-medium">
+            <div className="rounded-md border border-border bg-muted p-4">
+              <div className="flex items-center gap-2 text-foreground font-medium">
                 <AlertCircle className="w-5 h-5" /> Onboarding incomplete
               </div>
-              <p className="text-sm text-amber-700 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 Your Stripe account needs more details before you can accept payments.
               </p>
-              <button
-                onClick={startOnboarding}
-                disabled={starting}
-                className="mt-3 px-4 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800 text-sm disabled:opacity-50"
-              >
+              <Button onClick={startOnboarding} disabled={starting} size="sm" className="mt-3">
                 {starting ? 'Opening…' : 'Continue Stripe onboarding'}
-              </button>
+              </Button>
             </div>
           ) : (
             <div>
-              <button
-                onClick={startOnboarding}
-                disabled={starting}
-                className="px-4 py-2.5 bg-stone-900 text-white rounded-lg hover:bg-stone-800 text-sm font-medium disabled:opacity-50 inline-flex items-center gap-2"
-              >
+              <Button onClick={startOnboarding} disabled={starting}>
                 {starting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
                 Connect with Stripe
-              </button>
-              <p className="text-xs text-stone-400 mt-2">
+              </Button>
+              <p className="text-xs text-muted-foreground mt-2">
                 You'll be taken to Stripe to set up payouts, then returned here.
               </p>
             </div>
           )}
 
           {error && (
-            <div className="mt-4 flex items-center gap-2 text-sm text-red-700">
+            <div className="mt-4 flex items-center gap-2 text-sm text-destructive">
               <AlertCircle className="w-4 h-4" /> {error}
             </div>
           )}

@@ -63,23 +63,23 @@ export default function ConditionalLogicPage() {
     if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2000) }
   }
 
-  if (loading) return <div className="min-h-screen bg-stone-50 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-stone-400" /></div>
+  if (loading) return <div className="min-h-screen bg-background flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
   if (!form) return <div className="p-8">Form not found</div>
 
   return (
-    <div className="min-h-screen bg-stone-50">
-      <div className="bg-white border-b border-stone-200 sticky top-0 z-30">
+    <div className="min-h-screen bg-background">
+      <div className="bg-card text-card-foreground border-b border-border sticky top-0 z-30">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href={`/dashboard/forms/${id}`} className="text-stone-600 hover:text-stone-900"><ArrowLeft className="w-5 h-5" /></Link>
+            <Link href={`/dashboard/forms/${id}`} className="text-muted-foreground hover:text-foreground"><ArrowLeft className="w-5 h-5" /></Link>
             <div>
-              <h1 className="text-xl font-bold text-stone-900">Logic</h1>
-              <p className="text-sm text-stone-500">{form.title}</p>
+              <h1 className="text-xl heading-tight text-foreground">Logic</h1>
+              <p className="text-sm text-muted-foreground">{form.title}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Link href={`/f/${id}`} target="_blank" className="flex items-center gap-2 px-4 py-2 border border-stone-300 rounded-lg hover:bg-stone-50 text-sm"><Eye className="w-4 h-4" /> Preview</Link>
-            <button onClick={save} disabled={saving} className="flex items-center gap-2 px-5 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800 text-sm font-medium disabled:opacity-50">
+            <Link href={`/f/${id}`} target="_blank" className="flex items-center gap-2 px-4 py-2 border border-border rounded-md hover:bg-secondary text-sm"><Eye className="w-4 h-4" /> Preview</Link>
+            <button onClick={save} disabled={saving} className="flex items-center gap-2 px-5 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm font-medium disabled:opacity-50">
               <Save className="w-4 h-4" /> {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save logic'}
             </button>
           </div>
@@ -87,16 +87,16 @@ export default function ConditionalLogicPage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-6 py-8">
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-6 flex items-start gap-3">
-          <Zap className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
-          <p className="text-sm text-blue-800">
+        <div className="bg-secondary border border-border rounded-lg p-5 mb-6 flex items-start gap-3">
+          <Zap className="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
+          <p className="text-sm text-muted-foreground">
             Jump logic skips respondents to a later question (or ends the form) based on their answers.
             Rules are checked in order; the first match wins. This runs live in the player.
           </p>
         </div>
 
         {questions.length === 0 ? (
-          <div className="bg-white rounded-xl border border-stone-200 p-10 text-center text-stone-500">
+          <div className="card-surface p-10 text-center text-muted-foreground">
             Add some fields to your form first, then come back to set up logic.
           </div>
         ) : (
@@ -105,35 +105,35 @@ export default function ConditionalLogicPage() {
               {rules.map((rule, idx) => {
                 const op = LOGIC_OPERATORS.find((o) => o.value === rule.operator)
                 return (
-                  <div key={rule.id} className="bg-white rounded-xl border border-stone-200 p-5">
+                  <div key={rule.id} className="card-surface p-5">
                     <div className="flex items-center justify-between mb-4">
-                      <span className="text-xs font-semibold text-stone-400">RULE {idx + 1}</span>
-                      <button onClick={() => remove(rule.id)} className="text-stone-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                      <span className="text-xs font-semibold text-muted-foreground">RULE {idx + 1}</span>
+                      <button onClick={() => remove(rule.id)} className="text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
                     </div>
                     <div className="space-y-3 text-sm">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="px-2.5 py-1 bg-purple-100 text-purple-700 rounded font-semibold">IF</span>
-                        <select value={rule.field} onChange={(e) => update(rule.id, { field: e.target.value })} className="px-3 py-2 border border-stone-300 rounded-lg flex-1 min-w-[140px]">
+                        <span className="px-2.5 py-1 bg-secondary text-foreground rounded font-semibold">IF</span>
+                        <select value={rule.field} onChange={(e) => update(rule.id, { field: e.target.value })} className="border border-input rounded-md px-3 py-2 bg-background text-foreground focus:outline-none focus:border-foreground flex-1 min-w-[140px]">
                           {questions.map((q) => <option key={q.id} value={q.id}>{q.label}</option>)}
                         </select>
-                        <select value={rule.operator} onChange={(e) => update(rule.id, { operator: e.target.value as LogicOperator })} className="px-3 py-2 border border-stone-300 rounded-lg">
+                        <select value={rule.operator} onChange={(e) => update(rule.id, { operator: e.target.value as LogicOperator })} className="border border-input rounded-md px-3 py-2 bg-background text-foreground focus:outline-none focus:border-foreground">
                           {LOGIC_OPERATORS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                         </select>
                         {op?.needsValue && (
-                          <input type="text" value={rule.value || ''} onChange={(e) => update(rule.id, { value: e.target.value })} placeholder="value" className="px-3 py-2 border border-stone-300 rounded-lg w-32" />
+                          <input type="text" value={rule.value || ''} onChange={(e) => update(rule.id, { value: e.target.value })} placeholder="value" className="border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground w-32" />
                         )}
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="px-2.5 py-1 bg-green-100 text-green-700 rounded font-semibold">THEN jump to</span>
-                        <select value={rule.jumpTo} onChange={(e) => update(rule.id, { jumpTo: e.target.value })} className="px-3 py-2 border border-stone-300 rounded-lg flex-1 min-w-[140px]">
+                        <span className="px-2.5 py-1 bg-secondary text-foreground rounded font-semibold">THEN jump to</span>
+                        <select value={rule.jumpTo} onChange={(e) => update(rule.id, { jumpTo: e.target.value })} className="border border-input rounded-md px-3 py-2 bg-background text-foreground focus:outline-none focus:border-foreground flex-1 min-w-[140px]">
                           {questions.map((q) => <option key={q.id} value={q.id}>{q.label}</option>)}
                           <option value="end">⏹ End of form</option>
                         </select>
                       </div>
-                      <p className="text-xs text-stone-500 flex items-center gap-1.5 pt-1">
-                        When <strong className="text-stone-700">{label(rule.field)}</strong> {op?.label}
-                        {op?.needsValue && <> “<strong className="text-stone-700">{rule.value}</strong>”</>}
-                        <ArrowRight className="w-3 h-3" /> jump to <strong className="text-stone-700">{rule.jumpTo === 'end' ? 'the end' : label(rule.jumpTo)}</strong>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1.5 pt-1">
+                        When <strong className="text-foreground">{label(rule.field)}</strong> {op?.label}
+                        {op?.needsValue && <> “<strong className="text-foreground">{rule.value}</strong>”</>}
+                        <ArrowRight className="w-3 h-3" /> jump to <strong className="text-foreground">{rule.jumpTo === 'end' ? 'the end' : label(rule.jumpTo)}</strong>
                       </p>
                     </div>
                   </div>
@@ -141,7 +141,7 @@ export default function ConditionalLogicPage() {
               })}
             </div>
 
-            <button onClick={addRule} className="w-full mt-4 py-4 border-2 border-dashed border-stone-300 rounded-xl hover:border-stone-400 hover:bg-white transition-all flex items-center justify-center gap-2 text-stone-600 font-medium">
+            <button onClick={addRule} className="w-full mt-4 py-4 border-2 border-dashed border-border rounded-lg hover:border-foreground hover:bg-secondary transition-all flex items-center justify-center gap-2 text-muted-foreground font-medium">
               <Plus className="w-5 h-5" /> Add logic rule
             </button>
           </>

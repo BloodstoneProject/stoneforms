@@ -134,11 +134,11 @@ export default function IntegrationCard({
   }
 
   return (
-    <section className="bg-white rounded-xl border border-stone-200 p-6">
+    <section className="bg-card rounded-lg border border-border p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           {icon}
-          <h2 className="font-bold text-stone-900">{title}</h2>
+          <h2 className="heading-tight text-foreground">{title}</h2>
         </div>
         {connected && (
           <div className="flex items-center gap-1">
@@ -146,14 +146,14 @@ export default function IntegrationCard({
               onClick={toggleEnabled}
               disabled={saving}
               title={enabled ? 'Enabled — click to pause' : 'Paused — click to enable'}
-              className={`p-2 rounded-lg ${enabled ? 'text-green-600 hover:bg-green-50' : 'text-stone-400 hover:bg-stone-50'}`}
+              className={`p-2 rounded-md ${enabled ? 'text-foreground hover:bg-secondary' : 'text-muted-foreground hover:bg-secondary'}`}
             >
               <Power className="w-4 h-4" />
             </button>
             <button
               onClick={disconnect}
               disabled={saving}
-              className="p-2 rounded-lg text-stone-400 hover:text-red-600 hover:bg-red-50"
+              className="p-2 rounded-md text-muted-foreground hover:text-destructive hover:bg-secondary"
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -161,10 +161,10 @@ export default function IntegrationCard({
         )}
       </div>
 
-      <p className="text-sm text-stone-500 mb-4">{description}</p>
+      <p className="text-sm text-muted-foreground mb-4">{description}</p>
 
       {connected && (
-        <div className="flex items-center gap-2 mb-4 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+        <div className="flex items-center gap-2 mb-4 text-sm text-foreground bg-secondary border border-border rounded-md px-3 py-2">
           <CheckCircle2 className="w-4 h-4 shrink-0" />
           <span>{enabled ? 'Connected and active.' : 'Connected but paused.'}</span>
         </div>
@@ -173,26 +173,26 @@ export default function IntegrationCard({
       <div className="space-y-3 mb-4">
         {fields.map((f) => (
           <div key={f.key}>
-            <label className="block text-xs font-medium text-stone-700 mb-1">{f.label}</label>
+            <label className="block text-xs font-medium text-foreground mb-1">{f.label}</label>
             <input
               type={f.type === 'password' ? 'password' : f.type === 'url' ? 'url' : 'text'}
               value={config[f.key] || ''}
               onChange={(e) => update(f.key, e.target.value)}
               placeholder={f.placeholder}
               autoComplete="off"
-              className="w-full text-sm border border-stone-300 rounded px-3 py-2 focus:outline-none focus:border-stone-900"
+              className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
             />
-            {f.help && <p className="text-xs text-stone-400 mt-1">{f.help}</p>}
+            {f.help && <p className="text-xs text-muted-foreground mt-1">{f.help}</p>}
           </div>
         ))}
       </div>
 
       {msg && (
         <div
-          className={`flex items-center gap-2 mb-4 text-sm rounded-lg px-3 py-2 border ${
+          className={`flex items-center gap-2 mb-4 text-sm rounded-md px-3 py-2 border ${
             msg.kind === 'ok'
-              ? 'text-green-700 bg-green-50 border-green-200'
-              : 'text-red-700 bg-red-50 border-red-200'
+              ? 'text-foreground bg-secondary border-border'
+              : 'text-destructive bg-secondary border-border'
           }`}
         >
           {msg.kind === 'ok' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertTriangle className="w-4 h-4 shrink-0" />}
@@ -204,7 +204,7 @@ export default function IntegrationCard({
         <button
           onClick={() => save()}
           disabled={saving}
-          className="px-4 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800 text-sm disabled:opacity-50 inline-flex items-center gap-2"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm disabled:opacity-50 inline-flex items-center gap-2"
         >
           {saving && <Loader2 className="w-4 h-4 animate-spin" />}
           {saving ? 'Saving…' : saved ? 'Saved ✓' : connected ? 'Update' : 'Connect'}
@@ -212,7 +212,7 @@ export default function IntegrationCard({
         <button
           onClick={sendTest}
           disabled={testing || saving}
-          className="px-4 py-2 border border-stone-300 text-stone-700 rounded-lg hover:bg-stone-50 text-sm disabled:opacity-50 inline-flex items-center gap-2"
+          className="px-4 py-2 border border-border text-foreground rounded-md hover:bg-secondary text-sm disabled:opacity-50 inline-flex items-center gap-2"
         >
           {testing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           Send test

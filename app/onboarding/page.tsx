@@ -113,7 +113,7 @@ export default function OnboardingPage() {
     return (
       <Shell>
         <div className="flex items-center justify-center py-24">
-          <Loader2 className="w-7 h-7 animate-spin text-[#0a0a0a]/40" />
+          <Loader2 className="w-7 h-7 animate-spin text-muted-foreground" />
         </div>
       </Shell>
     )
@@ -131,7 +131,7 @@ export default function OnboardingPage() {
             <div key={n} className="flex items-center gap-2 flex-1">
               <div
                 className={`flex-1 h-1.5 rounded-full transition-all duration-500 ${
-                  done || active ? 'bg-[#8e1c1c]' : 'bg-[#0a0a0a]/10'
+                  done || active ? 'bg-primary' : 'bg-muted'
                 }`}
               />
             </div>
@@ -140,21 +140,21 @@ export default function OnboardingPage() {
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-[#8e1c1c]/10 border border-[#8e1c1c]/20 rounded-2xl">
-          <p className="text-sm text-[#8e1c1c] font-light">{error}</p>
+        <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-md">
+          <p className="text-sm text-destructive">{error}</p>
         </div>
       )}
 
       {/* STEP 1 — Welcome */}
       {step === 1 && (
         <div className="animate-fade">
-          <div className="w-14 h-14 bg-[#8e1c1c]/10 rounded-2xl flex items-center justify-center mb-6">
-            <Sparkles className="w-7 h-7 text-[#8e1c1c]" />
+          <div className="w-14 h-14 bg-muted rounded-lg flex items-center justify-center mb-6">
+            <Sparkles className="w-7 h-7 text-foreground" />
           </div>
-          <h1 className="text-3xl sm:text-4xl font-light tracking-tight text-[#0a0a0a] mb-4">
+          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground mb-4">
             {firstName ? `Welcome, ${firstName}.` : 'Welcome to Stoneforms.'}
           </h1>
-          <p className="text-[#0a0a0a]/60 font-light text-lg leading-relaxed mb-8 max-w-lg">
+          <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-lg">
             Stoneforms lets you build beautiful forms, surveys and quizzes in
             minutes, then collect and manage every response with a light CRM
             built in. Let's get your first form live.
@@ -162,14 +162,14 @@ export default function OnboardingPage() {
           <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={() => setStep(2)}
-              className="inline-flex items-center gap-2 px-7 py-3 bg-[#0a0a0a] text-[#fafaf9] rounded-full hover:bg-[#8e1c1c] font-light transition-all duration-300"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 font-medium transition-colors"
             >
               Get started <ArrowRight className="w-4 h-4" />
             </button>
             <button
               onClick={finishToDashboard}
               disabled={working}
-              className="px-6 py-3 text-[#0a0a0a]/50 hover:text-[#0a0a0a] font-light transition-colors disabled:opacity-50"
+              className="px-5 py-2.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
             >
               {working ? 'Skipping…' : 'Skip for now'}
             </button>
@@ -180,10 +180,10 @@ export default function OnboardingPage() {
       {/* STEP 2 — Use case */}
       {step === 2 && (
         <div className="animate-fade">
-          <h1 className="text-3xl sm:text-4xl font-light tracking-tight text-[#0a0a0a] mb-3">
+          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground mb-3">
             What will you use it for?
           </h1>
-          <p className="text-[#0a0a0a]/60 font-light text-lg mb-8">
+          <p className="text-muted-foreground text-lg mb-8">
             This helps us tailor your starting point. You can change direction
             any time.
           </p>
@@ -195,30 +195,30 @@ export default function OnboardingPage() {
                 <button
                   key={uc.id}
                   onClick={() => setUseCase(uc.id)}
-                  className={`text-left p-5 rounded-2xl border transition-all duration-200 ${
+                  className={`text-left p-5 rounded-lg border transition-all duration-200 ${
                     selected
-                      ? 'border-[#8e1c1c] bg-[#8e1c1c]/[0.04] ring-1 ring-[#8e1c1c]'
-                      : 'border-[#0a0a0a]/10 bg-white/40 hover:border-[#0a0a0a]/25'
+                      ? 'border-primary bg-muted ring-1 ring-primary'
+                      : 'border-border bg-card hover:border-foreground/30'
                   }`}
                 >
                   <div className="flex items-start justify-between">
                     <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${
+                      className={`w-10 h-10 rounded-md flex items-center justify-center mb-3 ${
                         selected
-                          ? 'bg-[#8e1c1c] text-[#fafaf9]'
-                          : 'bg-[#0a0a0a]/5 text-[#0a0a0a]/60'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground'
                       }`}
                     >
                       {USE_CASE_ICONS[uc.id]}
                     </div>
                     {selected && (
-                      <div className="w-6 h-6 rounded-full bg-[#8e1c1c] flex items-center justify-center">
-                        <Check className="w-3.5 h-3.5 text-[#fafaf9]" />
+                      <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                        <Check className="w-3.5 h-3.5 text-primary-foreground" />
                       </div>
                     )}
                   </div>
-                  <p className="font-medium text-[#0a0a0a]">{uc.label}</p>
-                  <p className="text-sm text-[#0a0a0a]/55 font-light mt-1">
+                  <p className="font-medium text-foreground">{uc.label}</p>
+                  <p className="text-sm text-muted-foreground mt-1">
                     {uc.description}
                   </p>
                 </button>
@@ -230,13 +230,13 @@ export default function OnboardingPage() {
             <button
               onClick={() => setStep(3)}
               disabled={!useCase}
-              className="inline-flex items-center gap-2 px-7 py-3 bg-[#0a0a0a] text-[#fafaf9] rounded-full hover:bg-[#8e1c1c] font-light transition-all duration-300 disabled:opacity-40 disabled:hover:bg-[#0a0a0a]"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 font-medium transition-colors disabled:opacity-40 disabled:hover:bg-primary"
             >
               Continue <ArrowRight className="w-4 h-4" />
             </button>
             <button
               onClick={() => setStep(1)}
-              className="px-6 py-3 text-[#0a0a0a]/50 hover:text-[#0a0a0a] font-light transition-colors"
+              className="px-5 py-2.5 text-muted-foreground hover:text-foreground transition-colors"
             >
               Back
             </button>
@@ -247,15 +247,15 @@ export default function OnboardingPage() {
       {/* STEP 3 — Create first form */}
       {step === 3 && (
         <div className="animate-fade">
-          <div className="w-14 h-14 bg-[#8e1c1c]/10 rounded-2xl flex items-center justify-center mb-6">
-            <Check className="w-7 h-7 text-[#8e1c1c]" />
+          <div className="w-14 h-14 bg-muted rounded-lg flex items-center justify-center mb-6">
+            <Check className="w-7 h-7 text-foreground" />
           </div>
-          <h1 className="text-3xl sm:text-4xl font-light tracking-tight text-[#0a0a0a] mb-4">
+          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground mb-4">
             You're all set.
           </h1>
-          <p className="text-[#0a0a0a]/60 font-light text-lg leading-relaxed mb-8 max-w-lg">
+          <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-lg">
             We'll create a starter{' '}
-            <span className="text-[#0a0a0a]">{starterTitleFor(useCase).toLowerCase()}</span>{' '}
+            <span className="text-foreground">{starterTitleFor(useCase).toLowerCase()}</span>{' '}
             and drop you straight into the builder. Add your questions, style it,
             and publish when you're ready.
           </p>
@@ -263,7 +263,7 @@ export default function OnboardingPage() {
             <button
               onClick={createFirstForm}
               disabled={working}
-              className="inline-flex items-center gap-2 px-7 py-3 bg-[#0a0a0a] text-[#fafaf9] rounded-full hover:bg-[#8e1c1c] font-light transition-all duration-300 disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 font-medium transition-colors disabled:opacity-50"
             >
               {working ? (
                 <>
@@ -278,7 +278,7 @@ export default function OnboardingPage() {
             <button
               onClick={finishToDashboard}
               disabled={working}
-              className="px-6 py-3 text-[#0a0a0a]/50 hover:text-[#0a0a0a] font-light transition-colors disabled:opacity-50"
+              className="px-5 py-2.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
             >
               Go to dashboard
             </button>
@@ -291,14 +291,14 @@ export default function OnboardingPage() {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#fafaf9] flex items-center justify-center p-6">
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
-          <span className="text-2xl font-light tracking-tight text-[#0a0a0a]">
+          <span className="text-2xl font-semibold tracking-tight text-foreground">
             Stoneforms
           </span>
         </div>
-        <div className="bg-white/50 backdrop-blur-sm border border-[#0a0a0a]/5 rounded-3xl p-8 sm:p-12">
+        <div className="card-surface rounded-lg p-8 sm:p-12">
           {children}
         </div>
       </div>

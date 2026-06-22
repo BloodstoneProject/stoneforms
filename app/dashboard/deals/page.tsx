@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Plus, Search, DollarSign, TrendingUp, Target, Award } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface Deal {
   id: string
@@ -33,11 +36,11 @@ export default function DealsPage() {
   const [saving, setSaving] = useState(false)
 
   const stages = [
-    { id: 'lead', name: 'Lead', color: 'bg-stone-100' },
-    { id: 'qualified', name: 'Qualified', color: 'bg-blue-100' },
-    { id: 'proposal', name: 'Proposal', color: 'bg-purple-100' },
-    { id: 'negotiation', name: 'Negotiation', color: 'bg-amber-100' },
-    { id: 'closed', name: 'Closed Won', color: 'bg-green-100' },
+    { id: 'lead', name: 'Lead' },
+    { id: 'qualified', name: 'Qualified' },
+    { id: 'proposal', name: 'Proposal' },
+    { id: 'negotiation', name: 'Negotiation' },
+    { id: 'closed', name: 'Closed Won' },
   ]
 
   useEffect(() => {
@@ -126,92 +129,70 @@ export default function DealsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stone-900 mx-auto"></div>
-          <p className="mt-4 text-stone-600">Loading deals...</p>
+      <div className="min-h-screen bg-background">
+        <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+          <Skeleton className="h-9 w-48" />
+          <div className="grid grid-cols-4 gap-4">
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+          </div>
+          <Skeleton className="h-64 w-full" />
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-stone-50">
-      <div className="bg-white border-b border-stone-200">
+    <div className="min-h-screen bg-background">
+      <div className="bg-card border-b border-border">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-stone-900">Deal Pipeline</h1>
-              <p className="text-stone-600 mt-1">Track sales opportunities</p>
+              <h1 className="text-3xl font-semibold tracking-tight text-foreground">Deal Pipeline</h1>
+              <p className="text-muted-foreground mt-1">Track sales opportunities</p>
             </div>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-stone-900 text-white rounded-lg hover:bg-stone-800 font-medium"
-            >
+            <Button onClick={() => setShowAddModal(true)}>
               <Plus className="w-5 h-5" />
               New Deal
-            </button>
+            </Button>
           </div>
 
           <div className="grid grid-cols-4 gap-4">
-            <div className="bg-stone-50 rounded-lg p-4">
-              <div className="flex items-center gap-2 text-stone-600 text-sm mb-1">
-                <Target className="w-4 h-4" />
-                Open Deals
-              </div>
-              <div className="text-2xl font-bold text-stone-900">{stats.open}</div>
-            </div>
-            <div className="bg-green-50 rounded-lg p-4">
-              <div className="flex items-center gap-2 text-green-700 text-sm mb-1">
-                <Award className="w-4 h-4" />
-                Won Deals
-              </div>
-              <div className="text-2xl font-bold text-green-900">{stats.won}</div>
-            </div>
-            <div className="bg-blue-50 rounded-lg p-4">
-              <div className="flex items-center gap-2 text-blue-700 text-sm mb-1">
-                <DollarSign className="w-4 h-4" />
-                Pipeline Value
-              </div>
-              <div className="text-2xl font-bold text-blue-900">
-                {stats.totalValue > 0 ? `£${(stats.totalValue / 1000).toFixed(0)}k` : '£0'}
-              </div>
-            </div>
-            <div className="bg-purple-50 rounded-lg p-4">
-              <div className="flex items-center gap-2 text-purple-700 text-sm mb-1">
-                <TrendingUp className="w-4 h-4" />
-                Total Deals
-              </div>
-              <div className="text-2xl font-bold text-purple-900">{stats.total}</div>
-            </div>
+            <StatCard label="Open Deals" value={String(stats.open)} icon={<Target className="w-4 h-4" />} />
+            <StatCard label="Won Deals" value={String(stats.won)} icon={<Award className="w-4 h-4" />} />
+            <StatCard
+              label="Pipeline Value"
+              value={stats.totalValue > 0 ? `£${(stats.totalValue / 1000).toFixed(0)}k` : '£0'}
+              icon={<DollarSign className="w-4 h-4" />}
+            />
+            <StatCard label="Total Deals" value={String(stats.total)} icon={<TrendingUp className="w-4 h-4" />} />
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="bg-white rounded-lg border border-stone-200 p-4 mb-6">
+        <div className="card-surface p-4 mb-6">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-stone-400 w-5 h-5" />
-            <input
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+            <Input
               type="text"
               placeholder="Search deals..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-900"
+              className="pl-10"
             />
           </div>
         </div>
 
         {deals.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-lg border border-stone-200">
-            <p className="text-stone-600 mb-4">No deals yet. Create your first deal to start tracking your pipeline.</p>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-stone-900 text-white rounded-lg"
-            >
+          <div className="text-center py-12 card-surface">
+            <p className="text-muted-foreground mb-4">No deals yet. Create your first deal to start tracking your pipeline.</p>
+            <Button onClick={() => setShowAddModal(true)}>
               <Plus className="w-5 h-5" />
               Create First Deal
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="grid grid-cols-5 gap-4 overflow-x-auto pb-4">
@@ -221,9 +202,9 @@ export default function DealsPage() {
 
               return (
                 <div key={stage.id} className="min-w-[240px]">
-                  <div className={`${stage.color} rounded-lg p-4 mb-3`}>
-                    <h3 className="font-semibold text-stone-900 mb-1">{stage.name}</h3>
-                    <div className="text-sm text-stone-600">
+                  <div className="bg-muted rounded-md p-4 mb-3 border border-border">
+                    <h3 className="font-semibold text-foreground mb-1">{stage.name}</h3>
+                    <div className="text-sm text-muted-foreground">
                       {stageDeals.length} deals {stageValue > 0 && `- £${(stageValue / 1000).toFixed(0)}k`}
                     </div>
                   </div>
@@ -232,27 +213,27 @@ export default function DealsPage() {
                     {stageDeals.map(deal => (
                       <div
                         key={deal.id}
-                        className="bg-white border border-stone-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                        className="card-surface p-4 hover:bg-muted/30 transition-colors"
                       >
-                        <h4 className="font-semibold text-stone-900 mb-2 text-sm">{deal.title}</h4>
+                        <h4 className="font-semibold text-foreground mb-2 text-sm">{deal.title}</h4>
                         {deal.contact && (
-                          <div className="text-xs text-stone-600 mb-3">
+                          <div className="text-xs text-muted-foreground mb-3">
                             {deal.contact.first_name} {deal.contact.last_name}
                             {deal.contact.company && <span className="block">{deal.contact.company}</span>}
                           </div>
                         )}
                         <div className="flex items-center justify-between">
-                          <span className="text-lg font-bold text-stone-900">
+                          <span className="text-lg font-semibold text-foreground">
                             £{deal.value > 0 ? (deal.value / 1000).toFixed(0) + 'k' : '0'}
                           </span>
-                          <span className="text-xs text-stone-600">{deal.probability}%</span>
+                          <span className="text-xs text-muted-foreground">{deal.probability}%</span>
                         </div>
                       </div>
                     ))}
 
                     {stageDeals.length === 0 && (
-                      <div className="bg-stone-50 border-2 border-dashed border-stone-200 rounded-lg p-4 text-center">
-                        <p className="text-stone-400 text-sm">No deals</p>
+                      <div className="bg-muted/40 border border-dashed border-border rounded-md p-4 text-center">
+                        <p className="text-muted-foreground text-sm">No deals</p>
                       </div>
                     )}
                   </div>
@@ -266,27 +247,26 @@ export default function DealsPage() {
       {/* Add Deal Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50" onClick={() => setShowAddModal(false)}>
-          <div className="bg-white rounded-2xl p-8 max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-2xl font-bold text-stone-900 mb-6">New Deal</h2>
+          <div className="card-surface p-8 max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground mb-6">New Deal</h2>
             <form onSubmit={addDeal} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-1">Deal Title *</label>
-                <input
+                <label className="block text-sm font-medium text-foreground mb-1">Deal Title *</label>
+                <Input
                   type="text"
                   required
                   value={newDeal.title}
                   onChange={(e) => setNewDeal({ ...newDeal, title: e.target.value })}
-                  className="w-full px-4 py-2 border border-stone-300 rounded-lg"
                   placeholder="e.g. Acme Corp - Pro Plan"
                 />
               </div>
               {contacts.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-1">Contact</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Contact</label>
                   <select
                     value={newDeal.contact_id}
                     onChange={(e) => setNewDeal({ ...newDeal, contact_id: e.target.value })}
-                    className="w-full px-4 py-2 border border-stone-300 rounded-lg"
+                    className="w-full h-10 px-4 rounded-md border border-input bg-card text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <option value="">No contact</option>
                     {contacts.map(c => (
@@ -299,21 +279,20 @@ export default function DealsPage() {
               )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-1">Value (£)</label>
-                  <input
+                  <label className="block text-sm font-medium text-foreground mb-1">Value (£)</label>
+                  <Input
                     type="number"
                     value={newDeal.value}
                     onChange={(e) => setNewDeal({ ...newDeal, value: e.target.value })}
-                    className="w-full px-4 py-2 border border-stone-300 rounded-lg"
                     placeholder="10000"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-1">Stage</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Stage</label>
                   <select
                     value={newDeal.stage}
                     onChange={(e) => setNewDeal({ ...newDeal, stage: e.target.value })}
-                    className="w-full px-4 py-2 border border-stone-300 rounded-lg"
+                    className="w-full h-10 px-4 rounded-md border border-input bg-card text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     {stages.map(s => (
                       <option key={s.id} value={s.id}>{s.name}</option>
@@ -322,17 +301,29 @@ export default function DealsPage() {
                 </div>
               </div>
               <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-2 border border-stone-300 rounded-lg">
+                <Button type="button" variant="outline" onClick={() => setShowAddModal(false)} className="flex-1">
                   Cancel
-                </button>
-                <button type="submit" disabled={saving} className="flex-1 px-4 py-2 bg-stone-900 text-white rounded-lg disabled:opacity-50">
+                </Button>
+                <Button type="submit" disabled={saving} className="flex-1">
                   {saving ? 'Creating...' : 'Create Deal'}
-                </button>
+                </Button>
               </div>
             </form>
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function StatCard({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
+  return (
+    <div className="card-surface p-4">
+      <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
+        {icon}
+        {label}
+      </div>
+      <div className="text-2xl font-semibold tracking-tight text-foreground">{value}</div>
     </div>
   )
 }

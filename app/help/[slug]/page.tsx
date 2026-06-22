@@ -91,18 +91,13 @@ If you still have questions, our support team is here to help. Contact us throug
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
-        * { font-family: 'DM Sans', sans-serif; }
-      `}</style>
-
+    <div className="min-h-screen bg-background text-foreground">
       {/* Navigation */}
-      <nav className="border-b border-stone-200">
+      <nav className="border-b border-border">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/" className="text-2xl font-bold text-stone-900">Stoneforms</Link>
-            <Link href="/help" className="text-stone-600 hover:text-stone-900">Help Center</Link>
+            <Link href="/" className="text-xl font-semibold tracking-tight text-foreground">Stoneforms</Link>
+            <Link href="/help" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Help Center</Link>
           </div>
         </div>
       </nav>
@@ -111,58 +106,58 @@ If you still have questions, our support team is here to help. Contact us throug
         <div className="grid md:grid-cols-4 gap-12">
           {/* Main Content */}
           <article className="md:col-span-3">
-            <Link href="/help" className="flex items-center gap-2 text-stone-600 hover:text-stone-900 mb-6">
+            <Link href="/help" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6">
               <ArrowLeft className="w-4 h-4" />
               Back to Help Center
             </Link>
 
             <div className="mb-4">
-              <span className="text-sm font-semibold text-stone-600 uppercase tracking-wider">
+              <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                 {article.category}
               </span>
             </div>
 
-            <h1 className="text-4xl font-bold text-stone-900 mb-8">
+            <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground mb-8">
               {article.title}
             </h1>
 
-            <div className="prose prose-lg max-w-none">
+            <div className="max-w-none">
               {article.content.split('\n').map((paragraph, i) => {
                 if (paragraph.startsWith('# ')) {
-                  return <h1 key={i} className="text-4xl font-bold text-stone-900 mt-12 mb-6">{paragraph.replace('# ', '')}</h1>
+                  return <h1 key={i} className="text-3xl font-semibold tracking-tight text-foreground mt-12 mb-6">{paragraph.replace('# ', '')}</h1>
                 }
                 if (paragraph.startsWith('## ')) {
-                  return <h2 key={i} className="text-3xl font-bold text-stone-900 mt-10 mb-4">{paragraph.replace('## ', '')}</h2>
+                  return <h2 key={i} className="text-2xl font-semibold tracking-tight text-foreground mt-10 mb-4">{paragraph.replace('## ', '')}</h2>
                 }
                 if (paragraph.startsWith('### ')) {
-                  return <h3 key={i} className="text-2xl font-bold text-stone-900 mt-8 mb-3">{paragraph.replace('### ', '')}</h3>
+                  return <h3 key={i} className="text-xl font-semibold tracking-tight text-foreground mt-8 mb-3">{paragraph.replace('### ', '')}</h3>
                 }
                 if (paragraph.startsWith('**') && paragraph.endsWith('**')) {
-                  return <p key={i} className="font-bold text-stone-900 mt-4">{paragraph.replace(/\*\*/g, '')}</p>
+                  return <p key={i} className="font-semibold text-foreground mt-4">{paragraph.replace(/\*\*/g, '')}</p>
                 }
                 if (paragraph.match(/^\d+\./)) {
-                  return <li key={i} className="text-stone-700 ml-6 mt-2">{paragraph.replace(/^\d+\.\s/, '')}</li>
+                  return <li key={i} className="text-muted-foreground ml-6 mt-2">{paragraph.replace(/^\d+\.\s/, '')}</li>
                 }
                 if (paragraph.startsWith('- ')) {
-                  return <li key={i} className="text-stone-700 ml-6 mt-2">{paragraph.replace('- ', '')}</li>
+                  return <li key={i} className="text-muted-foreground ml-6 mt-2">{paragraph.replace('- ', '')}</li>
                 }
                 if (paragraph.trim()) {
-                  return <p key={i} className="text-stone-700 leading-relaxed mt-4">{paragraph}</p>
+                  return <p key={i} className="text-muted-foreground leading-relaxed mt-4">{paragraph}</p>
                 }
                 return null
               })}
             </div>
 
             {/* Feedback */}
-            <div className="mt-12 pt-8 border-t border-stone-200">
-              <p className="text-stone-900 font-semibold mb-4">Was this article helpful?</p>
+            <div className="mt-12 pt-8 border-t border-border">
+              <p className="text-foreground font-semibold mb-4">Was this article helpful?</p>
               <div className="flex gap-3">
-                <button className="flex items-center gap-2 px-6 py-3 border border-stone-300 rounded-lg hover:bg-stone-50">
-                  <ThumbsUp className="w-5 h-5" />
+                <button className="flex items-center gap-2 px-5 py-2.5 border border-border bg-card rounded-md hover:bg-secondary transition-colors text-sm">
+                  <ThumbsUp className="w-4 h-4" />
                   <span>Yes</span>
                 </button>
-                <button className="flex items-center gap-2 px-6 py-3 border border-stone-300 rounded-lg hover:bg-stone-50">
-                  <ThumbsDown className="w-5 h-5" />
+                <button className="flex items-center gap-2 px-5 py-2.5 border border-border bg-card rounded-md hover:bg-secondary transition-colors text-sm">
+                  <ThumbsDown className="w-4 h-4" />
                   <span>No</span>
                 </button>
               </div>
@@ -171,14 +166,14 @@ If you still have questions, our support team is here to help. Contact us throug
 
           {/* Sidebar */}
           <aside className="space-y-6">
-            <div className="bg-stone-50 rounded-lg p-6">
-              <h3 className="font-bold text-stone-900 mb-4">Related Articles</h3>
+            <div className="bg-card border border-border rounded-lg p-6">
+              <h3 className="font-semibold tracking-tight text-foreground mb-4">Related Articles</h3>
               <ul className="space-y-3">
                 {article.relatedArticles.map((title, i) => (
                   <li key={i}>
                     <Link
                       href={`/help/${title.toLowerCase().replace(/\s+/g, '-')}`}
-                      className="text-stone-700 hover:text-stone-900 hover:underline text-sm"
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                     >
                       {title}
                     </Link>
@@ -187,14 +182,14 @@ If you still have questions, our support team is here to help. Contact us throug
               </ul>
             </div>
 
-            <div className="bg-gradient-to-br from-stone-900 to-stone-800 rounded-lg p-6 text-white">
-              <h3 className="font-bold text-lg mb-2">Need more help?</h3>
-              <p className="text-stone-300 text-sm mb-4">
+            <div className="bg-primary text-primary-foreground rounded-lg p-6">
+              <h3 className="font-semibold tracking-tight text-lg mb-2">Need more help?</h3>
+              <p className="text-primary-foreground/70 text-sm mb-4">
                 Our support team is here to assist you
               </p>
               <Link
                 href="/contact"
-                className="block w-full py-2 bg-white text-stone-900 rounded-lg text-center font-semibold text-sm hover:bg-stone-100"
+                className="block w-full py-2 bg-background text-foreground border border-border rounded-md text-center font-medium text-sm hover:bg-secondary transition-colors"
               >
                 Contact Support
               </Link>

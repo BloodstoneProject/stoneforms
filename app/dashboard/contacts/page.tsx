@@ -2,7 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Plus, Search, Mail, Phone, Building, Download, Upload } from 'lucide-react'
+import { Plus, Search, Mail, Phone } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface Contact {
   id: string
@@ -110,81 +114,80 @@ export default function ContactsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stone-900 mx-auto"></div>
-          <p className="mt-4 text-stone-600">Loading contacts...</p>
+      <div className="min-h-screen bg-background">
+        <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+          <Skeleton className="h-9 w-48" />
+          <div className="grid grid-cols-4 gap-4">
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+          </div>
+          <Skeleton className="h-64 w-full" />
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white border-b border-stone-200">
+      <div className="bg-card border-b border-border">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-stone-900">Contacts</h1>
-              <p className="text-stone-600 mt-1">Manage your contact database</p>
+              <h1 className="text-3xl font-semibold tracking-tight text-foreground">Contacts</h1>
+              <p className="text-muted-foreground mt-1">Manage your contact database</p>
             </div>
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="flex items-center gap-2 px-6 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800 font-medium"
-              >
+              <Button onClick={() => setShowAddModal(true)}>
                 <Plus className="w-5 h-5" />
                 Add Contact
-              </button>
+              </Button>
             </div>
           </div>
 
           {/* Stats */}
           <div className="grid grid-cols-4 gap-4">
-            <div className="bg-stone-50 rounded-lg p-4">
-              <div className="text-stone-600 text-sm mb-1">Total Contacts</div>
-              <div className="text-2xl font-bold text-stone-900">{stats.total}</div>
-            </div>
-            <div className="bg-blue-50 rounded-lg p-4">
-              <div className="text-blue-700 text-sm mb-1">Leads</div>
-              <div className="text-2xl font-bold text-blue-900">{stats.leads}</div>
-            </div>
-            <div className="bg-green-50 rounded-lg p-4">
-              <div className="text-green-700 text-sm mb-1">Customers</div>
-              <div className="text-2xl font-bold text-green-900">{stats.customers}</div>
-            </div>
-            <div className="bg-purple-50 rounded-lg p-4">
-              <div className="text-purple-700 text-sm mb-1">VIP</div>
-              <div className="text-2xl font-bold text-purple-900">{stats.vip}</div>
-            </div>
+            <StatCard label="Total Contacts" value={stats.total} />
+            <StatCard label="Leads" value={stats.leads} />
+            <StatCard label="Customers" value={stats.customers} />
+            <StatCard label="VIP" value={stats.vip} />
           </div>
         </div>
       </div>
 
       {/* Filters */}
       <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="bg-white rounded-lg border border-stone-200 p-4 mb-6">
+        <div className="card-surface p-4 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-stone-400 w-5 h-5" />
-              <input
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+              <Input
                 type="text"
                 placeholder="Search contacts..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-900"
+                className="pl-10"
               />
             </div>
             {allTags.length > 0 && (
-              <select value={tagFilter} onChange={(e) => setTagFilter(e.target.value)} className="px-4 py-2 border border-stone-300 rounded-lg">
+              <select
+                value={tagFilter}
+                onChange={(e) => setTagFilter(e.target.value)}
+                className="h-10 px-4 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
                 <option value="all">All Tags</option>
                 {allTags.map(tag => (
                   <option key={tag} value={tag}>{tag}</option>
                 ))}
               </select>
             )}
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)} className="px-4 py-2 border border-stone-300 rounded-lg">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="h-10 px-4 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
               <option value="recent">Most Recent</option>
               <option value="name">Name (A-Z)</option>
               <option value="company">Company (A-Z)</option>
@@ -194,47 +197,44 @@ export default function ContactsPage() {
 
         {/* Contacts Table */}
         {filteredContacts.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-lg border border-stone-200">
-            <p className="text-stone-600 mb-4">
+          <div className="text-center py-12 card-surface">
+            <p className="text-muted-foreground mb-4">
               {contacts.length === 0 ? 'No contacts yet. Add your first contact to get started.' : 'No contacts match your search.'}
             </p>
             {contacts.length === 0 && (
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-stone-900 text-white rounded-lg"
-              >
+              <Button onClick={() => setShowAddModal(true)}>
                 <Plus className="w-5 h-5" />
                 Add Your First Contact
-              </button>
+              </Button>
             )}
           </div>
         ) : (
-          <div className="bg-white rounded-lg border border-stone-200 overflow-hidden">
+          <div className="card-surface overflow-hidden">
             <table className="w-full">
-              <thead className="bg-stone-50 border-b border-stone-200">
+              <thead className="bg-muted/50 border-b border-border">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-stone-600 uppercase tracking-wider">Contact</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-stone-600 uppercase tracking-wider">Company</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-stone-600 uppercase tracking-wider">Tags</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-stone-600 uppercase tracking-wider">Added</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-stone-600 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contact</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Company</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tags</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Added</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-200">
+              <tbody className="divide-y divide-border">
                 {filteredContacts.map((contact) => (
-                  <tr key={contact.id} className="hover:bg-stone-50">
+                  <tr key={contact.id} className="hover:bg-muted/50 transition-colors">
                     <td className="px-6 py-4">
                       <Link href={`/dashboard/contacts/${contact.id}`} className="block">
-                        <div className="font-medium text-stone-900">
+                        <div className="font-medium text-foreground">
                           {contact.first_name || ''} {contact.last_name || ''}
                           {!contact.first_name && !contact.last_name && contact.email}
                         </div>
-                        <div className="text-sm text-stone-600 flex items-center gap-2">
+                        <div className="text-sm text-muted-foreground flex items-center gap-2">
                           <Mail className="w-4 h-4" />
                           {contact.email}
                         </div>
                         {contact.phone && (
-                          <div className="text-sm text-stone-600 flex items-center gap-2">
+                          <div className="text-sm text-muted-foreground flex items-center gap-2">
                             <Phone className="w-4 h-4" />
                             {contact.phone}
                           </div>
@@ -243,27 +243,27 @@ export default function ContactsPage() {
                     </td>
                     <td className="px-6 py-4">
                       {contact.company && (
-                        <div className="font-medium text-stone-900">{contact.company}</div>
+                        <div className="font-medium text-foreground">{contact.company}</div>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-wrap gap-1">
                         {(contact.tags || []).slice(0, 2).map(tag => (
-                          <span key={tag} className="px-2 py-1 bg-stone-100 text-stone-700 text-xs rounded">
+                          <Badge key={tag} variant="default">
                             {tag}
-                          </span>
+                          </Badge>
                         ))}
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-stone-600">
+                      <span className="text-sm text-muted-foreground">
                         {new Date(contact.created_at).toLocaleDateString()}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <Link
                         href={`/dashboard/contacts/${contact.id}`}
-                        className="text-stone-900 hover:text-stone-700 font-medium text-sm"
+                        className="text-foreground hover:text-muted-foreground font-medium text-sm"
                       >
                         View
                       </Link>
@@ -279,80 +279,83 @@ export default function ContactsPage() {
       {/* Add Contact Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50" onClick={() => setShowAddModal(false)}>
-          <div className="bg-white rounded-2xl p-8 max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-2xl font-bold text-stone-900 mb-6">Add Contact</h2>
+          <div className="card-surface p-8 max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground mb-6">Add Contact</h2>
             <form onSubmit={addContact} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-1">Email *</label>
-                <input
+                <label className="block text-sm font-medium text-foreground mb-1">Email *</label>
+                <Input
                   type="email"
                   required
                   value={newContact.email}
                   onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
-                  className="w-full px-4 py-2 border border-stone-300 rounded-lg"
                   placeholder="email@example.com"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-1">First Name</label>
-                  <input
+                  <label className="block text-sm font-medium text-foreground mb-1">First Name</label>
+                  <Input
                     type="text"
                     value={newContact.first_name}
                     onChange={(e) => setNewContact({ ...newContact, first_name: e.target.value })}
-                    className="w-full px-4 py-2 border border-stone-300 rounded-lg"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-1">Last Name</label>
-                  <input
+                  <label className="block text-sm font-medium text-foreground mb-1">Last Name</label>
+                  <Input
                     type="text"
                     value={newContact.last_name}
                     onChange={(e) => setNewContact({ ...newContact, last_name: e.target.value })}
-                    className="w-full px-4 py-2 border border-stone-300 rounded-lg"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-1">Phone</label>
-                <input
+                <label className="block text-sm font-medium text-foreground mb-1">Phone</label>
+                <Input
                   type="text"
                   value={newContact.phone}
                   onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })}
-                  className="w-full px-4 py-2 border border-stone-300 rounded-lg"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-1">Company</label>
-                <input
+                <label className="block text-sm font-medium text-foreground mb-1">Company</label>
+                <Input
                   type="text"
                   value={newContact.company}
                   onChange={(e) => setNewContact({ ...newContact, company: e.target.value })}
-                  className="w-full px-4 py-2 border border-stone-300 rounded-lg"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-1">Tags (comma separated)</label>
-                <input
+                <label className="block text-sm font-medium text-foreground mb-1">Tags (comma separated)</label>
+                <Input
                   type="text"
                   value={newContact.tags}
                   onChange={(e) => setNewContact({ ...newContact, tags: e.target.value })}
-                  className="w-full px-4 py-2 border border-stone-300 rounded-lg"
                   placeholder="Lead, VIP"
                 />
               </div>
               <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-2 border border-stone-300 rounded-lg">
+                <Button type="button" variant="outline" onClick={() => setShowAddModal(false)} className="flex-1">
                   Cancel
-                </button>
-                <button type="submit" disabled={saving} className="flex-1 px-4 py-2 bg-stone-900 text-white rounded-lg disabled:opacity-50">
+                </Button>
+                <Button type="submit" disabled={saving} className="flex-1">
                   {saving ? 'Adding...' : 'Add Contact'}
-                </button>
+                </Button>
               </div>
             </form>
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function StatCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="card-surface p-4">
+      <div className="text-muted-foreground text-sm mb-1">{label}</div>
+      <div className="text-2xl font-semibold tracking-tight text-foreground">{value}</div>
     </div>
   )
 }

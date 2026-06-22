@@ -58,18 +58,18 @@ export default function PublicFormPage({ params }: { params: Promise<{ id: strin
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f4f2ed]">
-        <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
+      <div className="min-h-screen flex items-center justify-center bg-neutral-50">
+        <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
       </div>
     )
   }
 
   if (error || !form) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f4f2ed] p-6">
+      <div className="min-h-screen flex items-center justify-center bg-neutral-50 p-6">
         <div className="text-center max-w-md">
-          <h1 className="text-2xl font-bold text-stone-900 mb-2">Form unavailable</h1>
-          <p className="text-stone-600">{error || 'This form may have been unpublished or removed.'}</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 mb-2">Form unavailable</h1>
+          <p className="text-neutral-600">{error || 'This form may have been unpublished or removed.'}</p>
         </div>
       </div>
     )

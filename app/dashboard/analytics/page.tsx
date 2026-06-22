@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { FileText, Eye, BarChart3, Inbox, Loader2, ArrowRight } from 'lucide-react'
+import { FileText, Eye, BarChart3, Inbox, ArrowRight } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface Form {
   id: string
@@ -31,51 +33,59 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
+      <div className="min-h-screen bg-background">
+        <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+          <Skeleton className="h-9 w-48" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+          <Skeleton className="h-64 w-full" />
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-stone-50">
-      <div className="bg-white border-b border-stone-200">
+    <div className="min-h-screen bg-background">
+      <div className="bg-card border-b border-border">
         <div className="max-w-5xl mx-auto px-6 py-6">
-          <h1 className="text-3xl font-bold text-stone-900">Analytics</h1>
-          <p className="text-stone-600 mt-1">Performance across all your forms</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">Analytics</h1>
+          <p className="text-muted-foreground mt-1">Performance across all your forms</p>
         </div>
       </div>
 
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Stat icon={<FileText className="w-5 h-5" />} label="Total forms" value={forms.length} tint="stone" />
-          <Stat icon={<Eye className="w-5 h-5" />} label="Published" value={published.length} tint="green" />
-          <Stat icon={<BarChart3 className="w-5 h-5" />} label="Responses this month" value={responsesThisMonth} tint="blue" />
+          <Stat icon={<FileText className="w-5 h-5" />} label="Total forms" value={forms.length} />
+          <Stat icon={<Eye className="w-5 h-5" />} label="Published" value={published.length} />
+          <Stat icon={<BarChart3 className="w-5 h-5" />} label="Responses this month" value={responsesThisMonth} />
         </div>
 
-        <div className="bg-white rounded-xl border border-stone-200">
-          <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
-            <h2 className="font-bold text-stone-900">Per-form analytics</h2>
-            <Link href="/dashboard/forms" className="text-sm text-stone-600 hover:text-stone-900">All forms</Link>
+        <div className="card-surface">
+          <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+            <h2 className="font-semibold tracking-tight text-foreground">Per-form analytics</h2>
+            <Link href="/dashboard/forms" className="text-sm text-muted-foreground hover:text-foreground">All forms</Link>
           </div>
           {forms.length === 0 ? (
             <div className="px-6 py-12 text-center">
-              <Inbox className="w-10 h-10 text-stone-300 mx-auto mb-3" />
-              <p className="text-stone-600">No forms yet — create one to start collecting analytics.</p>
+              <Inbox className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
+              <p className="text-muted-foreground">No forms yet — create one to start collecting analytics.</p>
             </div>
           ) : (
-            <div className="divide-y divide-stone-100">
+            <div className="divide-y divide-border">
               {forms.map((form) => (
                 <Link
                   key={form.id}
                   href={`/dashboard/forms/${form.id}/analytics`}
-                  className="flex items-center justify-between px-6 py-4 hover:bg-stone-50 group"
+                  className="flex items-center justify-between px-6 py-4 hover:bg-muted/50 transition-colors group"
                 >
                   <div className="min-w-0">
-                    <p className="font-medium text-stone-900 truncate">{form.title}</p>
-                    <p className="text-xs text-stone-500 capitalize">{form.status}</p>
+                    <p className="font-medium text-foreground truncate">{form.title}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{form.status}</p>
                   </div>
-                  <span className="text-sm text-stone-400 group-hover:text-stone-900 flex items-center gap-1">
+                  <span className="text-sm text-muted-foreground group-hover:text-foreground flex items-center gap-1">
                     View <ArrowRight className="w-4 h-4" />
                   </span>
                 </Link>
@@ -88,20 +98,15 @@ export default function AnalyticsPage() {
   )
 }
 
-function Stat({ icon, label, value, tint }: { icon: React.ReactNode; label: string; value: number; tint: 'stone' | 'green' | 'blue' }) {
-  const tints: Record<string, string> = {
-    stone: 'bg-stone-100 text-stone-600',
-    green: 'bg-green-100 text-green-600',
-    blue: 'bg-blue-100 text-blue-600',
-  }
+function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
-    <div className="bg-white rounded-xl border border-stone-200 p-5">
+    <div className="card-surface p-5">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-stone-500">{label}</p>
-          <p className="text-3xl font-bold text-stone-900 mt-1">{value}</p>
+          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className="text-3xl font-semibold tracking-tight text-foreground mt-1">{value}</p>
         </div>
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${tints[tint]}`}>{icon}</div>
+        <div className="w-10 h-10 rounded-md flex items-center justify-center bg-muted text-muted-foreground">{icon}</div>
       </div>
     </div>
   )

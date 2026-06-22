@@ -118,22 +118,17 @@ export default function HelpPage() {
     : []
 
   return (
-    <div className="min-h-screen bg-white">
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
-        * { font-family: 'DM Sans', sans-serif; }
-      `}</style>
-
+    <div className="min-h-screen bg-background text-foreground">
       {/* Navigation */}
-      <nav className="border-b border-stone-200">
+      <nav className="border-b border-border">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/" className="text-2xl font-bold text-stone-900">Stoneforms</Link>
-            <div className="flex items-center gap-6">
-              <Link href="/features" className="text-stone-600 hover:text-stone-900">Features</Link>
-              <Link href="/pricing" className="text-stone-600 hover:text-stone-900">Pricing</Link>
-              <Link href="/help" className="text-stone-900 font-medium">Help</Link>
-              <Link href="/auth/signup" className="px-6 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800">
+            <Link href="/" className="text-xl font-semibold tracking-tight text-foreground">Stoneforms</Link>
+            <div className="flex items-center gap-6 text-sm">
+              <Link href="/features" className="text-muted-foreground hover:text-foreground transition-colors">Features</Link>
+              <Link href="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
+              <Link href="/help" className="text-foreground font-medium">Help</Link>
+              <Link href="/auth/signup" className="px-5 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium">
                 Get Started Free
               </Link>
             </div>
@@ -142,43 +137,43 @@ export default function HelpPage() {
       </nav>
 
       {/* Hero */}
-      <section className="py-20 px-6 bg-gradient-to-br from-stone-50 to-stone-100">
+      <section className="py-20 px-6 bg-secondary border-b border-border">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-6xl font-bold text-stone-900 mb-6">How can we help?</h1>
-          <p className="text-xl text-stone-600 mb-8">
+          <h1 className="text-5xl sm:text-6xl font-semibold tracking-tight text-foreground mb-6">How can we help?</h1>
+          <p className="text-lg text-muted-foreground mb-8">
             Search our help center for answers and guides
           </p>
-          
+
           {/* Search */}
           <div className="max-w-2xl mx-auto relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-stone-400 w-6 h-6" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
             <input
               type="text"
               placeholder="Search for help..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-14 pr-4 py-5 border-2 border-stone-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-stone-200 focus:border-stone-900 text-lg"
+              className="w-full pl-12 pr-4 py-3.5 bg-background border border-input rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors text-base"
             />
           </div>
 
           {/* Search Results */}
           {searchTerm && (
-            <div className="max-w-2xl mx-auto mt-4 bg-white border border-stone-200 rounded-xl shadow-lg">
+            <div className="max-w-2xl mx-auto mt-3 bg-card border border-border rounded-md text-left">
               {filteredArticles.length > 0 ? (
-                <div className="p-4">
+                <div className="p-2">
                   {filteredArticles.slice(0, 5).map((article, i) => (
                     <Link
                       key={i}
                       href={`/help/${article.slug}`}
-                      className="block p-3 hover:bg-stone-50 rounded-lg"
+                      className="block p-3 hover:bg-secondary rounded-md transition-colors"
                     >
-                      <h3 className="font-semibold text-stone-900">{article.title}</h3>
-                      <p className="text-sm text-stone-600 mt-1">{article.category}</p>
+                      <h3 className="font-medium text-foreground">{article.title}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">{article.category}</p>
                     </Link>
                   ))}
                 </div>
               ) : (
-                <div className="p-8 text-center text-stone-600">
+                <div className="p-8 text-center text-muted-foreground">
                   No articles found. Try different keywords.
                 </div>
               )}
@@ -190,25 +185,25 @@ export default function HelpPage() {
       {/* Categories */}
       <section className="py-16 px-6">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-stone-900 mb-12 text-center">
+          <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground mb-12 text-center">
             Browse by Category
           </h2>
 
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-2 gap-6">
             {categories.map((category, i) => (
-              <div key={i} className="bg-white border border-stone-200 rounded-lg p-8">
+              <div key={i} className="bg-card border border-border rounded-lg p-8">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 bg-stone-100 rounded-lg flex items-center justify-center">
-                    <category.icon className="w-6 h-6 text-stone-600" />
+                  <div className="w-11 h-11 bg-secondary border border-border rounded-md flex items-center justify-center">
+                    <category.icon className="w-5 h-5 text-foreground" />
                   </div>
-                  <h3 className="text-2xl font-bold text-stone-900">{category.name}</h3>
+                  <h3 className="text-xl font-semibold tracking-tight text-foreground">{category.name}</h3>
                 </div>
                 <ul className="space-y-3">
                   {category.articles.map((article, j) => (
                     <li key={j}>
                       <Link
                         href={`/help/${article.slug}`}
-                        className="text-stone-700 hover:text-stone-900 hover:underline"
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                       >
                         {article.title}
                       </Link>
@@ -222,17 +217,17 @@ export default function HelpPage() {
       </section>
 
       {/* Contact Support */}
-      <section className="py-16 px-6 bg-stone-50">
+      <section className="py-16 px-6 bg-secondary border-t border-border">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-stone-900 mb-4">
+          <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground mb-4">
             Still need help?
           </h2>
-          <p className="text-xl text-stone-600 mb-8">
+          <p className="text-lg text-muted-foreground mb-8">
             Contact our support team and we will get back to you within 24 hours
           </p>
           <Link
             href="/contact"
-            className="inline-block px-8 py-4 bg-stone-900 text-white rounded-lg hover:bg-stone-800 font-semibold text-lg"
+            className="inline-block px-7 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm font-medium"
           >
             Contact Support
           </Link>

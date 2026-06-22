@@ -12,10 +12,10 @@ export default function TemplateDetailPage() {
 
   if (!template) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-stone-900 mb-4">Template Not Found</h1>
-          <Link href="/templates" className="text-stone-600 hover:text-stone-900">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground mb-4">Template Not Found</h1>
+          <Link href="/templates" className="text-muted-foreground hover:text-foreground transition-colors">
             ← Back to Templates
           </Link>
         </div>
@@ -28,29 +28,24 @@ export default function TemplateDetailPage() {
   ).slice(0, 3)
 
   return (
-    <div className="min-h-screen bg-stone-50">
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
-        * { font-family: 'DM Sans', sans-serif; }
-      `}</style>
-
+    <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <div className="bg-white border-b border-stone-200">
+      <div className="bg-card border-b border-border">
         <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center gap-4 mb-4">
-            <Link href="/templates" className="text-stone-600 hover:text-stone-900">
+          <div className="flex items-center gap-4 mb-6">
+            <Link href="/templates" className="text-muted-foreground hover:text-foreground transition-colors">
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-stone-900 flex items-center gap-3">
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground flex items-center gap-3">
                 <span>{template.icon}</span>
                 {template.name}
               </h1>
-              <p className="text-stone-600 mt-1">{template.description}</p>
+              <p className="text-muted-foreground mt-1">{template.description}</p>
             </div>
             <Link
               href="/auth/signup"
-              className="px-6 py-3 bg-stone-900 text-white rounded-lg hover:bg-stone-800 font-semibold"
+              className="px-5 py-2.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm font-medium"
             >
               Use This Template
             </Link>
@@ -58,17 +53,17 @@ export default function TemplateDetailPage() {
 
           {/* Stats */}
           <div className="grid grid-cols-3 gap-4">
-            <div className="bg-blue-50 rounded-lg p-4">
-              <div className="text-blue-700 text-sm mb-1">Form Fields</div>
-              <div className="text-2xl font-bold text-blue-900">{template.fields.length}</div>
+            <div className="bg-secondary border border-border rounded-md p-4">
+              <div className="text-muted-foreground text-sm mb-1">Form Fields</div>
+              <div className="text-2xl font-semibold tracking-tight text-foreground">{template.fields.length}</div>
             </div>
-            <div className="bg-green-50 rounded-lg p-4">
-              <div className="text-green-700 text-sm mb-1">Category</div>
-              <div className="text-lg font-bold text-green-900">{template.category}</div>
+            <div className="bg-secondary border border-border rounded-md p-4">
+              <div className="text-muted-foreground text-sm mb-1">Category</div>
+              <div className="text-lg font-semibold tracking-tight text-foreground">{template.category}</div>
             </div>
-            <div className="bg-amber-50 rounded-lg p-4">
-              <div className="text-amber-700 text-sm mb-1">Type</div>
-              <div className="text-lg font-bold text-amber-900">{template.quiz ? 'Scored quiz' : 'Standard form'}</div>
+            <div className="bg-secondary border border-border rounded-md p-4">
+              <div className="text-muted-foreground text-sm mb-1">Type</div>
+              <div className="text-lg font-semibold tracking-tight text-foreground">{template.quiz ? 'Scored quiz' : 'Standard form'}</div>
             </div>
           </div>
         </div>
@@ -78,46 +73,46 @@ export default function TemplateDetailPage() {
         <div className="grid md:grid-cols-3 gap-8">
           {/* Preview */}
           <div className="md:col-span-2">
-            <div className="bg-white rounded-lg border border-stone-200 p-8">
-              <h2 className="text-xl font-bold text-stone-900 mb-6">Template Preview</h2>
+            <div className="bg-card rounded-lg border border-border p-8">
+              <h2 className="text-xl font-semibold tracking-tight text-foreground mb-6">Template Preview</h2>
 
-              <div className="bg-gradient-to-br from-stone-50 to-stone-100 rounded-lg p-8 border-2 border-dashed border-stone-300">
+              <div className="bg-secondary rounded-lg p-8 border border-dashed border-border">
                 <div className="max-w-2xl mx-auto space-y-6">
                   <div className="text-center mb-8">
-                    <h3 className="text-2xl font-bold text-stone-900 mb-2">{template.name}</h3>
-                    <p className="text-stone-600">{template.description}</p>
+                    <h3 className="text-2xl font-semibold tracking-tight text-foreground mb-2">{template.name}</h3>
+                    <p className="text-muted-foreground">{template.description}</p>
                   </div>
 
                   {template.fields.map((field, i) => (
                     <div key={i}>
                       {field.field_type === 'statement' ? (
-                        <p className="text-stone-700 font-medium">{field.label}</p>
+                        <p className="text-foreground font-medium">{field.label}</p>
                       ) : (
                         <>
-                          <label className="block text-sm font-medium text-stone-700 mb-2">
+                          <label className="block text-sm font-medium text-foreground mb-2">
                             {field.label}
-                            {field.required && <span className="text-red-500 ml-1">*</span>}
+                            {field.required && <span className="text-destructive ml-1">*</span>}
                           </label>
                           {field.options ? (
                             <div className="space-y-2">
                               {field.options.map((opt, oi) => (
-                                <div key={oi} className="flex items-center gap-2 text-sm text-stone-600">
-                                  <span className="w-4 h-4 rounded-full border-2 border-stone-300 flex-shrink-0" />
+                                <div key={oi} className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <span className="w-4 h-4 rounded-full border border-border flex-shrink-0" />
                                   {opt}
                                 </div>
                               ))}
                             </div>
                           ) : field.field_type === 'long_text' ? (
-                            <div className="w-full h-24 bg-white border-2 border-stone-300 rounded-lg" />
+                            <div className="w-full h-24 bg-card border border-border rounded-md" />
                           ) : (
-                            <div className="w-full h-12 bg-white border-2 border-stone-300 rounded-lg" />
+                            <div className="w-full h-12 bg-card border border-border rounded-md" />
                           )}
                         </>
                       )}
                     </div>
                   ))}
 
-                  <button className="w-full py-3 bg-stone-900 text-white rounded-lg font-semibold">
+                  <button className="w-full py-2.5 bg-primary text-primary-foreground rounded-md text-sm font-medium">
                     Submit
                   </button>
                 </div>
@@ -126,17 +121,17 @@ export default function TemplateDetailPage() {
               {/* Quiz outcomes */}
               {template.quiz && (
                 <div className="mt-8">
-                  <h3 className="text-lg font-bold text-stone-900 mb-3">Possible results</h3>
+                  <h3 className="text-lg font-semibold tracking-tight text-foreground mb-3">Possible results</h3>
                   <div className="space-y-3">
                     {template.quiz.outcomes.map((o) => (
-                      <div key={o.id} className="border border-stone-200 rounded-lg p-4">
+                      <div key={o.id} className="border border-border rounded-md p-4">
                         <div className="flex items-center justify-between mb-1">
-                          <h4 className="font-semibold text-stone-900">{o.title}</h4>
-                          <span className="text-xs text-stone-500">
+                          <h4 className="font-medium text-foreground">{o.title}</h4>
+                          <span className="text-xs text-muted-foreground">
                             {o.minScore}–{o.maxScore} pts
                           </span>
                         </div>
-                        <p className="text-sm text-stone-600">{o.message}</p>
+                        <p className="text-sm text-muted-foreground">{o.message}</p>
                       </div>
                     ))}
                   </div>
@@ -148,29 +143,29 @@ export default function TemplateDetailPage() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Features */}
-            <div className="bg-white rounded-lg border border-stone-200 p-6">
-              <h3 className="font-bold text-stone-900 mb-4">Included Features</h3>
+            <div className="bg-card rounded-lg border border-border p-6">
+              <h3 className="font-semibold tracking-tight text-foreground mb-4">Included Features</h3>
               <ul className="space-y-3">
                 {['Mobile optimized', 'Validation built in', 'Export responses', 'Analytics included'].map((feat) => (
                   <li key={feat} className="flex items-center gap-3">
-                    <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Star className="w-3 h-3 text-green-600" />
+                    <div className="w-5 h-5 bg-secondary border border-border rounded-full flex items-center justify-center flex-shrink-0">
+                      <Star className="w-3 h-3 text-foreground" />
                     </div>
-                    <span className="text-stone-700">{feat}</span>
+                    <span className="text-muted-foreground">{feat}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
             {/* CTA */}
-            <div className="bg-gradient-to-br from-stone-900 to-stone-800 rounded-lg p-6 text-white">
-              <h3 className="font-bold text-xl mb-2">Ready to use?</h3>
-              <p className="text-stone-300 mb-4 text-sm">
+            <div className="bg-primary text-primary-foreground rounded-lg p-6">
+              <h3 className="font-semibold tracking-tight text-xl mb-2">Ready to use?</h3>
+              <p className="text-primary-foreground/70 mb-4 text-sm">
                 Sign up free and start using this template in minutes
               </p>
               <Link
                 href="/auth/signup"
-                className="block w-full py-3 bg-white text-stone-900 rounded-lg text-center font-semibold hover:bg-stone-100"
+                className="block w-full py-2.5 bg-background text-foreground border border-border rounded-md text-center text-sm font-medium hover:bg-secondary transition-colors"
               >
                 Get Started Free
               </Link>
@@ -178,20 +173,20 @@ export default function TemplateDetailPage() {
 
             {/* Similar Templates */}
             {similar.length > 0 && (
-              <div className="bg-white rounded-lg border border-stone-200 p-6">
-                <h3 className="font-bold text-stone-900 mb-4">Similar Templates</h3>
+              <div className="bg-card rounded-lg border border-border p-6">
+                <h3 className="font-semibold tracking-tight text-foreground mb-4">Similar Templates</h3>
                 <div className="space-y-3">
                   {similar.map((s) => (
                     <Link
                       key={s.id}
                       href={`/templates/${s.id}`}
-                      className="block p-3 border border-stone-200 rounded-lg hover:bg-stone-50"
+                      className="block p-3 border border-border rounded-md hover:bg-secondary transition-colors"
                     >
-                      <h4 className="font-medium text-stone-900 text-sm flex items-center gap-2">
+                      <h4 className="font-medium text-foreground text-sm flex items-center gap-2">
                         <span>{s.icon}</span>
                         {s.name}
                       </h4>
-                      <p className="text-xs text-stone-600 mt-1">{s.fields.length} fields</p>
+                      <p className="text-xs text-muted-foreground mt-1">{s.fields.length} fields</p>
                     </Link>
                   ))}
                 </div>

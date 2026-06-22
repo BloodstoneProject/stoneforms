@@ -16,18 +16,17 @@ export function QuestionEditor({ question, onUpdateQuestion }: QuestionEditorPro
     return (
       <div className="h-full flex items-center justify-center p-12 text-center">
         <div>
-          <div 
-            className="w-24 h-24 rounded-full mx-auto mb-6 flex items-center justify-center"
-            style={{ backgroundColor: '#f4f2ed' }}
+          <div
+            className="w-24 h-24 rounded-full mx-auto mb-6 flex items-center justify-center bg-secondary"
           >
-            <svg className="w-12 h-12" style={{ color: '#3d5948' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-12 h-12 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           </div>
-          <h3 className="text-xl font-semibold mb-2" style={{ color: '#142c1c' }}>
+          <h3 className="text-xl heading-tight mb-2 text-foreground">
             No Question Selected
           </h3>
-          <p style={{ color: '#3d5948' }}>
+          <p className="text-muted-foreground">
             Select a question from the left panel to edit it,
             <br />
             or add a new question to get started.
@@ -40,22 +39,20 @@ export function QuestionEditor({ question, onUpdateQuestion }: QuestionEditorPro
   return (
     <div className="p-12 max-w-3xl mx-auto">
       {/* Preview Card - Shows how it will look to respondents */}
-      <div 
-        className="rounded-xl p-8 mb-8 shadow-lg"
-        style={{ backgroundColor: '#f4f2ed' }}
+      <div
+        className="rounded-lg p-8 mb-8 card-surface"
       >
         <div className="mb-6">
           <Input
             value={question.label}
             onChange={(e) => onUpdateQuestion(question.id, { label: e.target.value })}
-            className="text-2xl font-semibold border-none bg-transparent p-0 h-auto focus-visible:ring-0 placeholder:opacity-50"
-            style={{ color: '#142c1c' }}
+            className="text-2xl heading-tight border-none bg-transparent p-0 h-auto focus-visible:ring-0 placeholder:opacity-50 text-foreground"
             placeholder="Type your question here..."
           />
         </div>
 
         {question.description && (
-          <p className="mb-6" style={{ color: '#3d5948' }}>
+          <p className="mb-6 text-muted-foreground">
             {question.description}
           </p>
         )}
@@ -66,15 +63,15 @@ export function QuestionEditor({ question, onUpdateQuestion }: QuestionEditorPro
 
       {/* Editing Hints */}
       <div className="space-y-4">
-        <div className="flex items-start gap-3 p-4 rounded-lg" style={{ backgroundColor: '#f4f2ed' }}>
-          <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#142c1c' }}>
-            <span className="text-xs font-bold text-white">?</span>
+        <div className="flex items-start gap-3 p-4 rounded-lg bg-secondary">
+          <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 bg-primary">
+            <span className="text-xs font-bold text-primary-foreground">?</span>
           </div>
           <div>
-            <p className="text-sm font-medium mb-1" style={{ color: '#142c1c' }}>
+            <p className="text-sm font-medium mb-1 text-foreground">
               How to use the question editor
             </p>
-            <p className="text-sm" style={{ color: '#3d5948' }}>
+            <p className="text-sm text-muted-foreground">
               Click on the question text to edit. Use the properties panel on the right to configure validation, 
               make it required, or add logic.
             </p>
@@ -128,7 +125,7 @@ function QuestionTypePreview({
         <Input
           placeholder="Your answer here..."
           disabled
-          style={{ backgroundColor: 'white', borderColor: '#e8e4db' }}
+          className="bg-background border-input"
         />
       )
 
@@ -138,8 +135,7 @@ function QuestionTypePreview({
           placeholder="Your detailed answer here..."
           disabled
           rows={4}
-          className="w-full rounded-md border p-3 text-sm"
-          style={{ backgroundColor: 'white', borderColor: '#e8e4db', color: '#3d5948' }}
+          className="w-full rounded-md border border-input p-3 text-sm bg-background text-muted-foreground"
         />
       )
 
@@ -149,7 +145,7 @@ function QuestionTypePreview({
           type="email"
           placeholder="name@example.com"
           disabled
-          style={{ backgroundColor: 'white', borderColor: '#e8e4db' }}
+          className="bg-background border-input"
         />
       )
 
@@ -159,7 +155,7 @@ function QuestionTypePreview({
           type="number"
           placeholder="Enter a number..."
           disabled
-          style={{ backgroundColor: 'white', borderColor: '#e8e4db' }}
+          className="bg-background border-input"
         />
       )
 
@@ -168,20 +164,19 @@ function QuestionTypePreview({
         <div className="space-y-3">
           {choices.map((choice) => (
             <div key={choice.id} className="flex items-center gap-3 group">
-              <div className="w-5 h-5 rounded-full border-2 flex-shrink-0" style={{ borderColor: '#142c1c' }}></div>
+              <div className="w-5 h-5 rounded-full border-2 border-foreground flex-shrink-0"></div>
               <Input
                 value={choice.label}
                 onChange={(e) => handleUpdateChoice(choice.id, e.target.value)}
-                className="flex-1"
-                style={{ backgroundColor: 'white', borderColor: '#e8e4db' }}
+                className="flex-1 bg-background border-input"
                 placeholder="Option text..."
               />
               {choices.length > 2 && (
                 <button
                   onClick={() => handleDeleteChoice(choice.id)}
-                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-50"
+                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-secondary"
                 >
-                  <X className="w-4 h-4 text-red-600" />
+                  <X className="w-4 h-4 text-destructive" />
                 </button>
               )}
             </div>
@@ -200,10 +195,9 @@ function QuestionTypePreview({
 
     case 'dropdown':
       return (
-        <select 
-          disabled 
-          className="w-full rounded-md border p-3 text-sm"
-          style={{ backgroundColor: 'white', borderColor: '#e8e4db', color: '#3d5948' }}
+        <select
+          disabled
+          className="w-full rounded-md border border-input p-3 text-sm bg-background text-muted-foreground"
         >
           <option>Select an option...</option>
           {choices.map((choice) => (
@@ -219,8 +213,7 @@ function QuestionTypePreview({
             <button
               key={star}
               disabled
-              className="w-12 h-12 rounded-lg border-2 flex items-center justify-center text-xl"
-              style={{ borderColor: '#e8e4db', color: '#3d5948' }}
+              className="w-12 h-12 rounded-lg border-2 border-border flex items-center justify-center text-xl text-muted-foreground"
             >
               ⭐
             </button>
@@ -233,15 +226,13 @@ function QuestionTypePreview({
         <div className="flex gap-4">
           <button
             disabled
-            className="flex-1 py-4 px-6 rounded-lg border-2 font-medium"
-            style={{ borderColor: '#142c1c', color: '#142c1c' }}
+            className="flex-1 py-4 px-6 rounded-lg border-2 border-foreground font-medium text-foreground"
           >
             Yes
           </button>
           <button
             disabled
-            className="flex-1 py-4 px-6 rounded-lg border-2 font-medium"
-            style={{ borderColor: '#e8e4db', color: '#3d5948' }}
+            className="flex-1 py-4 px-6 rounded-lg border-2 border-border font-medium text-muted-foreground"
           >
             No
           </button>
@@ -253,25 +244,24 @@ function QuestionTypePreview({
         <Input
           type="date"
           disabled
-          style={{ backgroundColor: 'white', borderColor: '#e8e4db' }}
+          className="bg-background border-input"
         />
       )
 
     case 'file_upload':
       return (
-        <div 
-          className="border-2 border-dashed rounded-lg p-8 text-center"
-          style={{ borderColor: '#e8e4db' }}
+        <div
+          className="border-2 border-dashed border-border rounded-lg p-8 text-center"
         >
-          <div className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center" style={{ backgroundColor: '#f4f2ed' }}>
-            <svg className="w-6 h-6" style={{ color: '#3d5948' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center bg-secondary">
+            <svg className="w-6 h-6 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
           </div>
-          <p className="text-sm font-medium" style={{ color: '#142c1c' }}>
+          <p className="text-sm font-medium text-foreground">
             Click to upload or drag and drop
           </p>
-          <p className="text-xs mt-1" style={{ color: '#3d5948' }}>
+          <p className="text-xs mt-1 text-muted-foreground">
             Max file size: 10MB
           </p>
         </div>
@@ -282,7 +272,7 @@ function QuestionTypePreview({
         <Input
           placeholder="Answer preview..."
           disabled
-          style={{ backgroundColor: 'white', borderColor: '#e8e4db' }}
+          className="bg-background border-input"
         />
       )
   }

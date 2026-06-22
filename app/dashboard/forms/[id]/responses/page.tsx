@@ -241,41 +241,41 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stone-900 mx-auto"></div>
-          <p className="mt-4 text-stone-600">Loading responses...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-foreground mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading responses...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white border-b border-stone-200">
+      <div className="bg-card border-b border-border">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
-              <Link href={`/dashboard/forms/${formId}`} className="text-stone-600 hover:text-stone-900">
+              <Link href={`/dashboard/forms/${formId}`} className="text-muted-foreground hover:text-foreground">
                 <ArrowLeft className="w-5 h-5" />
               </Link>
               <div>
-                <h1 className="text-3xl font-bold text-stone-900">Responses</h1>
-                <p className="text-stone-600 mt-1">{responses.length} total submissions</p>
+                <h1 className="text-3xl heading-tight text-foreground">Responses</h1>
+                <p className="text-muted-foreground mt-1">{responses.length} total submissions</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <Link
                 href={`/dashboard/forms/${formId}/analytics`}
-                className="flex items-center gap-2 px-4 py-2 border border-stone-300 rounded-lg hover:bg-stone-50"
+                className="flex items-center gap-2 px-4 py-2 border border-border rounded-md hover:bg-secondary"
               >
                 <TrendingUp className="w-4 h-4" />
                 Analytics
               </Link>
               <button
                 onClick={importFromCSV}
-                className="flex items-center gap-2 px-4 py-2 border border-stone-300 rounded-lg hover:bg-stone-50"
+                className="flex items-center gap-2 px-4 py-2 border border-border rounded-md hover:bg-secondary"
               >
                 <Upload className="w-4 h-4" />
                 Import CSV
@@ -283,7 +283,7 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
               <button
                 onClick={exportToCSV}
                 disabled={responses.length === 0}
-                className="flex items-center gap-2 px-4 py-2 border border-stone-300 rounded-lg hover:bg-stone-50 disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 border border-border rounded-md hover:bg-secondary disabled:opacity-50"
               >
                 <Download className="w-4 h-4" />
                 Export CSV
@@ -291,7 +291,7 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
               {responses.length > 0 && (
                 <button
                   onClick={deleteAllResponses}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                  className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
                 >
                   <Trash2 className="w-4 h-4" />
                   Delete All
@@ -302,40 +302,40 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
 
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-stone-50 rounded-lg p-4">
+            <div className="bg-secondary rounded-md p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-stone-600">Total</p>
-                  <p className="text-2xl font-bold text-stone-900">{stats.total}</p>
+                  <p className="text-sm text-muted-foreground">Total</p>
+                  <p className="text-2xl heading-tight text-foreground">{stats.total}</p>
                 </div>
-                <TrendingUp className="w-8 h-8 text-stone-400" />
+                <TrendingUp className="w-8 h-8 text-muted-foreground" />
               </div>
             </div>
-            <div className="bg-blue-50 rounded-lg p-4">
+            <div className="bg-secondary rounded-md p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-blue-700">Today</p>
-                  <p className="text-2xl font-bold text-blue-900">{stats.today}</p>
+                  <p className="text-sm text-muted-foreground">Today</p>
+                  <p className="text-2xl heading-tight text-foreground">{stats.today}</p>
                 </div>
-                <Calendar className="w-8 h-8 text-blue-400" />
+                <Calendar className="w-8 h-8 text-muted-foreground" />
               </div>
             </div>
-            <div className="bg-green-50 rounded-lg p-4">
+            <div className="bg-secondary rounded-md p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-green-700">This Week</p>
-                  <p className="text-2xl font-bold text-green-900">{stats.thisWeek}</p>
+                  <p className="text-sm text-muted-foreground">This Week</p>
+                  <p className="text-2xl heading-tight text-foreground">{stats.thisWeek}</p>
                 </div>
-                <Calendar className="w-8 h-8 text-green-400" />
+                <Calendar className="w-8 h-8 text-muted-foreground" />
               </div>
             </div>
-            <div className="bg-purple-50 rounded-lg p-4">
+            <div className="bg-secondary rounded-md p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-purple-700">Completion</p>
-                  <p className="text-2xl font-bold text-purple-900">{stats.completionRate}%</p>
+                  <p className="text-sm text-muted-foreground">Completion</p>
+                  <p className="text-2xl heading-tight text-foreground">{stats.completionRate}%</p>
                 </div>
-                <TrendingUp className="w-8 h-8 text-purple-400" />
+                <TrendingUp className="w-8 h-8 text-muted-foreground" />
               </div>
             </div>
           </div>
@@ -347,59 +347,59 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
         {/* Search */}
         <div className="mb-6">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-stone-400 w-5 h-5" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
             <input
               type="text"
               placeholder="Search responses..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border border-stone-300 rounded-lg"
+              className="w-full pl-12 pr-4 py-3 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
             />
           </div>
         </div>
 
         {/* Responses Table */}
         {filteredResponses.length === 0 ? (
-          <div className="bg-white rounded-lg border border-stone-200 p-12 text-center">
-            <p className="text-stone-600">
+          <div className="bg-card rounded-lg border border-border p-12 text-center">
+            <p className="text-muted-foreground">
               {searchTerm ? 'No responses match your search' : 'No responses yet'}
             </p>
           </div>
         ) : (
-          <div className="bg-white rounded-lg border border-stone-200 overflow-hidden">
+          <div className="bg-card rounded-lg border border-border overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-stone-50 border-b border-stone-200">
+                <thead className="bg-secondary border-b border-border">
                   <tr>
-                    <th className="text-left px-6 py-4 text-sm font-medium text-stone-900">Submitted</th>
+                    <th className="text-left px-6 py-4 text-sm font-medium text-foreground">Submitted</th>
                     {fields.slice(0, 3).map(field => (
-                      <th key={field.id} className="text-left px-6 py-4 text-sm font-medium text-stone-900">
+                      <th key={field.id} className="text-left px-6 py-4 text-sm font-medium text-foreground">
                         {field.label}
                       </th>
                     ))}
                     {hasQuizScores && (
-                      <th className="text-left px-6 py-4 text-sm font-medium text-stone-900">Score</th>
+                      <th className="text-left px-6 py-4 text-sm font-medium text-foreground">Score</th>
                     )}
-                    <th className="text-right px-6 py-4 text-sm font-medium text-stone-900">Actions</th>
+                    <th className="text-right px-6 py-4 text-sm font-medium text-foreground">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredResponses.map((response) => (
-                    <tr key={response.id} className="border-b border-stone-100 hover:bg-stone-50">
-                      <td className="px-6 py-4 text-sm text-stone-600">
+                    <tr key={response.id} className="border-b border-border hover:bg-secondary">
+                      <td className="px-6 py-4 text-sm text-muted-foreground">
                         {new Date(response.created_at).toLocaleString()}
                       </td>
                       {fields.slice(0, 3).map(field => {
                         const text = formatAnswer(response.answers[field.id], field.field_type)
                         return (
-                          <td key={field.id} className="px-6 py-4 text-sm text-stone-900">
+                          <td key={field.id} className="px-6 py-4 text-sm text-foreground">
                             {text ? text.slice(0, 50) : '-'}
                             {text.length > 50 && '…'}
                           </td>
                         )
                       })}
                       {hasQuizScores && (
-                        <td className="px-6 py-4 text-sm font-medium text-stone-900">
+                        <td className="px-6 py-4 text-sm font-medium text-foreground">
                           {response.metadata?.quiz
                             ? `${response.metadata.quiz.total}${response.metadata.quiz.max ? ` / ${response.metadata.quiz.max}` : ''}`
                             : '-'}
@@ -408,13 +408,13 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
                       <td className="px-6 py-4 text-right">
                         <button
                           onClick={() => setSelectedResponse(response)}
-                          className="text-stone-600 hover:text-stone-900 mr-4"
+                          className="text-muted-foreground hover:text-foreground mr-4"
                         >
                           <Eye className="w-5 h-5" />
                         </button>
                         <button
                           onClick={() => deleteResponse(response.id)}
-                          className="text-red-600 hover:text-red-700"
+                          className="text-destructive hover:text-destructive"
                         >
                           <Trash2 className="w-5 h-5" />
                         </button>
@@ -431,20 +431,20 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
       {/* Response Detail Modal */}
       {selectedResponse && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50" onClick={() => setSelectedResponse(null)}>
-          <div className="bg-white rounded-2xl p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-card rounded-lg p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-stone-900">Response Details</h2>
-              <button onClick={() => setSelectedResponse(null)} className="text-stone-600 hover:text-stone-900">
+              <h2 className="text-2xl heading-tight text-foreground">Response Details</h2>
+              <button onClick={() => setSelectedResponse(null)} className="text-muted-foreground hover:text-foreground">
                 ✕
               </button>
             </div>
-            <p className="text-sm text-stone-600 mb-6">
+            <p className="text-sm text-muted-foreground mb-6">
               Submitted: {new Date(selectedResponse.created_at).toLocaleString()}
             </p>
             {selectedResponse.metadata?.quiz && (
-              <div className="mb-6 p-4 rounded-lg bg-blue-50 border border-blue-200">
-                <p className="text-sm text-blue-700 font-medium">Quiz score</p>
-                <p className="text-2xl font-bold text-blue-900">
+              <div className="mb-6 p-4 rounded-md bg-secondary border border-border">
+                <p className="text-sm text-foreground font-medium">Quiz score</p>
+                <p className="text-2xl heading-tight text-foreground">
                   {selectedResponse.metadata.quiz.total}
                   {selectedResponse.metadata.quiz.max ? ` / ${selectedResponse.metadata.quiz.max}` : ''}
                 </p>
@@ -456,14 +456,14 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
                 const isSignature = field.field_type === 'signature' || (typeof raw === 'string' && raw.startsWith('data:image'))
                 return (
                   <div key={field.id}>
-                    <label className="block text-sm font-medium text-stone-900 mb-2">{field.label}</label>
+                    <label className="block text-sm font-medium text-foreground mb-2">{field.label}</label>
                     {isSignature && typeof raw === 'string' && raw.trim() ? (
-                      <div className="p-4 bg-stone-50 rounded-lg">
+                      <div className="p-4 bg-secondary rounded-md">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={raw} alt="Signature" className="max-h-32 bg-white border border-stone-200 rounded" />
+                        <img src={raw} alt="Signature" className="max-h-32 bg-card border border-border rounded" />
                       </div>
                     ) : (
-                      <div className="p-4 bg-stone-50 rounded-lg text-stone-900 whitespace-pre-wrap break-words">
+                      <div className="p-4 bg-secondary rounded-md text-foreground whitespace-pre-wrap break-words">
                         {formatAnswer(raw, field.field_type) || '(No answer)'}
                       </div>
                     )}

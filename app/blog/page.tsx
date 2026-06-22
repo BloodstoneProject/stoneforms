@@ -74,24 +74,19 @@ export default function BlogPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-white">
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
-        * { font-family: 'DM Sans', sans-serif; }
-      `}</style>
-
+    <div className="min-h-screen bg-background text-foreground">
       {/* Navigation */}
-      <nav className="border-b border-stone-200">
+      <nav className="border-b border-border">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/" className="text-2xl font-bold text-stone-900">Stoneforms</Link>
-            <div className="flex items-center gap-6">
-              <Link href="/features" className="text-stone-600 hover:text-stone-900">Features</Link>
-              <Link href="/pricing" className="text-stone-600 hover:text-stone-900">Pricing</Link>
-              <Link href="/templates" className="text-stone-600 hover:text-stone-900">Templates</Link>
-              <Link href="/blog" className="text-stone-900 font-medium">Blog</Link>
-              <Link href="/auth/login" className="text-stone-600 hover:text-stone-900">Sign In</Link>
-              <Link href="/auth/signup" className="px-6 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800">
+            <Link href="/" className="text-xl font-semibold tracking-tight text-foreground">Stoneforms</Link>
+            <div className="flex items-center gap-6 text-sm">
+              <Link href="/features" className="text-muted-foreground hover:text-foreground transition-colors">Features</Link>
+              <Link href="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
+              <Link href="/templates" className="text-muted-foreground hover:text-foreground transition-colors">Templates</Link>
+              <Link href="/blog" className="text-foreground font-medium">Blog</Link>
+              <Link href="/auth/login" className="text-muted-foreground hover:text-foreground transition-colors">Sign In</Link>
+              <Link href="/auth/signup" className="px-5 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium">
                 Get Started Free
               </Link>
             </div>
@@ -100,10 +95,10 @@ export default function BlogPage() {
       </nav>
 
       {/* Hero */}
-      <section className="py-20 px-6 border-b border-stone-100">
+      <section className="py-20 px-6 border-b border-border">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-6xl font-bold text-stone-900 mb-6">Blog</h1>
-          <p className="text-xl text-stone-600">
+          <h1 className="text-5xl sm:text-6xl font-semibold tracking-tight text-foreground mb-6">Blog</h1>
+          <p className="text-lg text-muted-foreground">
             Tips, guides, and insights to help you get the most out of your forms
           </p>
         </div>
@@ -119,7 +114,7 @@ export default function BlogPage() {
                 href={`/blog/${post.slug}`}
                 className="group"
               >
-                <div className="aspect-video bg-stone-200 rounded-lg overflow-hidden mb-4">
+                <div className="aspect-video bg-muted border border-border rounded-lg overflow-hidden mb-4">
                   <img
                     src={post.image}
                     alt={post.title}
@@ -127,17 +122,17 @@ export default function BlogPage() {
                   />
                 </div>
                 <div className="mb-3">
-                  <span className="text-xs font-semibold text-stone-900 uppercase tracking-wider">
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     {post.category}
                   </span>
                 </div>
-                <h2 className="text-xl font-bold text-stone-900 mb-3 group-hover:text-stone-700">
+                <h2 className="text-lg font-semibold tracking-tight text-foreground mb-3 group-hover:text-muted-foreground transition-colors">
                   {post.title}
                 </h2>
-                <p className="text-stone-600 mb-4 line-clamp-2">
+                <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
                   {post.excerpt}
                 </p>
-                <div className="flex items-center gap-4 text-sm text-stone-500">
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
                     <User className="w-4 h-4" />
                     <span>{post.author}</span>
@@ -154,21 +149,21 @@ export default function BlogPage() {
       </section>
 
       {/* Newsletter */}
-      <section className="py-20 px-6 bg-stone-50">
+      <section className="py-20 px-6 bg-secondary border-t border-border">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-bold text-stone-900 mb-4">
+          <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground mb-4">
             Subscribe to our Newsletter
           </h2>
-          <p className="text-xl text-stone-600 mb-8">
+          <p className="text-lg text-muted-foreground mb-8">
             Get the latest tips and updates delivered to your inbox
           </p>
           <div className="flex gap-3 max-w-md mx-auto">
             <input
               type="email"
               placeholder="Enter your email"
-              className="flex-1 px-4 py-3 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-900"
+              className="flex-1 px-3 py-2 bg-background border border-input rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors"
             />
-            <button className="px-6 py-3 bg-stone-900 text-white rounded-lg hover:bg-stone-800 font-semibold">
+            <button className="px-5 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm font-medium">
               Subscribe
             </button>
           </div>

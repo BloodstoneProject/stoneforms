@@ -93,18 +93,18 @@ export default function EmbedFormPage() {
 
   if (loading) {
     return (
-      <div ref={rootRef} className="min-h-[200px] flex items-center justify-center bg-[#f4f2ed]">
-        <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
+      <div ref={rootRef} className="min-h-[200px] flex items-center justify-center bg-neutral-50">
+        <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
       </div>
     )
   }
 
   if (error || !form) {
     return (
-      <div ref={rootRef} className="min-h-[200px] flex items-center justify-center bg-[#f4f2ed] p-6">
+      <div ref={rootRef} className="min-h-[200px] flex items-center justify-center bg-neutral-50 p-6">
         <div className="text-center max-w-md">
-          <h1 className="text-xl font-bold text-stone-900 mb-2">Form unavailable</h1>
-          <p className="text-stone-600">{error || 'This form may have been unpublished or removed.'}</p>
+          <h1 className="text-xl font-semibold tracking-tight text-neutral-900 mb-2">Form unavailable</h1>
+          <p className="text-neutral-600">{error || 'This form may have been unpublished or removed.'}</p>
         </div>
       </div>
     )

@@ -71,14 +71,14 @@ export default function EmbedCodeGenerator({ formId, formTitle }: EmbedCodeGener
             <button
               key={tab.key}
               onClick={() => setEmbedType(tab.key)}
-              className={`flex items-center gap-2 px-4 py-3 border-2 rounded-lg transition-all ${
-                active ? 'border-stone-900 bg-stone-50' : 'border-stone-200 hover:border-stone-300'
+              className={`flex items-center gap-2 px-4 py-3 border rounded-lg transition-all ${
+                active ? 'border-foreground bg-secondary' : 'border-border hover:border-foreground'
               }`}
             >
               <Icon className="w-5 h-5 shrink-0" />
               <div className="text-left">
                 <div className="font-medium text-sm">{tab.label}</div>
-                <div className="text-xs text-stone-600">{tab.sub}</div>
+                <div className="text-xs text-muted-foreground">{tab.sub}</div>
               </div>
             </button>
           )
@@ -89,7 +89,7 @@ export default function EmbedCodeGenerator({ formId, formTitle }: EmbedCodeGener
       <div className="flex flex-wrap gap-4">
         {(embedType === 'inline' || embedType === 'iframe') && (
           <div>
-            <label className="block text-xs font-medium text-stone-700 mb-1">
+            <label className="block text-xs font-medium text-foreground mb-1">
               Default height (px)
             </label>
             <input
@@ -97,13 +97,13 @@ export default function EmbedCodeGenerator({ formId, formTitle }: EmbedCodeGener
               value={height}
               min={200}
               onChange={(e) => setHeight(Math.max(200, parseInt(e.target.value, 10) || 600))}
-              className="w-32 px-3 py-2 border border-stone-300 rounded-lg text-sm"
+              className="w-32 px-3 py-2 border border-input rounded-md text-sm bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
             />
           </div>
         )}
         {usesButton && (
           <div className="flex-1 min-w-[200px]">
-            <label className="block text-xs font-medium text-stone-700 mb-1">
+            <label className="block text-xs font-medium text-foreground mb-1">
               Button label
             </label>
             <input
@@ -111,14 +111,14 @@ export default function EmbedCodeGenerator({ formId, formTitle }: EmbedCodeGener
               value={buttonLabel}
               onChange={(e) => setButtonLabel(e.target.value)}
               placeholder="Open form"
-              className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm"
+              className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
             />
           </div>
         )}
       </div>
 
       {/* Description */}
-      <div className="text-sm text-stone-600">
+      <div className="text-sm text-muted-foreground">
         {embedType === 'inline' && (
           <p>
             Drops the form straight into your page and grows/shrinks to fit its content
@@ -147,12 +147,12 @@ export default function EmbedCodeGenerator({ formId, formTitle }: EmbedCodeGener
 
       {/* Code Display */}
       <div className="relative">
-        <pre className="bg-stone-900 text-stone-100 p-6 pr-32 rounded-lg overflow-x-auto text-sm">
+        <pre className="bg-muted text-foreground border border-border p-6 pr-32 rounded-md overflow-x-auto text-sm">
           <code>{snippet}</code>
         </pre>
         <button
           onClick={() => copyToClipboard(snippet)}
-          className="absolute top-4 right-4 flex items-center gap-2 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-white rounded-lg transition-colors"
+          className="absolute top-4 right-4 flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors"
         >
           {copied ? (
             <>
@@ -170,8 +170,8 @@ export default function EmbedCodeGenerator({ formId, formTitle }: EmbedCodeGener
 
       {/* Live Preview */}
       <div>
-        <div className="text-xs font-medium text-stone-700 mb-2">Live preview</div>
-        <div className="border border-stone-200 rounded-lg p-4 bg-stone-50">
+        <div className="text-xs font-medium text-foreground mb-2">Live preview</div>
+        <div className="border border-border rounded-lg p-4 bg-secondary">
           {embedType === 'iframe' && origin && (
             <iframe
               src={`${origin}/embed/${formId}`}
@@ -204,9 +204,9 @@ export default function EmbedCodeGenerator({ formId, formTitle }: EmbedCodeGener
       </div>
 
       {/* Instructions */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-medium text-blue-900 mb-2">How to use</h4>
-        <div className="text-sm text-blue-800 space-y-1">
+      <div className="bg-secondary border border-border rounded-lg p-4">
+        <h4 className="font-medium text-foreground mb-2">How to use</h4>
+        <div className="text-sm text-muted-foreground space-y-1">
           <p>1. Copy the code above.</p>
           {embedType === 'iframe' ? (
             <p>2. Paste it into your page's HTML where the form should appear.</p>
@@ -214,7 +214,7 @@ export default function EmbedCodeGenerator({ formId, formTitle }: EmbedCodeGener
             <>
               <p>2. Paste it into your page's HTML where you want the form/button.</p>
               <p>
-                3. The <code className="bg-blue-100 px-1 rounded">embed.js</code> script can be
+                3. The <code className="bg-muted px-1 rounded">embed.js</code> script can be
                 included once per page even if you embed several forms.
               </p>
             </>
@@ -245,7 +245,7 @@ function PreviewButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="px-6 py-3 bg-stone-900 text-white rounded-lg font-medium hover:bg-stone-800"
+        className="px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90"
       >
         {label}
       </button>
@@ -257,7 +257,7 @@ function PreviewButton({
           {mode === 'popup' ? (
             <div className="m-auto p-4 w-full max-w-2xl">
               <div
-                className="relative bg-white rounded-2xl overflow-hidden h-[80vh] max-h-[760px] flex flex-col shadow-2xl"
+                className="relative bg-card border border-border rounded-2xl overflow-hidden h-[80vh] max-h-[760px] flex flex-col"
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
@@ -272,7 +272,7 @@ function PreviewButton({
             </div>
           ) : (
             <div
-              className="ml-auto bg-white h-full w-full max-w-md flex flex-col shadow-2xl"
+              className="ml-auto bg-card border-l border-border h-full w-full max-w-md flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
               <button

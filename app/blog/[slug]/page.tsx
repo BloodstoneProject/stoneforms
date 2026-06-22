@@ -165,22 +165,17 @@ GDPR compliance might seem complex, but with the right tools it is manageable. S
   const post = posts.find(p => p.slug === slug) || posts[0]
 
   return (
-    <div className="min-h-screen bg-white">
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
-        * { font-family: 'DM Sans', sans-serif; }
-      `}</style>
-
+    <div className="min-h-screen bg-background text-foreground">
       {/* Navigation */}
-      <nav className="border-b border-stone-200">
+      <nav className="border-b border-border">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/" className="text-2xl font-bold text-stone-900">Stoneforms</Link>
-            <div className="flex items-center gap-6">
-              <Link href="/features" className="text-stone-600 hover:text-stone-900">Features</Link>
-              <Link href="/pricing" className="text-stone-600 hover:text-stone-900">Pricing</Link>
-              <Link href="/blog" className="text-stone-900 font-medium">Blog</Link>
-              <Link href="/auth/signup" className="px-6 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800">
+            <Link href="/" className="text-xl font-semibold tracking-tight text-foreground">Stoneforms</Link>
+            <div className="flex items-center gap-6 text-sm">
+              <Link href="/features" className="text-muted-foreground hover:text-foreground transition-colors">Features</Link>
+              <Link href="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
+              <Link href="/blog" className="text-foreground font-medium">Blog</Link>
+              <Link href="/auth/signup" className="px-5 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium">
                 Get Started Free
               </Link>
             </div>
@@ -191,22 +186,22 @@ GDPR compliance might seem complex, but with the right tools it is manageable. S
       {/* Article */}
       <article className="max-w-4xl mx-auto px-6 py-16">
         <div className="mb-8">
-          <Link href="/blog" className="flex items-center gap-2 text-stone-600 hover:text-stone-900 mb-6">
+          <Link href="/blog" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6">
             <ArrowLeft className="w-4 h-4" />
             Back to Blog
           </Link>
-          
+
           <div className="mb-4">
-            <span className="text-sm font-semibold text-stone-900 uppercase tracking-wider">
+            <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
               {post.category}
             </span>
           </div>
 
-          <h1 className="text-5xl font-bold text-stone-900 mb-6">
+          <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight text-foreground mb-6">
             {post.title}
           </h1>
 
-          <div className="flex items-center gap-6 text-stone-600">
+          <div className="flex items-center gap-6 text-muted-foreground">
             <div className="flex items-center gap-2">
               <User className="w-5 h-5" />
               <span>{post.author}</span>
@@ -222,39 +217,39 @@ GDPR compliance might seem complex, but with the right tools it is manageable. S
           </div>
         </div>
 
-        <div className="prose prose-lg max-w-none">
+        <div className="max-w-none">
           {post.content.split('\n').map((paragraph, i) => {
             if (paragraph.startsWith('# ')) {
-              return <h1 key={i} className="text-4xl font-bold text-stone-900 mt-12 mb-6">{paragraph.replace('# ', '')}</h1>
+              return <h1 key={i} className="text-3xl font-semibold tracking-tight text-foreground mt-12 mb-6">{paragraph.replace('# ', '')}</h1>
             }
             if (paragraph.startsWith('## ')) {
-              return <h2 key={i} className="text-3xl font-bold text-stone-900 mt-10 mb-4">{paragraph.replace('## ', '')}</h2>
+              return <h2 key={i} className="text-2xl font-semibold tracking-tight text-foreground mt-10 mb-4">{paragraph.replace('## ', '')}</h2>
             }
             if (paragraph.startsWith('### ')) {
-              return <h3 key={i} className="text-2xl font-bold text-stone-900 mt-8 mb-3">{paragraph.replace('### ', '')}</h3>
+              return <h3 key={i} className="text-xl font-semibold tracking-tight text-foreground mt-8 mb-3">{paragraph.replace('### ', '')}</h3>
             }
             if (paragraph.startsWith('**') && paragraph.endsWith('**')) {
-              return <p key={i} className="font-bold text-stone-900 mt-4">{paragraph.replace(/\*\*/g, '')}</p>
+              return <p key={i} className="font-semibold text-foreground mt-4">{paragraph.replace(/\*\*/g, '')}</p>
             }
             if (paragraph.startsWith('- ')) {
-              return <li key={i} className="text-stone-700 ml-6">{paragraph.replace('- ', '')}</li>
+              return <li key={i} className="text-muted-foreground ml-6">{paragraph.replace('- ', '')}</li>
             }
             if (paragraph.trim()) {
-              return <p key={i} className="text-stone-700 leading-relaxed mt-4">{paragraph}</p>
+              return <p key={i} className="text-muted-foreground leading-relaxed mt-4">{paragraph}</p>
             }
             return null
           })}
         </div>
 
         {/* CTA */}
-        <div className="mt-16 p-8 bg-gradient-to-br from-stone-900 to-stone-800 rounded-2xl text-white">
-          <h3 className="text-2xl font-bold mb-3">Ready to create better forms?</h3>
-          <p className="text-stone-300 mb-6">
+        <div className="mt-16 p-8 bg-primary text-primary-foreground rounded-lg">
+          <h3 className="text-2xl font-semibold tracking-tight mb-3">Ready to create better forms?</h3>
+          <p className="text-primary-foreground/70 mb-6">
             Start using Stoneforms today. No credit card required.
           </p>
           <Link
             href="/auth/signup"
-            className="inline-block px-8 py-3 bg-white text-stone-900 rounded-lg font-semibold hover:bg-stone-100"
+            className="inline-block px-6 py-2.5 bg-background text-foreground border border-border rounded-md text-sm font-medium hover:bg-secondary transition-colors"
           >
             Get Started Free
           </Link>
