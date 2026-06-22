@@ -1,9 +1,23 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Link as LinkIcon, Code, QrCode, Mail, MessageSquare, Copy, Check } from 'lucide-react'
+import Link from 'next/link'
+import {
+  X,
+  Link as LinkIcon,
+  Code,
+  QrCode,
+  Mail,
+  MessageSquare,
+  Copy,
+  Check,
+  Globe,
+  ExternalLink,
+  Pencil,
+} from 'lucide-react'
 import EmbedCodeGenerator from './embed-code-generator'
 import { appendUtm, getQrImageUrl, type UtmParams } from '@/lib/embed'
+import { getSiteUrl } from '@/lib/site'
 
 interface ShareModalProps {
   formId: string
@@ -14,10 +28,12 @@ interface ShareModalProps {
 }
 
 export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }: ShareModalProps) {
-  const [activeTab, setActiveTab] = useState<'link' | 'embed' | 'qr' | 'social'>('link')
+  const [activeTab, setActiveTab] = useState<'link' | 'embed' | 'qr' | 'social' | 'landing'>('link')
   const [copied, setCopied] = useState(false)
   const [vanityCopied, setVanityCopied] = useState(false)
   const [utmCopied, setUtmCopied] = useState(false)
+  const [landingUrlCopied, setLandingUrlCopied] = useState(false)
+  const [landingEmbedCopied, setLandingEmbedCopied] = useState(false)
 
   // UTM / link builder — appended to whichever link a user shares.
   const [utm, setUtm] = useState<UtmParams>({ source: '', medium: '', campaign: '' })
@@ -33,6 +49,13 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
   const shareUrl = appendUtm(shareBase, utm)
 
   const hasUtm = !!(utm.source?.trim() || utm.medium?.trim() || utm.campaign?.trim())
+
+  // Landing page — hosted /p/{slug} page. Prefer the vanity slug, fall back to id.
+  const siteUrl = getSiteUrl()
+  const landingRef = slug || formId
+  const landingUrl = `${siteUrl}/p/${landingRef}`
+  const landingEditUrl = `/dashboard/forms/${formId}/landing`
+  const landingEmbed = `<iframe src="${siteUrl}/p/${landingRef}" style="width:100%;border:none;min-height:720px" title="${formTitle}"></iframe>`
 
   const copyText = (text: string, set: (v: boolean) => void) => {
     navigator.clipboard.writeText(text)
@@ -140,6 +163,17 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
             >
               <MessageSquare className="w-4 h-4" />
               Social
+            </button>
+            <button
+              onClick={() => setActiveTab('landing')}
+              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+                activeTab === 'landing'
+                  ? 'border-foreground text-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Globe className="w-4 h-4" />
+              Landing page
             </button>
           </div>
         </div>
@@ -409,6 +443,103 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
                   <div className="text-sm text-muted-foreground">Open your mail client</div>
                 </div>
               </button>
+            </div>
+          )}
+
+          {/* Landing Page Tab */}
+          {activeTab === 'landing' && (
+            <div className="space-y-6">
+              <p className="text-sm text-muted-foreground">
+                A hosted page at <code className="font-mono text-xs">/p/{landingRef}</code> with
+                your branding and this form embedded. Turn it on and customise it from the editor.
+              </p>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">Landing page URL</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={landingUrl}
+                    readOnly
+                    className="flex-1 px-4 py-3 border border-input rounded-md bg-secondary text-foreground"
+                  />
+                  <button
+                    onClick={() => copyText(landingUrl, setLandingUrlCopied)}
+                    className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+                  >
+                    {landingUrlCopied ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        Copy
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">Embed the landing page</label>
+                <div className="flex gap-2">
+                  <textarea
+                    value={landingEmbed}
+                    readOnly
+                    rows={3}
+                    className="flex-1 px-4 py-3 border border-input rounded-md bg-secondary text-foreground font-mono text-xs resize-none"
+                  />
+                  <button
+                    onClick={() => copyText(landingEmbed, setLandingEmbedCopied)}
+                    className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 self-start"
+                  >
+                    {landingEmbedCopied ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        Copy
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <a
+                  href={landingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 px-4 py-3 border border-border rounded-md hover:bg-secondary text-foreground transition-colors"
+                >
+                  <ExternalLink className="w-5 h-5" />
+                  <div className="text-left">
+                    <div className="font-medium">Open landing page</div>
+                    <div className="text-xs text-muted-foreground">View the public page</div>
+                  </div>
+                </a>
+
+                <Link
+                  href={landingEditUrl}
+                  className="flex items-center gap-3 px-4 py-3 border border-border rounded-md hover:bg-secondary text-foreground transition-colors"
+                  onClick={onClose}
+                >
+                  <Pencil className="w-5 h-5" />
+                  <div className="text-left">
+                    <div className="font-medium">Edit landing page</div>
+                    <div className="text-xs text-muted-foreground">Branding &amp; sections</div>
+                  </div>
+                </Link>
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                The landing page must be enabled in the editor for this link to go live.
+              </p>
             </div>
           )}
         </div>

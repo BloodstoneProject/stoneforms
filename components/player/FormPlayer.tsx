@@ -752,6 +752,16 @@ export default function FormPlayer({
     return (
       <div className="min-h-screen flex items-center justify-center p-6" style={{ background: bg, fontFamily: ff }}>
         <div className="w-full max-w-2xl text-center">
+          {theme.logoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={theme.logoUrl}
+              alt=""
+              className="mx-auto mb-8 w-auto object-contain"
+              style={{ maxHeight: '64px' }}
+              loading="eager"
+            />
+          )}
           <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight" style={{ color: c.text }}>
             {settings.welcome?.title || formTitle}
           </h1>

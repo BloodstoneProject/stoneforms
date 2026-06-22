@@ -148,6 +148,44 @@ export interface SectionBlockSettings {
   description?: string
 }
 
+// ---- Media & branding blocks ----
+
+export interface CoverImageBlockSettings {
+  // Full-width hero image with optional overlay text.
+  url: string
+  height?: 'sm' | 'md' | 'lg' // default 'md'
+  overlayTitle?: string
+  overlaySubtitle?: string
+  align?: BlockAlign // overlay text alignment; default 'center'
+}
+
+export interface TestimonialBlockSettings {
+  quote: string
+  author?: string
+  role?: string
+  company?: string
+  avatarUrl?: string
+}
+
+export interface LogoStripLogo {
+  url: string
+  alt?: string
+}
+
+export interface LogoStripBlockSettings {
+  // A "trusted by" row of logos.
+  title?: string
+  logos: LogoStripLogo[]
+}
+
+export interface LogoBlockSettings {
+  // A single brand logo image.
+  url: string
+  alt?: string
+  size?: 'sm' | 'md' | 'lg' // default 'md'
+  align?: BlockAlign // default 'center'
+}
+
 // A discriminated-union-friendly map from block type to its settings shape.
 export interface BlockSettingsMap {
   heading: HeadingBlockSettings
@@ -161,6 +199,10 @@ export interface BlockSettingsMap {
   quote: QuoteBlockSettings
   button: ButtonBlockSettings
   section: SectionBlockSettings
+  cover_image: CoverImageBlockSettings
+  testimonial: TestimonialBlockSettings
+  logo_strip: LogoStripBlockSettings
+  logo: LogoBlockSettings
 }
 
 export type AnyBlockSettings = BlockSettingsMap[ContentBlockType]
@@ -181,6 +223,10 @@ const DEFAULTS: { [K in ContentBlockType]: () => BlockSettingsMap[K] } = {
   quote: () => ({ text: '' }),
   button: () => ({ label: 'Button', url: '', style: 'primary' }),
   section: () => ({ title: '', description: '' }),
+  cover_image: () => ({ url: '', height: 'md', align: 'center' }),
+  testimonial: () => ({ quote: '' }),
+  logo_strip: () => ({ title: '', logos: [] }),
+  logo: () => ({ url: '', size: 'md', align: 'center' }),
 }
 
 // Returns a fresh default settings object for a content-block type, or {} when
@@ -217,6 +263,10 @@ export const BLOCK_LIBRARY: BlockLibraryEntry[] = [
   { type: 'video', label: 'Video', icon: 'Video', group: 'media', description: 'A YouTube, Vimeo or MP4 video.' },
   { type: 'embed', label: 'Embed', icon: 'AppWindow', group: 'media', description: 'Embed an external page or widget via iframe.' },
   { type: 'html', label: 'Custom HTML', icon: 'Code2', group: 'media', description: 'Custom HTML, rendered sandboxed.' },
+  { type: 'cover_image', label: 'Cover Image', icon: 'ImagePlus', group: 'media', description: 'A full-width hero image with optional overlay text.' },
+  { type: 'testimonial', label: 'Testimonial', icon: 'MessageSquareQuote', group: 'media', description: 'A customer quote with author, role and avatar.' },
+  { type: 'logo_strip', label: 'Logo Strip', icon: 'Images', group: 'media', description: 'A "trusted by" row of brand logos.' },
+  { type: 'logo', label: 'Logo', icon: 'BadgeCheck', group: 'media', description: 'A single brand logo image.' },
   { type: 'divider', label: 'Divider', icon: 'Minus', group: 'layout', description: 'A horizontal rule between blocks.' },
   { type: 'spacer', label: 'Spacer', icon: 'MoveVertical', group: 'layout', description: 'Vertical empty space.' },
   { type: 'section', label: 'Section', icon: 'LayoutGrid', group: 'layout', description: 'A grouping / page boundary.' },

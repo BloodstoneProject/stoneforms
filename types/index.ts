@@ -36,7 +36,12 @@ export type QuestionType =
   | 'spacer'
   | 'quote'
   | 'button'
-  | 'section';
+  | 'section'
+  // ---- Media & branding content blocks ----
+  | 'cover_image'
+  | 'testimonial'
+  | 'logo_strip'
+  | 'logo';
 
 export interface Choice {
   id: string;

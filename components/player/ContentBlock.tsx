@@ -366,6 +366,151 @@ export function ContentBlock({ block, theme, density = 'comfortable' }: ContentB
       return <div aria-hidden style={{ height: size }} />
     }
 
+    case 'cover_image': {
+      const url = String(p.url || '')
+      const align = (p.align || 'center') as Align
+      const heights: Record<string, string> = { sm: '200px', md: '320px', lg: '460px' }
+      const h = heights[p.height as string] || heights.md
+      const overlayTitle = p.overlayTitle ?? ''
+      const overlaySubtitle = p.overlaySubtitle ?? ''
+      const hasOverlay = Boolean(overlayTitle || overlaySubtitle)
+      if (!url) return null
+      const justify =
+        align === 'left' ? 'justify-start text-left' : align === 'right' ? 'justify-end text-right' : 'justify-center text-center'
+      return (
+        <div
+          className="relative w-full rounded-xl overflow-hidden"
+          style={{ height: h, backgroundColor: `${c.text}10` }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={url} alt={overlayTitle || ''} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+          {hasOverlay && (
+            <>
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.15), rgba(0,0,0,0.55))' }} />
+              <div className={`absolute inset-0 flex flex-col ${justify} ${alignItems(align)} p-6 md:p-10 gap-2`}>
+                {overlayTitle && (
+                  <h2
+                    className={`${tight ? 'text-2xl md:text-4xl' : 'text-3xl md:text-5xl'} font-bold leading-tight`}
+                    style={{ color: '#ffffff', fontFamily: ff }}
+                  >
+                    {overlayTitle}
+                  </h2>
+                )}
+                {overlaySubtitle && (
+                  <p className="text-base md:text-xl" style={{ color: '#ffffff', opacity: 0.9, fontFamily: ff }}>
+                    {overlaySubtitle}
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      )
+    }
+
+    case 'testimonial': {
+      const quote = p.quote ?? ''
+      const author = p.author
+      const role = p.role
+      const company = p.company
+      const avatarUrl = String(p.avatarUrl || '')
+      const meta = [role, company].filter(Boolean).join(', ')
+      if (!quote && !author) return null
+      return (
+        <figure
+          className="rounded-xl p-6 md:p-8"
+          style={{ backgroundColor: `${c.primary}0f`, border: `1px solid ${c.text}14` }}
+        >
+          <blockquote
+            className={`${tight ? 'text-lg md:text-xl' : 'text-xl md:text-2xl'} font-medium leading-snug`}
+            style={{ color: c.text, fontFamily: ff }}
+          >
+            &ldquo;{quote}&rdquo;
+          </blockquote>
+          {(author || meta || avatarUrl) && (
+            <figcaption className="mt-5 flex items-center gap-3">
+              {avatarUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={avatarUrl}
+                  alt={author || ''}
+                  className="w-11 h-11 rounded-full object-cover flex-shrink-0"
+                  style={{ border: `1px solid ${c.text}22` }}
+                  loading="lazy"
+                />
+              )}
+              <span className="min-w-0">
+                {author && (
+                  <span className="block text-sm font-semibold truncate" style={{ color: c.text, fontFamily: ff }}>
+                    {author}
+                  </span>
+                )}
+                {meta && (
+                  <span className="block text-sm truncate" style={{ color: c.text, opacity: 0.6, fontFamily: ff }}>
+                    {meta}
+                  </span>
+                )}
+              </span>
+            </figcaption>
+          )}
+        </figure>
+      )
+    }
+
+    case 'logo_strip': {
+      const title = p.title ?? ''
+      const logos: Array<{ url?: string; alt?: string }> = Array.isArray(p.logos) ? p.logos : []
+      const valid = logos.filter((l) => l && typeof l.url === 'string' && l.url.trim() !== '')
+      if (valid.length === 0 && !title) return null
+      return (
+        <div className="w-full text-center">
+          {title && (
+            <p
+              className="text-xs md:text-sm font-medium uppercase tracking-wide mb-4"
+              style={{ color: c.text, opacity: 0.55, fontFamily: ff }}
+            >
+              {title}
+            </p>
+          )}
+          {valid.length > 0 && (
+            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-5">
+              {valid.map((l, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={i}
+                  src={String(l.url)}
+                  alt={l.alt || ''}
+                  className="h-8 md:h-10 w-auto object-contain"
+                  style={{ opacity: 0.8 }}
+                  loading="lazy"
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )
+    }
+
+    case 'logo': {
+      const url = String(p.url || '')
+      const align = (p.align || 'center') as Align
+      const sizes: Record<string, string> = { sm: '40px', md: '64px', lg: '96px' }
+      const maxH = sizes[p.size as string] || sizes.md
+      if (!url) return null
+      return (
+        <div className={`flex ${alignItems(align)} flex-col`}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={url}
+            alt={p.alt || ''}
+            className="w-auto object-contain"
+            style={{ maxHeight: maxH }}
+            loading="lazy"
+          />
+        </div>
+      )
+    }
+
     case 'section':
       return (
         <header className="space-y-2">

@@ -41,6 +41,11 @@ export type FieldType =
   | 'quote'
   | 'button'
   | 'section'
+  // ---- Media & branding content blocks (non-input) ----
+  | 'cover_image'
+  | 'testimonial'
+  | 'logo_strip'
+  | 'logo'
 
 export interface FieldTypeMeta {
   value: FieldType
@@ -99,6 +104,11 @@ export const FIELD_TYPES: FieldTypeMeta[] = [
   { value: 'divider', label: 'Divider', icon: '➖', hasOptions: false, valueKind: 'none', category: 'layout', input: false },
   { value: 'spacer', label: 'Spacer', icon: '↕️', hasOptions: false, valueKind: 'none', category: 'layout', input: false },
   { value: 'section', label: 'Section', icon: '🗂️', hasOptions: false, valueKind: 'none', category: 'layout', input: false },
+  // ---- Media & branding content blocks (non-input; settings in lib/blocks.ts) ----
+  { value: 'cover_image', label: 'Cover Image', icon: '🏞️', hasOptions: false, valueKind: 'none', category: 'media', input: false },
+  { value: 'testimonial', label: 'Testimonial', icon: '💬', hasOptions: false, valueKind: 'none', category: 'media', input: false },
+  { value: 'logo_strip', label: 'Logo Strip', icon: '🏷️', hasOptions: false, valueKind: 'none', category: 'media', input: false },
+  { value: 'logo', label: 'Logo', icon: '🔰', hasOptions: false, valueKind: 'none', category: 'media', input: false },
 ]
 
 const BY_VALUE: Record<string, FieldTypeMeta> = Object.fromEntries(
@@ -135,6 +145,11 @@ export const CONTENT_BLOCK_TYPES = [
   'quote',
   'button',
   'section',
+  // ---- Media & branding ----
+  'cover_image',
+  'testimonial',
+  'logo_strip',
+  'logo',
 ] as const
 
 export type ContentBlockType = (typeof CONTENT_BLOCK_TYPES)[number]

@@ -37,7 +37,11 @@ import {
   Minus,
   MoveVertical,
   LayoutGrid,
-  AppWindow
+  AppWindow,
+  ImagePlus,
+  MessageSquareQuote,
+  Images,
+  BadgeCheck
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
@@ -90,6 +94,11 @@ const questionTypeIcons: Record<QuestionType, any> = {
   quote: QuoteIcon,
   button: MousePointerClick,
   section: LayoutGrid,
+  // ---- Media & branding ----
+  cover_image: ImagePlus,
+  testimonial: MessageSquareQuote,
+  logo_strip: Images,
+  logo: BadgeCheck,
 }
 
 const questionTypes: { type: QuestionType; label: string }[] = [

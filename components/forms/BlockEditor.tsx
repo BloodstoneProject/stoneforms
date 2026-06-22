@@ -376,6 +376,225 @@ export default function BlockEditor({ field, onUpdateSetting }: BlockEditorProps
         </div>
       )
 
+    case 'cover_image':
+      return (
+        <div className="space-y-3">
+          <div>
+            <label className={labelClass}>Image URL</label>
+            <input
+              type="text"
+              value={s.url ?? ''}
+              onChange={(e) => set('url', e.target.value)}
+              className={inputClass}
+              placeholder="https://example.com/hero.jpg"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelClass}>Height</label>
+              <select
+                value={s.height ?? 'md'}
+                onChange={(e) => set('height', e.target.value)}
+                className={inputClass}
+              >
+                <option value="sm">Small</option>
+                <option value="md">Medium</option>
+                <option value="lg">Large</option>
+              </select>
+            </div>
+            <AlignPicker value={s.align ?? 'center'} onChange={(v) => set('align', v)} />
+          </div>
+          <div>
+            <label className={labelClass}>Overlay title (optional)</label>
+            <input
+              type="text"
+              value={s.overlayTitle ?? ''}
+              onChange={(e) => set('overlayTitle', e.target.value)}
+              className={inputClass}
+              placeholder="Headline shown over the image"
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Overlay subtitle (optional)</label>
+            <input
+              type="text"
+              value={s.overlaySubtitle ?? ''}
+              onChange={(e) => set('overlaySubtitle', e.target.value)}
+              className={inputClass}
+              placeholder="Supporting line under the title"
+            />
+          </div>
+        </div>
+      )
+
+    case 'testimonial':
+      return (
+        <div className="space-y-3">
+          <div>
+            <label className={labelClass}>Quote</label>
+            <textarea
+              value={s.quote ?? ''}
+              onChange={(e) => set('quote', e.target.value)}
+              rows={3}
+              className={`${inputClass} resize-y`}
+              placeholder="What the customer said"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelClass}>Author (optional)</label>
+              <input
+                type="text"
+                value={s.author ?? ''}
+                onChange={(e) => set('author', e.target.value)}
+                className={inputClass}
+                placeholder="Jane Doe"
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Role (optional)</label>
+              <input
+                type="text"
+                value={s.role ?? ''}
+                onChange={(e) => set('role', e.target.value)}
+                className={inputClass}
+                placeholder="Head of Marketing"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelClass}>Company (optional)</label>
+              <input
+                type="text"
+                value={s.company ?? ''}
+                onChange={(e) => set('company', e.target.value)}
+                className={inputClass}
+                placeholder="Acme Inc."
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Avatar URL (optional)</label>
+              <input
+                type="text"
+                value={s.avatarUrl ?? ''}
+                onChange={(e) => set('avatarUrl', e.target.value)}
+                className={inputClass}
+                placeholder="https://…/avatar.jpg"
+              />
+            </div>
+          </div>
+        </div>
+      )
+
+    case 'logo_strip': {
+      const logos: Array<{ url?: string; alt?: string }> = Array.isArray(s.logos) ? s.logos : []
+      const updateLogo = (i: number, key: 'url' | 'alt', value: string) => {
+        const next = logos.map((l, idx) => (idx === i ? { ...l, [key]: value } : l))
+        set('logos', next)
+      }
+      const addLogo = () => set('logos', [...logos, { url: '', alt: '' }])
+      const removeLogo = (i: number) => set('logos', logos.filter((_, idx) => idx !== i))
+      return (
+        <div className="space-y-3">
+          <div>
+            <label className={labelClass}>Title (optional)</label>
+            <input
+              type="text"
+              value={s.title ?? ''}
+              onChange={(e) => set('title', e.target.value)}
+              className={inputClass}
+              placeholder="Trusted by teams at"
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Logos</label>
+            <div className="space-y-2">
+              {logos.length === 0 && (
+                <p className="text-xs text-muted-foreground">No logos yet. Add one below.</p>
+              )}
+              {logos.map((logo, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <div className="flex-1 space-y-2">
+                    <input
+                      type="text"
+                      value={logo.url ?? ''}
+                      onChange={(e) => updateLogo(i, 'url', e.target.value)}
+                      className={inputClass}
+                      placeholder="https://…/logo.svg"
+                    />
+                    <input
+                      type="text"
+                      value={logo.alt ?? ''}
+                      onChange={(e) => updateLogo(i, 'alt', e.target.value)}
+                      className={inputClass}
+                      placeholder="Alt text (company name)"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeLogo(i)}
+                    className="px-2 py-2 text-xs rounded-md border border-input text-muted-foreground hover:bg-secondary"
+                    title="Remove logo"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={addLogo}
+              className="mt-2 px-3 py-1.5 text-sm rounded-md border border-input text-foreground hover:bg-secondary"
+            >
+              + Add logo
+            </button>
+          </div>
+        </div>
+      )
+    }
+
+    case 'logo':
+      return (
+        <div className="space-y-3">
+          <div>
+            <label className={labelClass}>Logo URL</label>
+            <input
+              type="text"
+              value={s.url ?? ''}
+              onChange={(e) => set('url', e.target.value)}
+              className={inputClass}
+              placeholder="https://example.com/logo.svg"
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Alt text (optional)</label>
+            <input
+              type="text"
+              value={s.alt ?? ''}
+              onChange={(e) => set('alt', e.target.value)}
+              className={inputClass}
+              placeholder="Brand name"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelClass}>Size</label>
+              <select
+                value={s.size ?? 'md'}
+                onChange={(e) => set('size', e.target.value)}
+                className={inputClass}
+              >
+                <option value="sm">Small</option>
+                <option value="md">Medium</option>
+                <option value="lg">Large</option>
+              </select>
+            </div>
+            <AlignPicker value={s.align ?? 'center'} onChange={(v) => set('align', v)} />
+          </div>
+        </div>
+      )
+
     default:
       return (
         <p className="text-sm text-muted-foreground">
@@ -416,6 +635,16 @@ export function blockPreview(field: BlockField): string {
       return s.label ? `${s.label}${s.url ? ` → ${s.url}` : ''}` : 'Untitled button'
     case 'section':
       return s.title || s.description || 'Untitled section'
+    case 'cover_image':
+      return s.overlayTitle || (s.url ? s.url : 'No cover image yet')
+    case 'testimonial':
+      return s.quote ? `“${String(s.quote).slice(0, 90)}”` : 'Empty testimonial'
+    case 'logo_strip': {
+      const n = Array.isArray(s.logos) ? s.logos.filter((l: any) => l && l.url).length : 0
+      return s.title ? `${s.title} · ${n} logo${n === 1 ? '' : 's'}` : `Logo strip · ${n} logo${n === 1 ? '' : 's'}`
+    }
+    case 'logo':
+      return s.url ? s.url : 'No logo URL yet'
     default:
       return ''
   }

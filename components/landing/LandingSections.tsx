@@ -1,87 +1,53 @@
 // Optional extra content blocks rendered above the embedded form on /p/{slug}.
-// Renders a SAFE subset of the block types from lib/blocks.ts. Deliberately
-// excludes `html`/`embed`/`video` here (those need the sandboxed player); keep
-// the landing render minimal and safe. When sections grow, this converges with
-// the player's block renderer.
+//
+// Rendering is delegated to the shared player ContentBlock so that EVERY block
+// type (heading, text_block, image, quote, button, divider, spacer, and any new
+// media blocks like cover_image / testimonial / logo_strip / logo added to
+// lib/blocks.ts) renders with the exact same look as inside a form — no per-type
+// code to maintain here. Each landing section `{ type, settings }` is mapped to
+// the Question-like shape ContentBlock expects (`{ type, properties }`) and
+// rendered in the form's theme, with the landing accent applied to the
+// primary/button colours so CTAs/quotes pick up the page accent.
+import ContentBlock from '@/components/player/ContentBlock'
+import { normalizeTheme, type FormTheme } from '@/lib/themes'
+import type { Question } from '@/types'
 import type { LandingBlock } from '@/lib/landing'
-
-const alignClass = (a?: string) =>
-  a === 'center' ? 'text-center' : a === 'right' ? 'text-right' : 'text-left'
-
-function Block({ block, color }: { block: LandingBlock; color: string }) {
-  const s: any = block.settings || {}
-  switch (block.type) {
-    case 'heading': {
-      const level = s.level === 1 ? 1 : s.level === 3 ? 3 : 2
-      const cls =
-        level === 1
-          ? 'text-3xl sm:text-4xl font-semibold tracking-tight'
-          : level === 3
-          ? 'text-lg sm:text-xl font-semibold'
-          : 'text-2xl sm:text-3xl font-semibold tracking-tight'
-      const Tag = (`h${level}` as unknown) as keyof JSX.IntrinsicElements
-      return s.text ? <Tag className={`${cls} ${alignClass(s.align)}`}>{s.text}</Tag> : null
-    }
-    case 'text_block':
-      return s.text ? (
-        <p className={`text-base leading-relaxed opacity-80 whitespace-pre-line ${alignClass(s.align)}`}>{s.text}</p>
-      ) : null
-    case 'quote':
-      return s.text ? (
-        <blockquote className="border-l-2 pl-4 italic opacity-90" style={{ borderColor: color }}>
-          <p className="text-lg">{s.text}</p>
-          {(s.author || s.role) && (
-            <footer className="mt-2 text-sm opacity-70 not-italic">
-              {[s.author, s.role].filter(Boolean).join(' · ')}
-            </footer>
-          )}
-        </blockquote>
-      ) : null
-    case 'image':
-      // eslint-disable-next-line @next/next/no-img-element
-      return s.url ? (
-        <figure className={alignClass(s.align)}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={s.url} alt={s.alt || ''} className="inline-block max-w-full rounded-lg" />
-          {s.caption && <figcaption className="mt-2 text-sm opacity-60">{s.caption}</figcaption>}
-        </figure>
-      ) : null
-    case 'button':
-      return s.url && s.label ? (
-        <div className={alignClass(s.align)}>
-          <a
-            href={s.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center rounded-md px-5 py-2.5 text-sm font-medium text-white"
-            style={{ backgroundColor: color }}
-          >
-            {s.label}
-          </a>
-        </div>
-      ) : null
-    case 'divider':
-      return <hr className="border-current opacity-15" />
-    case 'spacer':
-      return <div style={{ height: s.size === 'lg' ? 48 : s.size === 'sm' ? 16 : 32 }} />
-    default:
-      return null
-  }
-}
 
 export default function LandingSections({
   sections,
   accent,
+  theme,
 }: {
   sections: LandingBlock[]
   accent: string
+  // The form/landing theme. Optional for backward-compat; falls back to a
+  // normalized default tinted with the accent.
+  theme?: FormTheme
 }) {
   if (!sections?.length) return null
+
+  const base = theme || normalizeTheme(null)
+  // Tint the theme with the landing accent so buttons/quotes use the page accent.
+  const sectionTheme: FormTheme = {
+    ...base,
+    colors: {
+      ...base.colors,
+      primary: accent || base.colors.primary,
+      button: accent || base.colors.button,
+    },
+  }
+
   return (
     <div className="mx-auto max-w-2xl px-6 py-10 space-y-6">
-      {sections.map((b, i) => (
-        <Block key={b.id || i} block={b} color={accent} />
-      ))}
+      {sections.map((b, i) => {
+        const block = {
+          id: b.id || `section-${i}`,
+          type: b.type,
+          label: '',
+          properties: b.settings || {},
+        } as unknown as Question
+        return <ContentBlock key={b.id || i} block={block} theme={sectionTheme} />
+      })}
     </div>
   )
 }

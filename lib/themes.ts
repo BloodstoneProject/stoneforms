@@ -20,6 +20,9 @@ export interface FormTheme {
   buttonStyle: ButtonStyle
   backgroundStyle: BackgroundStyle
   backgroundGradient?: [string, string]
+  // Optional per-form brand logo. When set, it's shown on the player's welcome
+  // screen. Undefined = no logo (today's behaviour, fully backward-compatible).
+  logoUrl?: string
 }
 
 // Curated Google Fonts. `stack` is the CSS fallback.
@@ -99,6 +102,11 @@ export function normalizeTheme(raw: any): FormTheme {
     buttonStyle: raw.buttonStyle || DEFAULT_THEME.buttonStyle,
     backgroundStyle: raw.backgroundStyle || DEFAULT_THEME.backgroundStyle,
     backgroundGradient: raw.backgroundGradient,
+    // Backward-compatible: undefined when unset (also tolerate a legacy `logo`
+    // key). Empty string is treated as "no logo".
+    logoUrl: (typeof raw.logoUrl === 'string' && raw.logoUrl.trim())
+      ? raw.logoUrl
+      : (typeof raw.logo === 'string' && raw.logo.trim() ? raw.logo : undefined),
   }
 }
 

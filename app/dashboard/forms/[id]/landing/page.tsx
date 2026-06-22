@@ -16,7 +16,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { getSiteUrl } from '@/lib/site'
-import { defaultLanding, type LandingConfig } from '@/lib/landing'
+import { defaultLanding, type LandingConfig, type LandingBlock } from '@/lib/landing'
+import LandingSectionEditor from '@/components/landing/LandingSectionEditor'
 
 export default function LandingEditorPage() {
   const { id: formId } = useParams() as any
@@ -258,6 +259,21 @@ export default function LandingEditorPage() {
               <option value="dark">Dark hero (light text)</option>
             </select>
           </div>
+        </div>
+
+        {/* Page sections */}
+        <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+          <div>
+            <h2 className="font-medium text-foreground">Page sections</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Optional content blocks shown above your form on the landing page. They render
+              in your form’s theme.
+            </p>
+          </div>
+          <LandingSectionEditor
+            sections={config.sections || []}
+            onChange={(sections: LandingBlock[]) => set({ sections })}
+          />
         </div>
 
         <p className="text-xs text-muted-foreground">

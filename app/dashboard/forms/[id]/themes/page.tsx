@@ -123,6 +123,26 @@ export default function DesignStudioPage() {
             </div>
           </section>
 
+          {/* Brand */}
+          <section className="card-surface p-5">
+            <h2 className="heading-tight text-foreground mb-3">Brand</h2>
+            <label className="block text-xs font-medium text-muted-foreground mb-1">Logo URL</label>
+            <input
+              type="text"
+              value={theme.logoUrl ?? ''}
+              onChange={(e) => update({ logoUrl: e.target.value })}
+              className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
+              placeholder="https://example.com/logo.svg"
+            />
+            <p className="text-xs text-muted-foreground mt-1">Shown centered above the title on the form&apos;s welcome screen.</p>
+            {theme.logoUrl ? (
+              <div className="mt-3 flex items-center justify-center rounded-md border border-border p-3" style={{ background: backgroundCss(theme) }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={theme.logoUrl} alt="" className="w-auto object-contain" style={{ maxHeight: '48px' }} />
+              </div>
+            ) : null}
+          </section>
+
           {/* Buttons + Background */}
           <section className="card-surface p-5 space-y-4">
             <div>
