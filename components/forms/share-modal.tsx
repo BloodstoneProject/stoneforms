@@ -112,17 +112,17 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
             <h2 className="text-2xl heading-tight text-foreground">Share Form</h2>
             <p className="text-sm text-muted-foreground mt-1">{formTitle}</p>
           </div>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+          <button onClick={onClose} aria-label="Close share dialog" className="text-muted-foreground hover:text-foreground">
             <X className="w-6 h-6" />
           </button>
         </div>
 
         {/* Tabs */}
         <div className="border-b border-border">
-          <div className="flex gap-1 px-6">
+          <div className="flex gap-1 px-6 overflow-x-auto">
             <button
               onClick={() => setActiveTab('link')}
-              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors shrink-0 whitespace-nowrap ${
                 activeTab === 'link'
                   ? 'border-foreground text-foreground'
                   : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -133,7 +133,7 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
             </button>
             <button
               onClick={() => setActiveTab('embed')}
-              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors shrink-0 whitespace-nowrap ${
                 activeTab === 'embed'
                   ? 'border-foreground text-foreground'
                   : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -144,7 +144,7 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
             </button>
             <button
               onClick={() => setActiveTab('qr')}
-              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors shrink-0 whitespace-nowrap ${
                 activeTab === 'qr'
                   ? 'border-foreground text-foreground'
                   : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -155,7 +155,7 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
             </button>
             <button
               onClick={() => setActiveTab('social')}
-              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors shrink-0 whitespace-nowrap ${
                 activeTab === 'social'
                   ? 'border-foreground text-foreground'
                   : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -166,7 +166,7 @@ export default function ShareModal({ formId, formTitle, slug, isOpen, onClose }:
             </button>
             <button
               onClick={() => setActiveTab('landing')}
-              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors shrink-0 whitespace-nowrap ${
                 activeTab === 'landing'
                   ? 'border-foreground text-foreground'
                   : 'border-transparent text-muted-foreground hover:text-foreground'

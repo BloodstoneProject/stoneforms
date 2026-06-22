@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation'
 import { use } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Calendar, User, Clock } from 'lucide-react'
+import { MarketingNav } from '@/components/marketing/MarketingNav'
 
 export default function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = (useParams() as any)
@@ -166,22 +167,16 @@ GDPR compliance might seem complex, but with the right tools it is manageable. S
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Navigation */}
-      <nav className="border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="text-xl font-semibold tracking-tight text-foreground">Stoneforms</Link>
-            <div className="flex items-center gap-6 text-sm">
-              <Link href="/features" className="text-muted-foreground hover:text-foreground transition-colors">Features</Link>
-              <Link href="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
-              <Link href="/blog" className="text-foreground font-medium">Blog</Link>
-              <Link href="/auth/signup" className="px-5 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium">
-                Get Started Free
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <MarketingNav
+        fixed={false}
+        active="/blog"
+        links={[
+          { href: '/features', label: 'Features' },
+          { href: '/templates', label: 'Templates' },
+          { href: '/pricing', label: 'Pricing' },
+          { href: '/blog', label: 'Blog' },
+        ]}
+      />
 
       {/* Article */}
       <article className="max-w-4xl mx-auto px-6 py-16">
@@ -220,7 +215,7 @@ GDPR compliance might seem complex, but with the right tools it is manageable. S
         <div className="max-w-none">
           {post.content.split('\n').map((paragraph, i) => {
             if (paragraph.startsWith('# ')) {
-              return <h1 key={i} className="text-3xl font-semibold tracking-tight text-foreground mt-12 mb-6">{paragraph.replace('# ', '')}</h1>
+              return <h2 key={i} className="text-3xl font-semibold tracking-tight text-foreground mt-12 mb-6">{paragraph.replace('# ', '')}</h2>
             }
             if (paragraph.startsWith('## ')) {
               return <h2 key={i} className="text-2xl font-semibold tracking-tight text-foreground mt-10 mb-4">{paragraph.replace('## ', '')}</h2>

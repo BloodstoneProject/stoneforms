@@ -99,6 +99,8 @@ export function SignatureField({ value, onChange, theme }: SignatureFieldProps) 
       >
         <canvas
           ref={canvasRef}
+          role="img"
+          aria-label="Signature pad. Draw your signature here."
           className="w-full block touch-none"
           style={{ height: 200, cursor: 'crosshair' }}
           onPointerDown={handleDown}

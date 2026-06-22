@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Settings, CreditCard, LogOut } from 'lucide-react'
+import { Plus, Settings, CreditCard, LogOut, Menu } from 'lucide-react'
 import { authHelpers } from '@/lib/supabase-client'
 import { ThemeToggle } from '@/components/theme-toggle'
 
@@ -13,9 +13,11 @@ interface TopBarProps {
     firstName?: string
     lastName?: string
   }
+  /** Opens the mobile navigation drawer. */
+  onOpenNav?: () => void
 }
 
-export function TopBar({ user }: TopBarProps) {
+export function TopBar({ user, onOpenNav }: TopBarProps) {
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
   const [creating, setCreating] = useState(false)
@@ -54,14 +56,26 @@ export function TopBar({ user }: TopBarProps) {
   }
 
   return (
-    <div className="flex h-16 items-center justify-end gap-3 border-b border-border bg-card px-6">
+    <div className="flex h-16 items-center justify-between gap-3 border-b border-border bg-card px-4 sm:px-6">
+      {/* Mobile nav trigger */}
+      <button
+        onClick={onOpenNav}
+        aria-label="Open navigation"
+        className="-ml-1 inline-flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hidden"
+      >
+        <Menu className="h-5 w-5" />
+      </button>
+
+      {/* Right-side actions */}
+      <div className="flex items-center gap-2 sm:gap-3 ml-auto">
       <button
         onClick={createForm}
         disabled={creating}
-        className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50"
+        className="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-3 sm:px-4 text-sm font-medium text-primary-foreground transition-colors duration-150 hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50"
       >
         <Plus className="h-4 w-4" />
-        {creating ? 'Creating…' : 'Create form'}
+        <span className="hidden sm:inline">{creating ? 'Creating…' : 'Create form'}</span>
+        <span className="sr-only sm:hidden">{creating ? 'Creating form' : 'Create form'}</span>
       </button>
 
       <ThemeToggle />
@@ -69,7 +83,10 @@ export function TopBar({ user }: TopBarProps) {
       <div className="relative">
         <button
           onClick={() => setMenuOpen((v) => !v)}
-          className="flex items-center gap-2 rounded-md p-1 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          aria-label="Account menu"
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+          className="flex h-10 w-10 items-center justify-center rounded-md transition-colors duration-150 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
             {initials}
@@ -118,6 +135,7 @@ export function TopBar({ user }: TopBarProps) {
             </div>
           </>
         )}
+      </div>
       </div>
     </div>
   )

@@ -923,7 +923,7 @@ export default function FormPlayer({
             </div>
 
             {submitError && (
-              <div className="mt-5 p-3 rounded-lg text-sm" style={{ backgroundColor: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca' }}>
+              <div role="alert" className="mt-5 p-3 rounded-lg text-sm" style={{ backgroundColor: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca' }}>
                 {submitError}
               </div>
             )}

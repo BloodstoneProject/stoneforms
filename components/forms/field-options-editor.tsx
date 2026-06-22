@@ -110,6 +110,7 @@ export default function FieldOptionsEditor({
             <div className="flex items-center gap-2">
               <button
                 type="button"
+                aria-label="Drag to reorder option"
                 className="cursor-move text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <GripVertical className="w-4 h-4" />
@@ -135,6 +136,7 @@ export default function FieldOptionsEditor({
                 type="text"
                 value={option}
                 onChange={(e) => updateOption(index, e.target.value)}
+                aria-label={`Option ${index + 1}`}
                 className="flex-1 px-3 py-2 border border-input rounded bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
                 placeholder={`Option ${index + 1}`}
               />
@@ -147,6 +149,7 @@ export default function FieldOptionsEditor({
                   className="w-20 px-2 py-2 border border-input rounded bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground text-sm"
                   placeholder="pts"
                   title="Points awarded when this option is chosen"
+                  aria-label={`Points for option ${index + 1}`}
                 />
               )}
 
@@ -157,6 +160,7 @@ export default function FieldOptionsEditor({
                   disabled={index === 0}
                   className="p-2 text-muted-foreground hover:text-foreground disabled:opacity-30"
                   title="Move up"
+                  aria-label="Move option up"
                 >
                   ↑
                 </button>
@@ -166,6 +170,7 @@ export default function FieldOptionsEditor({
                   disabled={index === options.length - 1}
                   className="p-2 text-muted-foreground hover:text-foreground disabled:opacity-30"
                   title="Move down"
+                  aria-label="Move option down"
                 >
                   ↓
                 </button>
@@ -174,6 +179,7 @@ export default function FieldOptionsEditor({
               <button
                 type="button"
                 onClick={() => deleteOption(index)}
+                aria-label={`Delete option ${index + 1}`}
                 className="p-2 text-destructive hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <Trash2 className="w-4 h-4" />

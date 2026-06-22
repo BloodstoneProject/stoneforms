@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { Sidebar } from '@/components/dashboard/Sidebar'
 import { TopBar } from '@/components/dashboard/TopBar'
 import { createClient } from '@/lib/supabase-client'
@@ -13,12 +13,19 @@ export default function DashboardLayout({
 }) {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [navOpen, setNavOpen] = useState(false)
   const router = useRouter()
+  const pathname = usePathname()
   const supabase = createClient()
 
   useEffect(() => {
     checkUser()
   }, [])
+
+  // Close the mobile nav whenever the route changes.
+  useEffect(() => {
+    setNavOpen(false)
+  }, [pathname])
 
   async function checkUser() {
     const { data: { user }, error } = await supabase.auth.getUser()
@@ -53,13 +60,13 @@ export default function DashboardLayout({
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Sidebar */}
-      <Sidebar />
+      {/* Sidebar (static drawer on desktop, slide-over on mobile) */}
+      <Sidebar mobileOpen={navOpen} onClose={() => setNavOpen(false)} />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {/* Top Bar */}
-        <TopBar user={user} />
+        <TopBar user={user} onOpenNav={() => setNavOpen(true)} />
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto">

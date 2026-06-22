@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { Calendar, User, ArrowRight } from 'lucide-react'
+import { MarketingNav } from '@/components/marketing/MarketingNav'
 
 export default function BlogPage() {
   const posts = [
@@ -75,24 +76,16 @@ export default function BlogPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Navigation */}
-      <nav className="border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="text-xl font-semibold tracking-tight text-foreground">Stoneforms</Link>
-            <div className="flex items-center gap-6 text-sm">
-              <Link href="/features" className="text-muted-foreground hover:text-foreground transition-colors">Features</Link>
-              <Link href="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
-              <Link href="/templates" className="text-muted-foreground hover:text-foreground transition-colors">Templates</Link>
-              <Link href="/blog" className="text-foreground font-medium">Blog</Link>
-              <Link href="/auth/login" className="text-muted-foreground hover:text-foreground transition-colors">Sign In</Link>
-              <Link href="/auth/signup" className="px-5 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium">
-                Get Started Free
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <MarketingNav
+        fixed={false}
+        active="/blog"
+        links={[
+          { href: '/features', label: 'Features' },
+          { href: '/templates', label: 'Templates' },
+          { href: '/pricing', label: 'Pricing' },
+          { href: '/blog', label: 'Blog' },
+        ]}
+      />
 
       {/* Hero */}
       <section className="py-20 px-6 border-b border-border">
@@ -160,6 +153,7 @@ export default function BlogPage() {
           <div className="flex gap-3 max-w-md mx-auto">
             <input
               type="email"
+              aria-label="Email address"
               placeholder="Enter your email"
               className="flex-1 px-3 py-2 bg-background border border-input rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors"
             />

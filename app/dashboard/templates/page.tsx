@@ -68,20 +68,21 @@ export default function TemplatesPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="bg-card border-b border-border">
-        <div className="max-w-6xl mx-auto px-6 py-6">
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">Templates</h1>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">Templates</h1>
           <p className="text-muted-foreground mt-1">Start from a ready-made form or a blank canvas</p>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
         {/* Category filter */}
         <div className="flex gap-2 mb-6 flex-wrap">
           {CATEGORIES.map((c) => (
             <button
               key={c}
               onClick={() => setCategory(c)}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              aria-pressed={category === c}
+              className={`px-4 py-2.5 rounded-md text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 category === c
                   ? 'bg-secondary text-foreground'
                   : 'bg-card border border-border text-muted-foreground hover:bg-muted/50'
@@ -98,7 +99,7 @@ export default function TemplatesPage() {
             <button
               onClick={() => useTemplate(null)}
               disabled={busyId !== null}
-              className="text-left w-full sm:max-w-sm bg-card rounded-lg border border-dashed border-border p-6 hover:border-foreground transition-colors disabled:opacity-50 flex flex-col"
+              className="text-left w-full sm:max-w-sm bg-card rounded-lg border border-dashed border-border p-6 hover:border-foreground transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 flex flex-col"
             >
               <div className="w-11 h-11 rounded-md bg-muted flex items-center justify-center text-xl mb-4">
                 <Plus className="w-5 h-5 text-muted-foreground" />

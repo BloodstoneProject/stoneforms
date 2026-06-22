@@ -69,9 +69,9 @@ export default function ConditionalLogicPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="bg-card text-card-foreground border-b border-border sticky top-0 z-30">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-6 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
-            <Link href={`/dashboard/forms/${id}`} className="text-muted-foreground hover:text-foreground"><ArrowLeft className="w-5 h-5" /></Link>
+            <Link href={`/dashboard/forms/${id}`} aria-label="Back to form builder" className="text-muted-foreground hover:text-foreground"><ArrowLeft className="w-5 h-5" /></Link>
             <div>
               <h1 className="text-xl heading-tight text-foreground">Logic</h1>
               <p className="text-sm text-muted-foreground">{form.title}</p>
@@ -108,7 +108,7 @@ export default function ConditionalLogicPage() {
                   <div key={rule.id} className="card-surface p-5">
                     <div className="flex items-center justify-between mb-4">
                       <span className="text-xs font-semibold text-muted-foreground">RULE {idx + 1}</span>
-                      <button onClick={() => remove(rule.id)} className="text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
+                      <button onClick={() => remove(rule.id)} aria-label={`Delete rule ${idx + 1}`} className="text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
                     </div>
                     <div className="space-y-3 text-sm">
                       <div className="flex flex-wrap items-center gap-2">

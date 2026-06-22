@@ -54,9 +54,9 @@ export default function DesignStudioPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="bg-card border-b border-border sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
-            <Link href={`/dashboard/forms/${id}`} className="text-muted-foreground hover:text-foreground"><ArrowLeft className="w-5 h-5" /></Link>
+            <Link href={`/dashboard/forms/${id}`} aria-label="Back to form builder" className="text-muted-foreground hover:text-foreground"><ArrowLeft className="w-5 h-5" /></Link>
             <div>
               <h1 className="text-xl heading-tight text-foreground">Design</h1>
               <p className="text-sm text-muted-foreground">{formTitle}</p>
@@ -101,8 +101,8 @@ export default function DesignStudioPage() {
                 <div key={key} className="flex items-center justify-between">
                   <span className="text-sm text-foreground">{label}</span>
                   <div className="flex items-center gap-2">
-                    <input type="text" value={c[key]} onChange={(e) => updateColor(key, e.target.value)} className="w-24 text-xs border border-input rounded-md px-2 py-1 font-mono bg-background text-foreground" />
-                    <input type="color" value={c[key]} onChange={(e) => updateColor(key, e.target.value)} className="w-9 h-9 rounded-md border border-input cursor-pointer" />
+                    <input type="text" value={c[key]} onChange={(e) => updateColor(key, e.target.value)} aria-label={`${label} colour hex`} className="w-24 text-xs border border-input rounded-md px-2 py-1 font-mono bg-background text-foreground" />
+                    <input type="color" value={c[key]} onChange={(e) => updateColor(key, e.target.value)} aria-label={`${label} colour picker`} className="w-9 h-9 rounded-md border border-input cursor-pointer" />
                   </div>
                 </div>
               ))}

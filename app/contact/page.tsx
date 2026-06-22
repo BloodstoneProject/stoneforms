@@ -2,24 +2,12 @@
 
 import Link from 'next/link'
 import { Mail, MessageSquare, HelpCircle } from 'lucide-react'
+import { MarketingNav } from '@/components/marketing/MarketingNav'
 
 export default function ContactPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <nav className="fixed top-0 left-0 right-0 z-40 backdrop-blur-xl bg-background/80 border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 sm:px-12 py-4 flex items-center justify-between">
-          <Link href="/" className="text-xl font-semibold tracking-tight hover:opacity-70 transition-opacity">Stoneforms</Link>
-          <div className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
-            <Link href="/features" className="hover:text-foreground transition-colors">Features</Link>
-            <Link href="/templates" className="hover:text-foreground transition-colors">Templates</Link>
-            <Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/auth/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Sign in</Link>
-            <Link href="/auth/signup" className="px-5 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors">Get Started</Link>
-          </div>
-        </div>
-      </nav>
+      <MarketingNav />
 
       <section className="pt-40 pb-16 px-6 sm:px-12">
         <div className="max-w-3xl mx-auto text-center">
@@ -53,18 +41,18 @@ export default function ContactPage() {
             </div>
           </div>
 
-          <form className="space-y-5 p-8 bg-card border border-border rounded-lg">
+          <form className="space-y-5 p-6 sm:p-8 bg-card border border-border rounded-lg">
             <div>
-              <label className="block text-sm font-medium mb-2">Name</label>
-              <input type="text" className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors" />
+              <label htmlFor="contact-name" className="block text-sm font-medium mb-2">Name</label>
+              <input id="contact-name" name="name" type="text" autoComplete="name" required className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors" />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Email</label>
-              <input type="email" className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors" />
+              <label htmlFor="contact-email" className="block text-sm font-medium mb-2">Email</label>
+              <input id="contact-email" name="email" type="email" autoComplete="email" required className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors" />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Message</label>
-              <textarea rows={6} className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors resize-none" />
+              <label htmlFor="contact-message" className="block text-sm font-medium mb-2">Message</label>
+              <textarea id="contact-message" name="message" rows={6} required className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors resize-none" />
             </div>
             <button type="submit" className="w-full py-2.5 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors">
               Send Message

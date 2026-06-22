@@ -173,7 +173,7 @@ export default function IntegrationsPage({ params }: { params: Promise<{ id: str
     <div className="min-h-screen bg-background">
       <div className="bg-card border-b border-border">
         <div className="max-w-4xl mx-auto px-6 py-6 flex items-center gap-4">
-          <Link href={`/dashboard/forms/${formId}`} className="text-muted-foreground hover:text-foreground">
+          <Link href={`/dashboard/forms/${formId}`} aria-label="Back to form builder" className="text-muted-foreground hover:text-foreground">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
@@ -295,11 +295,12 @@ export default function IntegrationsPage({ params }: { params: Promise<{ id: str
                       <button
                         onClick={() => toggleWebhook(hook)}
                         title={hook.is_active ? 'Active — click to pause' : 'Paused — click to activate'}
+                        aria-label={hook.is_active ? 'Pause webhook' : 'Activate webhook'}
                         className={`p-2 rounded-md ${hook.is_active ? 'text-foreground hover:bg-secondary' : 'text-muted-foreground hover:bg-secondary'}`}
                       >
                         <Power className="w-4 h-4" />
                       </button>
-                      <button onClick={() => deleteWebhook(hook.id)} className="p-2 rounded-md text-muted-foreground hover:text-destructive hover:bg-secondary">
+                      <button onClick={() => deleteWebhook(hook.id)} aria-label="Delete webhook" className="p-2 rounded-md text-muted-foreground hover:text-destructive hover:bg-secondary">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -308,7 +309,7 @@ export default function IntegrationsPage({ params }: { params: Promise<{ id: str
                     <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
                       <span className="text-xs text-muted-foreground shrink-0">Signing secret</span>
                       <code className="flex-1 text-xs bg-secondary rounded px-2 py-1 font-mono truncate">{hook.secret}</code>
-                      <button onClick={() => copySecret(hook)} className="p-1.5 text-muted-foreground hover:text-foreground">
+                      <button onClick={() => copySecret(hook)} aria-label="Copy signing secret" className="p-1.5 text-muted-foreground hover:text-foreground">
                         {copiedId === hook.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                       </button>
                     </div>

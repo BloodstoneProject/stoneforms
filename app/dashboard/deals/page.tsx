@@ -130,9 +130,9 @@ export default function DealsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
           <Skeleton className="h-9 w-48" />
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <Skeleton className="h-20 w-full" />
             <Skeleton className="h-20 w-full" />
             <Skeleton className="h-20 w-full" />
@@ -147,19 +147,19 @@ export default function DealsPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="bg-card border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between mb-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-3xl font-semibold tracking-tight text-foreground">Deal Pipeline</h1>
+              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">Deal Pipeline</h1>
               <p className="text-muted-foreground mt-1">Track sales opportunities</p>
             </div>
-            <Button onClick={() => setShowAddModal(true)}>
+            <Button onClick={() => setShowAddModal(true)} className="self-start sm:self-auto">
               <Plus className="w-5 h-5" />
               New Deal
             </Button>
           </div>
 
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <StatCard label="Open Deals" value={String(stats.open)} icon={<Target className="w-4 h-4" />} />
             <StatCard label="Won Deals" value={String(stats.won)} icon={<Award className="w-4 h-4" />} />
             <StatCard
@@ -172,12 +172,13 @@ export default function DealsPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         <div className="card-surface p-4 mb-6">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+            <Search aria-hidden="true" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
             <Input
               type="text"
+              aria-label="Search deals"
               placeholder="Search deals..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -195,13 +196,13 @@ export default function DealsPage() {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-5 gap-4 overflow-x-auto pb-4">
+          <div className="flex gap-4 overflow-x-auto pb-4">
             {stages.map(stage => {
               const stageDeals = filteredDeals.filter(d => d.stage === stage.id)
               const stageValue = stageDeals.reduce((sum, d) => sum + (d.value || 0), 0)
 
               return (
-                <div key={stage.id} className="min-w-[240px]">
+                <div key={stage.id} className="w-[260px] shrink-0">
                   <div className="bg-muted rounded-md p-4 mb-3 border border-border">
                     <h3 className="font-semibold text-foreground mb-1">{stage.name}</h3>
                     <div className="text-sm text-muted-foreground">
@@ -246,13 +247,20 @@ export default function DealsPage() {
 
       {/* Add Deal Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50" onClick={() => setShowAddModal(false)}>
-          <div className="card-surface p-8 max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground mb-6">New Deal</h2>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 sm:p-6 z-50" onClick={() => setShowAddModal(false)}>
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="new-deal-title"
+            className="card-surface p-6 sm:p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="new-deal-title" className="text-2xl font-semibold tracking-tight text-foreground mb-6">New Deal</h2>
             <form onSubmit={addDeal} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Deal Title *</label>
+                <label htmlFor="deal-title" className="block text-sm font-medium text-foreground mb-1">Deal Title *</label>
                 <Input
+                  id="deal-title"
                   type="text"
                   required
                   value={newDeal.title}
@@ -262,8 +270,9 @@ export default function DealsPage() {
               </div>
               {contacts.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Contact</label>
+                  <label htmlFor="deal-contact" className="block text-sm font-medium text-foreground mb-1">Contact</label>
                   <select
+                    id="deal-contact"
                     value={newDeal.contact_id}
                     onChange={(e) => setNewDeal({ ...newDeal, contact_id: e.target.value })}
                     className="w-full h-10 px-4 rounded-md border border-input bg-card text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -279,8 +288,9 @@ export default function DealsPage() {
               )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Value (£)</label>
+                  <label htmlFor="deal-value" className="block text-sm font-medium text-foreground mb-1">Value (£)</label>
                   <Input
+                    id="deal-value"
                     type="number"
                     value={newDeal.value}
                     onChange={(e) => setNewDeal({ ...newDeal, value: e.target.value })}
@@ -288,8 +298,9 @@ export default function DealsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Stage</label>
+                  <label htmlFor="deal-stage" className="block text-sm font-medium text-foreground mb-1">Stage</label>
                   <select
+                    id="deal-stage"
                     value={newDeal.stage}
                     onChange={(e) => setNewDeal({ ...newDeal, stage: e.target.value })}
                     className="w-full h-10 px-4 rounded-md border border-input bg-card text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

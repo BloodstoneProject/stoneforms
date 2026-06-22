@@ -9,7 +9,7 @@
 import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Save, ExternalLink, Copy, Check, Image as ImageIcon } from 'lucide-react'
+import { ArrowLeft, Save, ExternalLink, Copy, Check, Image as ImageIcon, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -81,7 +81,7 @@ export default function LandingEditorPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Loading…</p>
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     )
   }
@@ -93,6 +93,7 @@ export default function LandingEditorPage() {
           <div className="flex items-center gap-4">
             <Link
               href={`/dashboard/forms/${formId}`}
+              aria-label="Back to form builder"
               className="text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="w-5 h-5" />

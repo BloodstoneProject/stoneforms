@@ -55,27 +55,31 @@ export default function ResetPasswordPage() {
           ) : (
             <form className="space-y-6" onSubmit={submit}>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">New password</label>
+                <label htmlFor="reset-password" className="block text-sm font-medium text-foreground mb-2">New password</label>
                 <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" aria-hidden="true" />
                   <input
+                    id="reset-password"
                     type="password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="new-password"
                     className="w-full pl-11 pr-4 py-2.5 bg-background border border-border rounded-md text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Confirm new password</label>
+                <label htmlFor="reset-confirm" className="block text-sm font-medium text-foreground mb-2">Confirm new password</label>
                 <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" aria-hidden="true" />
                   <input
+                    id="reset-confirm"
                     type="password"
                     required
                     value={confirm}
                     onChange={(e) => setConfirm(e.target.value)}
+                    autoComplete="new-password"
                     className="w-full pl-11 pr-4 py-2.5 bg-background border border-border rounded-md text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
                   />
                 </div>

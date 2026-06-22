@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { FORM_TEMPLATES } from '@/lib/form-templates'
 import { TEMPLATE_CATEGORIES, CATEGORY_BLURBS } from '@/lib/template-categories'
+import { MarketingNav } from '@/components/marketing/MarketingNav'
 
 const FILTERS = ['All', ...TEMPLATE_CATEGORIES] as const
 
@@ -19,20 +20,7 @@ export default function TemplatesPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <nav className="fixed top-0 left-0 right-0 z-40 backdrop-blur-xl bg-background/80 border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 sm:px-12 py-4 flex items-center justify-between">
-          <Link href="/" className="text-xl font-semibold tracking-tight hover:opacity-70 transition-opacity">Stoneforms</Link>
-          <div className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
-            <Link href="/features" className="hover:text-foreground transition-colors">Features</Link>
-            <Link href="/templates" className="text-foreground transition-colors">Templates</Link>
-            <Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/auth/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Sign in</Link>
-            <Link href="/auth/signup" className="px-5 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors">Get Started</Link>
-          </div>
-        </div>
-      </nav>
+      <MarketingNav active="/templates" />
 
       <section className="pt-40 pb-10 px-6 sm:px-12">
         <div className="max-w-4xl mx-auto text-center">
@@ -67,6 +55,18 @@ export default function TemplatesPage() {
 
       <section className="pb-28 px-6 sm:px-12">
         <div className="max-w-7xl mx-auto space-y-16">
+          {sections.length === 0 && (
+            <div className="text-center py-16">
+              <p className="text-lg font-medium text-foreground mb-1">No templates in this category yet</p>
+              <p className="text-sm text-muted-foreground mb-6">Try another category or browse them all.</p>
+              <button
+                onClick={() => setFilter('All')}
+                className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-card border border-border text-foreground hover:bg-secondary transition-colors"
+              >
+                Show all templates
+              </button>
+            </div>
+          )}
           {sections.map((section) => (
             <div key={section.cat}>
               <div className="mb-6 max-w-3xl">

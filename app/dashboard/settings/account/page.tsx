@@ -67,7 +67,7 @@ export default function AccountSettingsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
           <Skeleton className="h-8 w-40" />
           <Skeleton className="h-48 w-full" />
           <Skeleton className="h-48 w-full" />
@@ -79,8 +79,12 @@ export default function AccountSettingsPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="bg-card border-b border-border">
-        <div className="max-w-3xl mx-auto px-6 py-6 flex items-center gap-4">
-          <Link href="/dashboard/settings" className="text-muted-foreground hover:text-foreground">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 flex items-center gap-4">
+          <Link
+            href="/dashboard/settings"
+            aria-label="Back to settings"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
@@ -90,14 +94,15 @@ export default function AccountSettingsPage() {
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
         {/* Profile */}
         <div className="card-surface p-6">
           <h2 className="font-semibold tracking-tight text-foreground mb-4">Profile</h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Email</label>
+              <label htmlFor="account-email" className="block text-sm font-medium text-foreground mb-1">Email</label>
               <Input
+                id="account-email"
                 type="email"
                 value={email}
                 readOnly
@@ -106,8 +111,9 @@ export default function AccountSettingsPage() {
               <p className="text-xs text-muted-foreground mt-1">Contact support to change your email.</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Full name</label>
+              <label htmlFor="account-name" className="block text-sm font-medium text-foreground mb-1">Full name</label>
               <Input
+                id="account-name"
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
@@ -128,16 +134,18 @@ export default function AccountSettingsPage() {
           <h2 className="font-semibold tracking-tight text-foreground mb-4">Change password</h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">New password</label>
+              <label htmlFor="new-password" className="block text-sm font-medium text-foreground mb-1">New password</label>
               <Input
+                id="new-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Confirm new password</label>
+              <label htmlFor="confirm-password" className="block text-sm font-medium text-foreground mb-1">Confirm new password</label>
               <Input
+                id="confirm-password"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}

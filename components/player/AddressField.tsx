@@ -30,6 +30,8 @@ export function AddressField({ value, onChange, theme }: AddressFieldProps) {
         value={v.line1 || ''}
         onChange={(e) => set('line1', e.target.value)}
         placeholder="Address line 1 *"
+        aria-label="Address line 1"
+        autoComplete="address-line1"
         className="text-lg py-5 border-2 focus:ring-2"
         style={borderStyle}
         autoFocus
@@ -39,6 +41,8 @@ export function AddressField({ value, onChange, theme }: AddressFieldProps) {
         value={v.line2 || ''}
         onChange={(e) => set('line2', e.target.value)}
         placeholder="Address line 2 (optional)"
+        aria-label="Address line 2"
+        autoComplete="address-line2"
         className="text-lg py-5 border-2 focus:ring-2"
         style={borderStyle}
       />
@@ -48,6 +52,8 @@ export function AddressField({ value, onChange, theme }: AddressFieldProps) {
           value={v.city || ''}
           onChange={(e) => set('city', e.target.value)}
           placeholder="City *"
+          aria-label="City"
+          autoComplete="address-level2"
           className="text-lg py-5 border-2 focus:ring-2"
           style={borderStyle}
         />
@@ -56,6 +62,8 @@ export function AddressField({ value, onChange, theme }: AddressFieldProps) {
           value={v.state || ''}
           onChange={(e) => set('state', e.target.value)}
           placeholder="State / Region"
+          aria-label="State or region"
+          autoComplete="address-level1"
           className="text-lg py-5 border-2 focus:ring-2"
           style={borderStyle}
         />
@@ -66,6 +74,8 @@ export function AddressField({ value, onChange, theme }: AddressFieldProps) {
           value={v.postal || ''}
           onChange={(e) => set('postal', e.target.value)}
           placeholder="Postal / ZIP code *"
+          aria-label="Postal or ZIP code"
+          autoComplete="postal-code"
           className="text-lg py-5 border-2 focus:ring-2"
           style={borderStyle}
         />
@@ -74,6 +84,8 @@ export function AddressField({ value, onChange, theme }: AddressFieldProps) {
           value={v.country || ''}
           onChange={(e) => set('country', e.target.value)}
           placeholder="Country"
+          aria-label="Country"
+          autoComplete="country-name"
           className="text-lg py-5 border-2 focus:ring-2"
           style={borderStyle}
         />

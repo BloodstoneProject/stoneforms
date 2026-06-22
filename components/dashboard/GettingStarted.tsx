@@ -108,7 +108,7 @@ export function GettingStarted({
   return (
     <div className="space-y-6">
       {/* Hero / empty-state header */}
-      <div className="relative overflow-hidden card-surface p-8">
+      <div className="relative overflow-hidden card-surface p-6 sm:p-8">
         <div className="relative">
           <div className="w-12 h-12 bg-primary text-primary-foreground rounded-md flex items-center justify-center mb-4">
             <Sparkles className="w-6 h-6" />
@@ -140,7 +140,7 @@ export function GettingStarted({
         {steps.map((step) => (
           <div
             key={step.id}
-            className="flex items-center gap-4 px-6 py-4"
+            className="flex items-center gap-4 px-4 sm:px-6 py-4"
           >
             <div
               className={`w-10 h-10 rounded-md flex items-center justify-center shrink-0 ${

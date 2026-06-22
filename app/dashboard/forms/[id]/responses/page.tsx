@@ -3,7 +3,7 @@ import { useParams } from 'next/navigation'
 
 import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Download, Upload, Trash2, Eye, Search, Calendar, TrendingUp } from 'lucide-react'
+import { ArrowLeft, Download, Upload, Trash2, Eye, Search, Calendar, TrendingUp, X, Loader2 } from 'lucide-react'
 
 interface Response {
   id: string
@@ -243,7 +243,7 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-foreground mx-auto"></div>
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mx-auto" />
           <p className="mt-4 text-muted-foreground">Loading responses...</p>
         </div>
       </div>
@@ -255,9 +255,9 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
       {/* Header */}
       <div className="bg-card border-b border-border">
         <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4">
-              <Link href={`/dashboard/forms/${formId}`} className="text-muted-foreground hover:text-foreground">
+              <Link href={`/dashboard/forms/${formId}`} aria-label="Back to form builder" className="text-muted-foreground hover:text-foreground">
                 <ArrowLeft className="w-5 h-5" />
               </Link>
               <div>
@@ -265,7 +265,7 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
                 <p className="text-muted-foreground mt-1">{responses.length} total submissions</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <Link
                 href={`/dashboard/forms/${formId}/analytics`}
                 className="flex items-center gap-2 px-4 py-2 border border-border rounded-md hover:bg-secondary"
@@ -408,12 +408,14 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
                       <td className="px-6 py-4 text-right">
                         <button
                           onClick={() => setSelectedResponse(response)}
+                          aria-label="View response details"
                           className="text-muted-foreground hover:text-foreground mr-4"
                         >
                           <Eye className="w-5 h-5" />
                         </button>
                         <button
                           onClick={() => deleteResponse(response.id)}
+                          aria-label="Delete response"
                           className="text-destructive hover:text-destructive"
                         >
                           <Trash2 className="w-5 h-5" />
@@ -434,8 +436,8 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
           <div className="bg-card rounded-lg p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl heading-tight text-foreground">Response Details</h2>
-              <button onClick={() => setSelectedResponse(null)} className="text-muted-foreground hover:text-foreground">
-                ✕
+              <button onClick={() => setSelectedResponse(null)} aria-label="Close response details" className="text-muted-foreground hover:text-foreground">
+                <X className="w-5 h-5" />
               </button>
             </div>
             <p className="text-sm text-muted-foreground mb-6">

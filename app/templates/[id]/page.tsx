@@ -32,27 +32,33 @@ export default function TemplateDetailPage() {
       {/* Header */}
       <div className="bg-card border-b border-border">
         <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center gap-4 mb-6">
-            <Link href="/templates" className="text-muted-foreground hover:text-foreground transition-colors">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <div className="flex-1">
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground flex items-center gap-3">
-                <span>{template.icon}</span>
-                {template.name}
-              </h1>
-              <p className="text-muted-foreground mt-1">{template.description}</p>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
+            <div className="flex items-start gap-4 flex-1 min-w-0">
+              <Link
+                href="/templates"
+                aria-label="Back to templates"
+                className="text-muted-foreground hover:text-foreground transition-colors mt-1 flex-shrink-0"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Link>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-2xl font-semibold tracking-tight text-foreground flex items-center gap-3">
+                  <span>{template.icon}</span>
+                  {template.name}
+                </h1>
+                <p className="text-muted-foreground mt-1">{template.description}</p>
+              </div>
             </div>
             <Link
               href="/auth/signup"
-              className="px-5 py-2.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm font-medium"
+              className="px-5 py-2.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm font-medium text-center flex-shrink-0"
             >
               Use This Template
             </Link>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-secondary border border-border rounded-md p-4">
               <div className="text-muted-foreground text-sm mb-1">Form Fields</div>
               <div className="text-2xl font-semibold tracking-tight text-foreground">{template.fields.length}</div>
@@ -73,10 +79,10 @@ export default function TemplateDetailPage() {
         <div className="grid md:grid-cols-3 gap-8">
           {/* Preview */}
           <div className="md:col-span-2">
-            <div className="bg-card rounded-lg border border-border p-8">
+            <div className="bg-card rounded-lg border border-border p-6 sm:p-8">
               <h2 className="text-xl font-semibold tracking-tight text-foreground mb-6">Template Preview</h2>
 
-              <div className="bg-secondary rounded-lg p-8 border border-dashed border-border">
+              <div className="bg-secondary rounded-lg p-5 sm:p-8 border border-dashed border-border">
                 <div className="max-w-2xl mx-auto space-y-6">
                   <div className="text-center mb-8">
                     <h3 className="text-2xl font-semibold tracking-tight text-foreground mb-2">{template.name}</h3>

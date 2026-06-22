@@ -3,7 +3,7 @@ import { useParams } from 'next/navigation'
 
 import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Mail, Save, Plus, X } from 'lucide-react'
+import { ArrowLeft, Mail, Save, Plus, X, Loader2 } from 'lucide-react'
 
 interface NotificationSettings {
   notify_on_submission: boolean
@@ -84,7 +84,7 @@ export default function NotificationSettingsPage({ params }: { params: Promise<{
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p>Loading...</p>
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     )
   }
@@ -93,9 +93,9 @@ export default function NotificationSettingsPage({ params }: { params: Promise<{
     <div className="min-h-screen bg-background">
       <div className="bg-card text-card-foreground border-b border-border">
         <div className="max-w-4xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
-              <Link href={`/dashboard/forms/${formId}`} className="text-muted-foreground hover:text-foreground">
+              <Link href={`/dashboard/forms/${formId}`} aria-label="Back to form builder" className="text-muted-foreground hover:text-foreground">
                 <ArrowLeft className="w-5 h-5" />
               </Link>
               <div>
@@ -106,7 +106,7 @@ export default function NotificationSettingsPage({ params }: { params: Promise<{
             <button
               onClick={saveSettings}
               disabled={saving}
-              className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 shrink-0"
             >
               <Save className="w-4 h-4" />
               {saving ? 'Saving...' : 'Save Settings'}
@@ -163,6 +163,7 @@ export default function NotificationSettingsPage({ params }: { params: Promise<{
                       <span className="text-foreground">{email}</span>
                       <button
                         onClick={() => removeEmail(email)}
+                        aria-label={`Remove ${email}`}
                         className="text-destructive hover:text-destructive"
                       >
                         <X className="w-4 h-4" />

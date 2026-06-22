@@ -133,9 +133,9 @@ export default function FormsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
           <Skeleton className="h-9 w-48" />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
             <Skeleton className="h-24 w-full" />
             <Skeleton className="h-24 w-full" />
             <Skeleton className="h-24 w-full" />
@@ -153,29 +153,30 @@ export default function FormsPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="bg-card border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between mb-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-3xl font-semibold tracking-tight text-foreground">Forms</h1>
+              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">Forms</h1>
               <p className="text-muted-foreground mt-1">Manage all your forms</p>
             </div>
-            <Button onClick={createForm} disabled={creating}>
+            <Button onClick={createForm} disabled={creating} className="self-start sm:self-auto">
               <Plus className="w-5 h-5" />
               {creating ? 'Creating...' : 'Create Form'}
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6">
             <Stat label="Total Forms" value={stats.total} icon={<TrendingUp className="w-6 h-6" />} />
             <Stat label="Published" value={stats.published} icon={<Eye className="w-6 h-6" />} />
             <Stat label="Drafts" value={stats.draft} icon={<Calendar className="w-6 h-6" />} />
           </div>
 
-          <div className="flex gap-4 items-center">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center">
             <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+              <Search aria-hidden="true" className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
               <Input
                 type="text"
+                aria-label="Search forms"
                 placeholder="Search forms..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -185,6 +186,7 @@ export default function FormsPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as any)}
+              aria-label="Filter by status"
               className="h-11 px-4 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="all">All Status</option>
@@ -196,7 +198,7 @@ export default function FormsPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {filteredForms.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">No forms found. Create your first form to get started!</p>
@@ -223,14 +225,16 @@ export default function FormsPage() {
                     <button
                       onClick={() => duplicateForm(form.id)}
                       title="Duplicate"
-                      className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label={`Duplicate ${form.title}`}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <Copy className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => deleteForm(form.id)}
                       title="Delete"
-                      className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
+                      aria-label={`Delete ${form.title}`}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-destructive transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

@@ -45,15 +45,17 @@ export default function ForgotPasswordPage() {
           ) : (
             <form className="space-y-6" onSubmit={submit}>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Email address</label>
+                <label htmlFor="forgot-email" className="block text-sm font-medium text-foreground mb-2">Email address</label>
                 <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" aria-hidden="true" />
                   <input
+                    id="forgot-email"
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
+                    autoComplete="email"
                     className="w-full pl-11 pr-4 py-2.5 bg-background border border-border rounded-md text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
                   />
                 </div>

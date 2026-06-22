@@ -34,7 +34,7 @@ export default function AnalyticsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8">
           <Skeleton className="h-9 w-48" />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Skeleton className="h-24 w-full" />
@@ -50,13 +50,13 @@ export default function AnalyticsPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="bg-card border-b border-border">
-        <div className="max-w-5xl mx-auto px-6 py-6">
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">Analytics</h1>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">Analytics</h1>
           <p className="text-muted-foreground mt-1">Performance across all your forms</p>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Stat icon={<FileText className="w-5 h-5" />} label="Total forms" value={forms.length} />
           <Stat icon={<Eye className="w-5 h-5" />} label="Published" value={published.length} />

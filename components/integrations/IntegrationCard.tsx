@@ -146,6 +146,7 @@ export default function IntegrationCard({
               onClick={toggleEnabled}
               disabled={saving}
               title={enabled ? 'Enabled — click to pause' : 'Paused — click to enable'}
+              aria-label={enabled ? `Pause ${title} integration` : `Enable ${title} integration`}
               className={`p-2 rounded-md ${enabled ? 'text-foreground hover:bg-secondary' : 'text-muted-foreground hover:bg-secondary'}`}
             >
               <Power className="w-4 h-4" />
@@ -153,6 +154,7 @@ export default function IntegrationCard({
             <button
               onClick={disconnect}
               disabled={saving}
+              aria-label={`Disconnect ${title}`}
               className="p-2 rounded-md text-muted-foreground hover:text-destructive hover:bg-secondary"
             >
               <Trash2 className="w-4 h-4" />

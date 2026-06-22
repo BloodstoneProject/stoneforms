@@ -443,9 +443,9 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
       {/* Top Bar */}
       <div className="bg-card border-b border-border sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
             <div className="flex items-center gap-4 min-w-0">
-              <Link href="/dashboard/forms" className="text-muted-foreground hover:text-foreground shrink-0">
+              <Link href="/dashboard/forms" aria-label="Back to forms" className="text-muted-foreground hover:text-foreground shrink-0">
                 <ArrowLeft className="w-5 h-5" />
               </Link>
               <div className="min-w-0">
@@ -453,6 +453,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                   type="text"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  aria-label="Form title"
                   className="text-xl heading-tight text-foreground border-none focus:outline-none bg-transparent w-full"
                   placeholder="Form Title"
                 />
@@ -468,32 +469,32 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 flex-wrap lg:flex-nowrap lg:shrink-0 -mx-6 px-6 lg:mx-0 lg:px-0 overflow-x-auto lg:overflow-visible">
               <Link
                 href={`/f/${formId}`}
                 target="_blank"
-                className="flex items-center gap-2 px-3 py-2 border border-border rounded-md hover:bg-secondary text-sm text-foreground transition-colors"
+                className="flex items-center gap-2 px-3 py-2 border border-border rounded-md hover:bg-secondary text-sm text-foreground transition-colors shrink-0"
               >
                 <Eye className="w-4 h-4" /> Preview
               </Link>
 
               <Link
                 href={`/dashboard/forms/${formId}/themes`}
-                className="flex items-center gap-2 px-3 py-2 border border-border rounded-md hover:bg-secondary text-sm text-foreground transition-colors"
+                className="flex items-center gap-2 px-3 py-2 border border-border rounded-md hover:bg-secondary text-sm text-foreground transition-colors shrink-0"
               >
                 <Palette className="w-4 h-4" /> Design
               </Link>
 
               <Link
                 href={`/dashboard/forms/${formId}/logic`}
-                className="flex items-center gap-2 px-3 py-2 border border-border rounded-md hover:bg-secondary text-sm text-foreground transition-colors"
+                className="flex items-center gap-2 px-3 py-2 border border-border rounded-md hover:bg-secondary text-sm text-foreground transition-colors shrink-0"
               >
                 <GitBranch className="w-4 h-4" /> Logic
               </Link>
 
               <Link
                 href={`/dashboard/forms/${formId}/integrations`}
-                className="flex items-center gap-2 px-3 py-2 border border-border rounded-md hover:bg-secondary text-sm text-foreground transition-colors"
+                className="flex items-center gap-2 px-3 py-2 border border-border rounded-md hover:bg-secondary text-sm text-foreground transition-colors shrink-0"
               >
                 <Webhook className="w-4 h-4" /> Integrations
               </Link>
@@ -501,7 +502,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
               {isPublished && (
                 <button
                   onClick={() => setShareModalOpen(true)}
-                  className="flex items-center gap-2 px-3 py-2 border border-border rounded-md hover:bg-secondary text-sm text-foreground transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 border border-border rounded-md hover:bg-secondary text-sm text-foreground transition-colors shrink-0"
                 >
                   <Share2 className="w-4 h-4" /> Share
                 </button>
@@ -511,20 +512,20 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                 <>
                   <Link
                     href={`/dashboard/forms/${formId}/analytics`}
-                    className="flex items-center gap-2 px-3 py-2 border border-border rounded-md hover:bg-secondary text-sm text-foreground transition-colors"
+                    className="flex items-center gap-2 px-3 py-2 border border-border rounded-md hover:bg-secondary text-sm text-foreground transition-colors shrink-0"
                   >
                     <BarChart3 className="w-4 h-4" /> Analytics
                   </Link>
                   <Link
                     href={`/dashboard/forms/${formId}/responses`}
-                    className="px-3 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm transition-colors"
+                    className="px-3 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm transition-colors shrink-0"
                   >
                     Responses
                   </Link>
                   <button
                     onClick={() => setStatus('draft')}
                     disabled={publishing}
-                    className="px-3 py-2 border border-border rounded-md hover:bg-secondary text-sm text-foreground disabled:opacity-50 transition-colors"
+                    className="px-3 py-2 border border-border rounded-md hover:bg-secondary text-sm text-foreground disabled:opacity-50 transition-colors shrink-0"
                   >
                     {publishing ? 'Working…' : 'Unpublish'}
                   </button>
@@ -533,7 +534,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                 <button
                   onClick={() => setStatus('published')}
                   disabled={publishing}
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 text-sm font-medium transition-colors"
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 text-sm font-medium transition-colors shrink-0"
                 >
                   {publishing ? 'Publishing…' : 'Publish'}
                 </button>
@@ -543,11 +544,11 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
           {/* Field Types + Content Blocks Sidebar */}
           <div className="lg:col-span-1">
-            <div className="card-surface p-4 sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto">
+            <div className="card-surface p-4 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
               <h3 className="heading-tight text-foreground mb-4">Add Fields</h3>
               <div className="space-y-2">
                 {FIELD_TYPES.filter((t) => t.input || t.value === 'statement' || t.value === 'page_break').map((type) => (
@@ -605,12 +606,14 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                 type="text"
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
+                aria-label="Form title"
                 className="text-2xl heading-tight text-foreground w-full border-none focus:outline-none mb-2 bg-transparent"
                 placeholder="Form Title"
               />
               <textarea
                 value={form.description || ''}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
+                aria-label="Form description"
                 className="w-full text-muted-foreground border-none focus:outline-none resize-none bg-transparent"
                 placeholder="Add a description..."
                 rows={2}
@@ -621,6 +624,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
             <div className="card-surface">
               <button
                 onClick={() => setFormSettingsOpen((v) => !v)}
+                aria-expanded={formSettingsOpen}
                 className="w-full flex items-center justify-between px-6 py-4 text-left"
               >
                 <span className="flex items-center gap-2 font-medium text-foreground">
@@ -1081,6 +1085,7 @@ function SortableField({ field, index, allFields, quizEnabled, expanded, onToggl
               {preview && <span className="text-sm text-muted-foreground truncate">{preview}</span>}
               <button
                 onClick={onToggleExpand}
+                aria-expanded={expanded}
                 className="ml-auto flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground shrink-0"
               >
                 <Settings2 className="w-4 h-4" /> Edit
@@ -1122,6 +1127,7 @@ function SortableField({ field, index, allFields, quizEnabled, expanded, onToggl
               type="text"
               value={field.label}
               onChange={(e) => onUpdate(field.id, { label: e.target.value })}
+              aria-label={`Question ${index + 1} label`}
               className="flex-1 text-lg font-medium text-foreground border-b border-transparent hover:border-border focus:outline-none focus:border-foreground pb-1"
               placeholder="Question"
             />
@@ -1158,6 +1164,7 @@ function SortableField({ field, index, allFields, quizEnabled, expanded, onToggl
             </label>
             <button
               onClick={onToggleExpand}
+              aria-expanded={expanded}
               className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
             >
               <Settings2 className="w-4 h-4" /> Settings

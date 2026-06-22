@@ -115,9 +115,9 @@ export default function ContactsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
           <Skeleton className="h-9 w-48" />
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <Skeleton className="h-20 w-full" />
             <Skeleton className="h-20 w-full" />
             <Skeleton className="h-20 w-full" />
@@ -133,14 +133,14 @@ export default function ContactsPage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="bg-card border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between mb-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-3xl font-semibold tracking-tight text-foreground">Contacts</h1>
+              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">Contacts</h1>
               <p className="text-muted-foreground mt-1">Manage your contact database</p>
             </div>
             <div className="flex items-center gap-3">
-              <Button onClick={() => setShowAddModal(true)}>
+              <Button onClick={() => setShowAddModal(true)} className="self-start sm:self-auto">
                 <Plus className="w-5 h-5" />
                 Add Contact
               </Button>
@@ -148,7 +148,7 @@ export default function ContactsPage() {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <StatCard label="Total Contacts" value={stats.total} />
             <StatCard label="Leads" value={stats.leads} />
             <StatCard label="Customers" value={stats.customers} />
@@ -158,13 +158,14 @@ export default function ContactsPage() {
       </div>
 
       {/* Filters */}
-      <div className="max-w-7xl mx-auto px-6 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         <div className="card-surface p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex flex-col md:flex-row gap-3 md:gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+              <Search aria-hidden="true" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
               <Input
                 type="text"
+                aria-label="Search contacts"
                 placeholder="Search contacts..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -175,6 +176,7 @@ export default function ContactsPage() {
               <select
                 value={tagFilter}
                 onChange={(e) => setTagFilter(e.target.value)}
+                aria-label="Filter by tag"
                 className="h-10 px-4 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <option value="all">All Tags</option>
@@ -186,6 +188,7 @@ export default function ContactsPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
+              aria-label="Sort contacts"
               className="h-10 px-4 rounded-md border border-input bg-background text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="recent">Most Recent</option>
@@ -210,7 +213,8 @@ export default function ContactsPage() {
           </div>
         ) : (
           <div className="card-surface overflow-hidden">
-            <table className="w-full">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px]">
               <thead className="bg-muted/50 border-b border-border">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contact</th>
@@ -272,19 +276,27 @@ export default function ContactsPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </div>
 
       {/* Add Contact Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50" onClick={() => setShowAddModal(false)}>
-          <div className="card-surface p-8 max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground mb-6">Add Contact</h2>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 sm:p-6 z-50" onClick={() => setShowAddModal(false)}>
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-contact-title"
+            className="card-surface p-6 sm:p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="add-contact-title" className="text-2xl font-semibold tracking-tight text-foreground mb-6">Add Contact</h2>
             <form onSubmit={addContact} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Email *</label>
+                <label htmlFor="contact-email" className="block text-sm font-medium text-foreground mb-1">Email *</label>
                 <Input
+                  id="contact-email"
                   type="email"
                   required
                   value={newContact.email}
@@ -294,16 +306,18 @@ export default function ContactsPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">First Name</label>
+                  <label htmlFor="contact-first" className="block text-sm font-medium text-foreground mb-1">First Name</label>
                   <Input
+                    id="contact-first"
                     type="text"
                     value={newContact.first_name}
                     onChange={(e) => setNewContact({ ...newContact, first_name: e.target.value })}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Last Name</label>
+                  <label htmlFor="contact-last" className="block text-sm font-medium text-foreground mb-1">Last Name</label>
                   <Input
+                    id="contact-last"
                     type="text"
                     value={newContact.last_name}
                     onChange={(e) => setNewContact({ ...newContact, last_name: e.target.value })}
@@ -311,24 +325,27 @@ export default function ContactsPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Phone</label>
+                <label htmlFor="contact-phone" className="block text-sm font-medium text-foreground mb-1">Phone</label>
                 <Input
+                  id="contact-phone"
                   type="text"
                   value={newContact.phone}
                   onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Company</label>
+                <label htmlFor="contact-company" className="block text-sm font-medium text-foreground mb-1">Company</label>
                 <Input
+                  id="contact-company"
                   type="text"
                   value={newContact.company}
                   onChange={(e) => setNewContact({ ...newContact, company: e.target.value })}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Tags (comma separated)</label>
+                <label htmlFor="contact-tags" className="block text-sm font-medium text-foreground mb-1">Tags (comma separated)</label>
                 <Input
+                  id="contact-tags"
                   type="text"
                   value={newContact.tags}
                   onChange={(e) => setNewContact({ ...newContact, tags: e.target.value })}

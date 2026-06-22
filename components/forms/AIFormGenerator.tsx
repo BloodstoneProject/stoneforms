@@ -68,6 +68,7 @@ export function AIFormGenerator({ onFormGenerated }: AIFormGeneratorProps) {
                 </CardTitle>
                 <button
                   onClick={() => setIsOpen(false)}
+                  aria-label="Close AI form generator"
                   className="text-muted-foreground hover:text-foreground"
                 >
                   ✕

@@ -57,16 +57,16 @@ export default function PaymentsSettingsPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="bg-card border-b border-border">
-        <div className="max-w-3xl mx-auto px-6 py-6">
-          <Link href="/dashboard/settings" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-3">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
+          <Link href="/dashboard/settings" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-3 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md">
             <ArrowLeft className="w-4 h-4" /> Settings
           </Link>
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">Payments</h1>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">Payments</h1>
           <p className="text-muted-foreground mt-1">Collect payments from respondents on your forms via Stripe.</p>
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-6 py-8">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
         <div className="card-surface p-6">
           <div className="flex items-start gap-4 mb-5">
             <div className="w-12 h-12 bg-muted rounded-md flex items-center justify-center shrink-0">

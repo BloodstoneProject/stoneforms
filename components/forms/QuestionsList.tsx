@@ -225,6 +225,7 @@ export function QuestionsList({
                           }}
                           className="p-1 rounded hover:bg-secondary"
                           title="Duplicate"
+                          aria-label="Duplicate question"
                         >
                           <Copy className="w-3 h-3 text-muted-foreground" />
                         </button>
@@ -237,6 +238,7 @@ export function QuestionsList({
                           }}
                           className="p-1 rounded hover:bg-secondary"
                           title="Delete"
+                          aria-label="Delete question"
                         >
                           <Trash2 className="w-3 h-3 text-destructive" />
                         </button>

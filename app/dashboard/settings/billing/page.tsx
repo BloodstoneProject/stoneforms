@@ -80,8 +80,12 @@ function BillingInner() {
   return (
     <div className="min-h-screen bg-background">
       <div className="bg-card border-b border-border">
-        <div className="max-w-4xl mx-auto px-6 py-6 flex items-center gap-4">
-          <Link href="/dashboard/settings" className="text-muted-foreground hover:text-foreground">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 flex items-center gap-4">
+          <Link
+            href="/dashboard/settings"
+            aria-label="Back to settings"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
@@ -91,7 +95,7 @@ function BillingInner() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6">
         {status === 'success' && (
           <div className="p-4 card-surface bg-secondary text-foreground text-sm">
             Your subscription is active. It may take a few seconds to reflect below.
@@ -115,7 +119,7 @@ function BillingInner() {
             {/* Current plan */}
             <div className="card-surface p-6">
               <h2 className="text-lg font-semibold tracking-tight text-foreground mb-4">Current plan</h2>
-              <div className="flex items-start justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-3 mb-1">
                     <h3 className="text-2xl font-semibold tracking-tight text-foreground">{data.plan.name}</h3>

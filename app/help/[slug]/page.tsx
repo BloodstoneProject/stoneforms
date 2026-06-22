@@ -124,7 +124,7 @@ If you still have questions, our support team is here to help. Contact us throug
             <div className="max-w-none">
               {article.content.split('\n').map((paragraph, i) => {
                 if (paragraph.startsWith('# ')) {
-                  return <h1 key={i} className="text-3xl font-semibold tracking-tight text-foreground mt-12 mb-6">{paragraph.replace('# ', '')}</h1>
+                  return <h2 key={i} className="text-3xl font-semibold tracking-tight text-foreground mt-12 mb-6">{paragraph.replace('# ', '')}</h2>
                 }
                 if (paragraph.startsWith('## ')) {
                   return <h2 key={i} className="text-2xl font-semibold tracking-tight text-foreground mt-10 mb-4">{paragraph.replace('## ', '')}</h2>

@@ -71,7 +71,7 @@ export default function DashboardHome() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8">
           <Skeleton className="h-9 w-48" />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Skeleton className="h-24 w-full" />
@@ -89,9 +89,9 @@ export default function DashboardHome() {
   if (forms.length === 0) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-4xl mx-auto px-6 py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">Dashboard</h1>
+            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">Dashboard</h1>
             <p className="text-muted-foreground mt-1">You're on the {planName} plan.</p>
           </div>
           <GettingStarted
@@ -109,14 +109,14 @@ export default function DashboardHome() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">Dashboard</h1>
+            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">Dashboard</h1>
             <p className="text-muted-foreground mt-1">You're on the {planName} plan.</p>
           </div>
-          <Button onClick={createForm} disabled={creating}>
+          <Button onClick={createForm} disabled={creating} className="self-start sm:self-auto">
             <Plus className="w-4 h-4" /> {creating ? 'Creating…' : 'Create form'}
           </Button>
         </div>

@@ -28,23 +28,23 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="bg-card border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">Settings</h1>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">Settings</h1>
           <p className="text-muted-foreground mt-1">Manage your account and preferences</p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <div className="grid md:grid-cols-2 gap-6">
           {settingsSections.map((section, i) => (
             <Link
               key={i}
               href={section.href}
-              className="card-surface p-6 hover:bg-muted/30 transition-colors group"
+              className="card-surface p-6 hover:bg-muted/30 transition-colors duration-150 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-muted rounded-md flex items-center justify-center group-hover:bg-primary transition-colors">
-                  <section.icon className="w-6 h-6 text-muted-foreground group-hover:text-primary-foreground transition-colors" />
+                <div className="w-12 h-12 bg-muted rounded-md flex items-center justify-center group-hover:bg-primary transition-colors duration-150">
+                  <section.icon className="w-6 h-6 text-muted-foreground group-hover:text-primary-foreground transition-colors duration-150" />
                 </div>
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold tracking-tight text-foreground mb-2">

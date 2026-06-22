@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { Search, BookOpen, Video, FileText, HelpCircle } from 'lucide-react'
 import { useState } from 'react'
+import { MarketingNav } from '@/components/marketing/MarketingNav'
 
 export default function HelpPage() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -119,22 +120,16 @@ export default function HelpPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Navigation */}
-      <nav className="border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="text-xl font-semibold tracking-tight text-foreground">Stoneforms</Link>
-            <div className="flex items-center gap-6 text-sm">
-              <Link href="/features" className="text-muted-foreground hover:text-foreground transition-colors">Features</Link>
-              <Link href="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
-              <Link href="/help" className="text-foreground font-medium">Help</Link>
-              <Link href="/auth/signup" className="px-5 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium">
-                Get Started Free
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <MarketingNav
+        fixed={false}
+        active="/help"
+        links={[
+          { href: '/features', label: 'Features' },
+          { href: '/templates', label: 'Templates' },
+          { href: '/pricing', label: 'Pricing' },
+          { href: '/help', label: 'Help' },
+        ]}
+      />
 
       {/* Hero */}
       <section className="py-20 px-6 bg-secondary border-b border-border">
@@ -146,9 +141,10 @@ export default function HelpPage() {
 
           {/* Search */}
           <div className="max-w-2xl mx-auto relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" aria-hidden="true" />
             <input
               type="text"
+              aria-label="Search the help center"
               placeholder="Search for help..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}

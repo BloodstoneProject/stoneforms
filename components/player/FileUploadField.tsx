@@ -142,8 +142,8 @@ export function FileUploadField({
       )}
 
       {error && (
-        <div className="flex items-center gap-2 mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+        <div role="alert" className="flex items-center gap-2 mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" aria-hidden="true" />
           <p className="text-sm text-red-700">{error}</p>
         </div>
       )}

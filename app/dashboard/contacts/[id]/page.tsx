@@ -73,9 +73,9 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
           <Skeleton className="h-9 w-64" />
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <Skeleton className="h-20 w-full" />
             <Skeleton className="h-20 w-full" />
             <Skeleton className="h-20 w-full" />
@@ -106,31 +106,35 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
   return (
     <div className="min-h-screen bg-background">
       <div className="bg-card border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <Link href="/dashboard/contacts" className="text-muted-foreground hover:text-foreground">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+          <div className="flex items-start justify-between gap-4 mb-6">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+              <Link
+                href="/dashboard/contacts"
+                aria-label="Back to contacts"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
                 <ArrowLeft className="w-5 h-5" />
               </Link>
-              <div>
-                <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+              <div className="min-w-0">
+                <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground truncate">
                   {contact.first_name || ''} {contact.last_name || ''}
                   {!contact.first_name && !contact.last_name && contact.email}
                 </h1>
                 {contact.company && (
-                  <p className="text-muted-foreground mt-1">{contact.company}</p>
+                  <p className="text-muted-foreground mt-1 truncate">{contact.company}</p>
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 shrink-0">
               <Button variant="outline" onClick={deleteContact} className="text-destructive hover:text-destructive">
                 <Trash2 className="w-4 h-4" />
-                Delete
+                <span className="hidden sm:inline">Delete</span>
               </Button>
             </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <StatCard label="Total Deals" value={String(deals.length)} />
             <StatCard label="Won Deals" value={String(wonDeals.length)} />
             <StatCard label="Total Value" value={totalDealValue > 0 ? `£${(totalDealValue / 1000).toFixed(0)}k` : '£0'} />
@@ -142,7 +146,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         <div className="grid md:grid-cols-3 gap-6">
           <div className="space-y-6">
             <div className="card-surface p-6">
