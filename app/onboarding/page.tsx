@@ -159,19 +159,19 @@ export default function OnboardingPage() {
             minutes, then collect and manage every response with a light CRM
             built in. Let's get your first form live.
           </p>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
             <button
               onClick={() => setStep(2)}
-              className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 font-medium transition-colors"
+              className="inline-flex min-h-[44px] w-full sm:w-auto items-center justify-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               Get started <ArrowRight className="w-4 h-4" />
             </button>
             <button
               onClick={finishToDashboard}
               disabled={working}
-              className="px-5 py-2.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+              className="inline-flex min-h-[44px] w-full sm:w-auto items-center justify-center gap-2 px-5 py-2.5 text-muted-foreground hover:text-foreground rounded-md transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
-              {working ? 'Skipping…' : 'Skip for now'}
+              {working ? <><Loader2 className="w-4 h-4 animate-spin" /> Skipping…</> : 'Skip for now'}
             </button>
           </div>
         </div>
@@ -195,7 +195,8 @@ export default function OnboardingPage() {
                 <button
                   key={uc.id}
                   onClick={() => setUseCase(uc.id)}
-                  className={`text-left p-5 rounded-lg border transition-all duration-200 ${
+                  aria-pressed={selected}
+                  className={`text-left p-5 rounded-lg border transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
                     selected
                       ? 'border-primary bg-muted ring-1 ring-primary'
                       : 'border-border bg-card hover:border-foreground/30'
@@ -226,17 +227,17 @@ export default function OnboardingPage() {
             })}
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
             <button
               onClick={() => setStep(3)}
               disabled={!useCase}
-              className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 font-medium transition-colors disabled:opacity-40 disabled:hover:bg-primary"
+              className="inline-flex min-h-[44px] w-full sm:w-auto items-center justify-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 font-medium transition-colors disabled:opacity-40 disabled:hover:bg-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               Continue <ArrowRight className="w-4 h-4" />
             </button>
             <button
               onClick={() => setStep(1)}
-              className="px-5 py-2.5 text-muted-foreground hover:text-foreground transition-colors"
+              className="inline-flex min-h-[44px] w-full sm:w-auto items-center justify-center px-5 py-2.5 text-muted-foreground hover:text-foreground rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               Back
             </button>
@@ -259,11 +260,11 @@ export default function OnboardingPage() {
             and drop you straight into the builder. Add your questions, style it,
             and publish when you're ready.
           </p>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
             <button
               onClick={createFirstForm}
               disabled={working}
-              className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 font-medium transition-colors disabled:opacity-50"
+              className="inline-flex min-h-[44px] w-full sm:w-auto items-center justify-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 font-medium transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               {working ? (
                 <>
@@ -278,7 +279,7 @@ export default function OnboardingPage() {
             <button
               onClick={finishToDashboard}
               disabled={working}
-              className="px-5 py-2.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+              className="inline-flex min-h-[44px] w-full sm:w-auto items-center justify-center px-5 py-2.5 text-muted-foreground hover:text-foreground rounded-md transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               Go to dashboard
             </button>

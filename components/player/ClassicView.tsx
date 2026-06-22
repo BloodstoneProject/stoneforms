@@ -7,7 +7,7 @@
 // this component is pure rendering + a validate-all-then-submit handler.
 
 import { useState } from 'react'
-import { Check } from 'lucide-react'
+import { Check, Loader2 } from 'lucide-react'
 import { Question } from '@/types'
 import { QuestionRenderer } from '@/components/player/QuestionRenderer'
 import { ContentBlock } from '@/components/player/ContentBlock'
@@ -84,14 +84,14 @@ export function ClassicView({
 
   return (
     <div className="min-h-screen" style={{ background: bg, fontFamily: ff }}>
-      <div className="mx-auto max-w-2xl px-6 py-16">
+      <div className="mx-auto max-w-2xl px-4 sm:px-6 py-10 sm:py-16">
         {/* Form header */}
-        <header className="mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold leading-tight" style={{ color: c.text }}>
+        <header className="mb-10 sm:mb-12">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight" style={{ color: c.text }}>
             {formTitle}
           </h1>
           {formDescription && (
-            <p className="mt-3 text-lg md:text-xl opacity-70" style={{ color: c.text }}>
+            <p className="mt-3 text-base sm:text-lg md:text-xl opacity-70" style={{ color: c.text }}>
               {formDescription}
             </p>
           )}
@@ -118,6 +118,7 @@ export function ClassicView({
 
         {(submitError || localError) && (
           <div
+            role="alert"
             className="mt-8 p-3 rounded-lg text-sm"
             style={{ backgroundColor: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca' }}
           >
@@ -129,10 +130,14 @@ export function ClassicView({
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="sf-cta inline-flex items-center gap-2 px-7 py-3.5 font-semibold text-lg disabled:opacity-60 shadow-sm hover:shadow-md transition-transform active:scale-95"
+            className="sf-cta inline-flex min-h-[48px] w-full sm:w-auto items-center justify-center gap-2 px-7 py-3.5 font-semibold text-lg disabled:opacity-60 shadow-sm hover:shadow-md transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
             style={{ backgroundColor: c.button, color: c.buttonText, borderRadius: radius }}
           >
-            {submitting ? 'Submitting…' : <>Submit <Check className="w-5 h-5" /></>}
+            {submitting ? (
+              <><Loader2 className="w-5 h-5 animate-spin" /> Submitting…</>
+            ) : (
+              <>Submit <Check className="w-5 h-5" /></>
+            )}
           </button>
         </div>
 

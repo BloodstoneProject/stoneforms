@@ -113,7 +113,7 @@ export default async function LandingPage({
             href={getSiteUrl()}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs opacity-50 hover:opacity-80 transition-opacity"
+            className="inline-block rounded px-2 py-1 text-xs opacity-50 hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
             style={{ color: theme.colors.text }}
           >
             Powered by Stoneforms

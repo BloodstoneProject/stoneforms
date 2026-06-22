@@ -38,7 +38,7 @@ export default function LandingSections({
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-10 space-y-6">
+    <div className="mx-auto max-w-2xl px-4 sm:px-6 py-10 space-y-6">
       {sections.map((b, i) => {
         const block = {
           id: b.id || `section-${i}`,

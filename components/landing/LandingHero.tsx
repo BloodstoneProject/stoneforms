@@ -51,7 +51,7 @@ export default function LandingHero({
   return (
     <header
       style={bgStyle}
-      className="relative w-full px-6 py-16 sm:py-24"
+      className="relative w-full px-5 sm:px-6 py-16 sm:py-24"
     >
       <div className="mx-auto max-w-2xl text-center">
         {landing.logoUrl?.trim() ? (

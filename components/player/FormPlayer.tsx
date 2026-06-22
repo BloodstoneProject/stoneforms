@@ -13,7 +13,7 @@ import { RewardBadge } from '@/components/player/RewardScreen'
 import { ContentBlock } from '@/components/player/ContentBlock'
 import { ClassicView } from '@/components/player/ClassicView'
 import { MagazineView } from '@/components/player/MagazineView'
-import { ArrowRight, ArrowLeft, Check } from 'lucide-react'
+import { ArrowRight, ArrowLeft, Check, Loader2 } from 'lucide-react'
 import { getPresentation } from '@/lib/blocks'
 import { isInputField, isContentBlock } from '@/lib/field-types'
 import {
@@ -660,7 +660,7 @@ export default function FormPlayer({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`sf-cta inline-flex items-center gap-2 px-7 py-3.5 font-semibold text-lg disabled:opacity-60 shadow-sm hover:shadow-md ${gamifyOn && !reduceMotion ? 'sf-cta-spring' : 'transition-transform active:scale-95'}`}
+      className={`sf-cta inline-flex min-h-[48px] items-center justify-center gap-2 px-6 sm:px-7 py-3.5 font-semibold text-base sm:text-lg disabled:opacity-60 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${gamifyOn && !reduceMotion ? 'sf-cta-spring' : 'transition-transform active:scale-95'}`}
       style={{ backgroundColor: c.button, color: c.buttonText, borderRadius: radius }}
     >
       {label}
@@ -723,7 +723,7 @@ export default function FormPlayer({
   // A respondent who already completed (above) still sees their thank-you screen.
   if (availability && availability.open === false) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6" style={{ background: bg, fontFamily: ff }}>
+      <div className="min-h-screen flex items-center justify-center p-5 sm:p-6" style={{ background: bg, fontFamily: ff }}>
         <div className="w-full max-w-xl text-center">
           <div
             className="w-16 h-16 rounded-full mx-auto mb-6 flex items-center justify-center text-3xl"
@@ -731,10 +731,10 @@ export default function FormPlayer({
           >
             🔒
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: c.text }}>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3" style={{ color: c.text }}>
             {availability.reason === 'not_open' ? 'Not open yet' : 'Form closed'}
           </h1>
-          <p className="text-lg opacity-70" style={{ color: c.text }}>
+          <p className="text-base sm:text-lg opacity-70" style={{ color: c.text }}>
             {availability.message || 'This form is not currently accepting responses.'}
           </p>
           {!hideBranding && (
@@ -750,7 +750,7 @@ export default function FormPlayer({
   // Welcome screen
   if (!started && welcomeEnabled) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6" style={{ background: bg, fontFamily: ff }}>
+      <div className="min-h-screen flex items-center justify-center p-5 sm:p-6" style={{ background: bg, fontFamily: ff }}>
         <div className="w-full max-w-2xl text-center">
           {theme.logoUrl && (
             // eslint-disable-next-line @next/next/no-img-element
@@ -762,11 +762,11 @@ export default function FormPlayer({
               loading="eager"
             />
           )}
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight" style={{ color: c.text }}>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 leading-tight" style={{ color: c.text }}>
             {settings.welcome?.title || formTitle}
           </h1>
           {(settings.welcome?.description || formDescription) && (
-            <p className="text-lg md:text-xl mb-10 opacity-70" style={{ color: c.text }}>
+            <p className="text-base sm:text-lg md:text-xl mb-10 opacity-70" style={{ color: c.text }}>
               {settings.welcome?.description || formDescription}
             </p>
           )}
@@ -854,7 +854,7 @@ export default function FormPlayer({
           </div>
         )}
 
-        <div className="flex-1 flex items-center justify-center px-6 py-16">
+        <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-10 sm:py-16">
           <div
             key={safePageIndex}
             className="w-full max-w-2xl"
@@ -928,13 +928,13 @@ export default function FormPlayer({
               </div>
             )}
 
-            <div className="flex items-center gap-4 mt-9">
+            <div className="flex items-center gap-3 sm:gap-4 mt-9">
               {primaryBtn(
-                submitting ? 'Submitting…' : onLastPage ? <>Submit <Check className="w-5 h-5" /></> : <>Next <ArrowRight className="w-5 h-5" /></>,
+                submitting ? <><Loader2 className="w-5 h-5 animate-spin" /> Submitting…</> : onLastPage ? <>Submit <Check className="w-5 h-5" /></> : <>Next <ArrowRight className="w-5 h-5" /></>,
                 goNextPage, submitting
               )}
               {safePageIndex > 0 && (
-                <button onClick={goPrevPage} className="inline-flex items-center gap-1.5 px-4 py-2 text-sm opacity-60 hover:opacity-100 transition-opacity" style={{ color: c.text }}>
+                <button onClick={goPrevPage} className="inline-flex min-h-[44px] items-center gap-1.5 px-4 py-2 text-sm opacity-60 hover:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 rounded-md" style={{ color: c.text }}>
                   <ArrowLeft className="w-4 h-4" /> Back
                 </button>
               )}
@@ -982,7 +982,7 @@ export default function FormPlayer({
         </div>
       )}
 
-      <div className="flex-1 flex items-center justify-center px-6 py-16">
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-10 sm:py-16">
         <div
           key={currentId}
           className="w-full max-w-2xl"
@@ -1017,7 +1017,7 @@ export default function FormPlayer({
                     return kept
                   })
                 }}
-                className="text-xs font-medium underline opacity-70 hover:opacity-100"
+                className="shrink-0 text-xs font-medium underline opacity-70 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 rounded"
               >
                 Start over
               </button>
@@ -1050,18 +1050,18 @@ export default function FormPlayer({
           )}
 
           {submitError && (
-            <div className="mt-5 p-3 rounded-lg text-sm" style={{ backgroundColor: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca' }}>
+            <div role="alert" className="mt-5 p-3 rounded-lg text-sm" style={{ backgroundColor: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca' }}>
               {submitError}
             </div>
           )}
 
-          <div className="flex items-center gap-4 mt-9">
+          <div className="flex items-center gap-3 sm:gap-4 mt-9">
             {primaryBtn(
-              submitting ? 'Submitting…' : isLast ? <>Submit <Check className="w-5 h-5" /></> : <>OK <ArrowRight className="w-5 h-5" /></>,
+              submitting ? <><Loader2 className="w-5 h-5 animate-spin" /> Submitting…</> : isLast ? <>Submit <Check className="w-5 h-5" /></> : <>OK <ArrowRight className="w-5 h-5" /></>,
               goNext, submitting
             )}
             {!isFirst && (
-              <button onClick={goPrev} className="inline-flex items-center gap-1.5 px-4 py-2 text-sm opacity-60 hover:opacity-100 transition-opacity" style={{ color: c.text }}>
+              <button onClick={goPrev} className="inline-flex min-h-[44px] items-center gap-1.5 px-4 py-2 text-sm opacity-60 hover:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 rounded-md" style={{ color: c.text }}>
                 <ArrowLeft className="w-4 h-4" /> Back
               </button>
             )}

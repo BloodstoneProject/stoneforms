@@ -11,7 +11,7 @@
 // persist across spreads, quiz/redirect/payment all run through the parent.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, ArrowRight, Check } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-react'
 import { Question } from '@/types'
 import { QuestionRenderer } from '@/components/player/QuestionRenderer'
 import { ContentBlock } from '@/components/player/ContentBlock'
@@ -209,15 +209,15 @@ export function MagazineView(props: MagazineViewProps) {
   const renderPage = (lf: Leaf) => {
     if (lf.kind === 'cover') {
       return (
-        <div className="h-full flex flex-col items-center justify-center text-center px-8 py-12">
+        <div className="h-full flex flex-col items-center justify-center text-center px-6 sm:px-8 py-10 sm:py-12">
           <div className="mb-6 text-xs tracking-[0.3em] uppercase opacity-50" style={{ color: c.primary }}>
             Stoneforms
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold leading-tight" style={{ color: c.text }}>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight" style={{ color: c.text }}>
             {formTitle}
           </h1>
           {formDescription && (
-            <p className="mt-4 text-lg opacity-70 max-w-md" style={{ color: c.text }}>
+            <p className="mt-4 text-base sm:text-lg opacity-70 max-w-md" style={{ color: c.text }}>
               {formDescription}
             </p>
           )}
@@ -228,7 +228,7 @@ export function MagazineView(props: MagazineViewProps) {
       )
     }
     return (
-      <div className="h-full overflow-y-auto px-8 md:px-10 py-10 sf-mag-scroll">
+      <div className="h-full overflow-y-auto px-5 sm:px-8 md:px-10 py-8 sm:py-10 sf-mag-scroll">
         <div className="space-y-8 max-w-xl mx-auto">
           {lf.page.map((b) => (
             <div key={b.id} id={`sf-block-${b.id}`}>
@@ -321,20 +321,20 @@ export function MagazineView(props: MagazineViewProps) {
 
       {/* Errors */}
       {submitError && (
-        <div className="px-6 -mt-4 mb-2 w-full max-w-xl">
-          <div className="p-3 rounded-lg text-sm" style={{ backgroundColor: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca' }}>
+        <div className="px-4 sm:px-6 -mt-4 mb-2 w-full max-w-xl">
+          <div role="alert" className="p-3 rounded-lg text-sm" style={{ backgroundColor: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca' }}>
             {submitError}
           </div>
         </div>
       )}
 
       {/* Controls */}
-      <div className="flex items-center gap-4 pb-10">
+      <div className="flex items-center gap-3 sm:gap-4 px-4 pb-10">
         <button
           onClick={goPrev}
           disabled={atStart}
           aria-label="Previous page"
-          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-medium disabled:opacity-30 transition-opacity"
+          className="inline-flex min-h-[44px] items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-medium disabled:opacity-30 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
           style={{ color: c.text, border: `1px solid ${c.text}33` }}
         >
           <ArrowLeft className="w-4 h-4" /> Back
@@ -343,11 +343,12 @@ export function MagazineView(props: MagazineViewProps) {
         <button
           onClick={goNext}
           disabled={submitting}
-          className="sf-cta inline-flex items-center gap-2 px-7 py-3 font-semibold disabled:opacity-60 shadow-sm hover:shadow-md transition-transform active:scale-95"
+          aria-label={isFinalSpread ? 'Submit form' : 'Next page'}
+          className="sf-cta inline-flex min-h-[44px] items-center justify-center gap-2 px-6 sm:px-7 py-3 font-semibold disabled:opacity-60 shadow-sm hover:shadow-md transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
           style={{ backgroundColor: c.button, color: c.buttonText, borderRadius: radius }}
         >
           {submitting
-            ? 'Submitting…'
+            ? <><Loader2 className="w-5 h-5 animate-spin" /> Submitting…</>
             : isFinalSpread
               ? <>Submit <Check className="w-5 h-5" /></>
               : <>Next <ArrowRight className="w-5 h-5" /></>}
