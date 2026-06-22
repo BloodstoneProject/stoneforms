@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, Plus, Trash2, GripVertical, Eye, Share2,
   Settings2, ChevronDown, ChevronUp, Check, Loader2, Globe, Pencil, BarChart3, Webhook, Palette, GitBranch,
+  Heading, AlignLeft, Quote, MousePointerClick, Image as ImageIcon, Video, AppWindow, Code2, Minus, MoveVertical, LayoutGrid,
+  type LucideIcon,
 } from 'lucide-react'
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor,
@@ -19,7 +21,31 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import ShareModal from '@/components/forms/share-modal'
 import FieldOptionsEditor from '@/components/forms/field-options-editor'
-import { FIELD_TYPES, fieldHasOptions, getFieldMeta } from '@/lib/field-types'
+import BlockEditor, { blockPreview } from '@/components/forms/BlockEditor'
+import { Badge } from '@/components/ui/badge'
+import { FIELD_TYPES, fieldHasOptions, getFieldMeta, isContentBlock } from '@/lib/field-types'
+import {
+  BLOCK_LIBRARY, defaultBlockSettings, PRESENTATION_MODES, getPresentation,
+  type BlockGroup, type PresentationMode,
+} from '@/lib/blocks'
+
+// Maps the lucide icon NAME from BLOCK_LIBRARY to the actual component.
+const BLOCK_ICONS: Record<string, LucideIcon> = {
+  Heading, AlignLeft, Quote, MousePointerClick, Image: ImageIcon, Video,
+  AppWindow, Code2, Minus, MoveVertical, LayoutGrid,
+}
+
+const BLOCK_GROUP_LABELS: Record<BlockGroup, string> = {
+  content: 'Content',
+  media: 'Media',
+  layout: 'Layout',
+}
+
+const PRESENTATION_LABELS: Record<PresentationMode, { label: string; description: string }> = {
+  conversational: { label: 'Conversational', description: 'One block per screen, Typeform-style.' },
+  classic: { label: 'Classic', description: 'All blocks on one scrolling page.' },
+  magazine: { label: 'Magazine', description: 'Editorial layout; sections act as page boundaries.' },
+}
 
 interface QuizOutcome {
   id: string
@@ -284,6 +310,38 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
     }
   }
 
+  // Add a CONTENT block. Reuses the EXACT same fields API as questions: a block
+  // is a form_fields row whose field_type is the block type and whose content
+  // lives in settings (seeded from defaultBlockSettings). No new API.
+  const addBlock = async (blockType: string) => {
+    try {
+      const res = await fetch(`/api/forms/${formId}/fields`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          field_type: blockType,
+          label: '',
+          required: false,
+          options: null,
+          settings: defaultBlockSettings(blockType),
+        }),
+      })
+      if (!res.ok) return
+      const data = await res.json()
+      if (data.field) {
+        setFields((prev) => [...prev, data.field])
+        // Open its editor straight away so the owner can fill it in.
+        setExpandedSettingsId(data.field.id)
+      }
+    } catch (error) {
+      console.error('Failed to add block:', error)
+    }
+  }
+
+  // Presentation mode lives in forms.settings.presentation. Spread existing
+  // settings so quiz/schedule/gamify/etc. are never dropped.
+  const setPresentation = (mode: PresentationMode) => updateSetting('presentation', mode)
+
   // Optimistic field update + persist. `optimistic` patches local state immediately.
   const updateField = async (fieldId: string, updates: Partial<Field>) => {
     setFields((prev) => prev.map((f) => (f.id === fieldId ? { ...f, ...updates } : f)))
@@ -487,12 +545,12 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Field Types Sidebar */}
+          {/* Field Types + Content Blocks Sidebar */}
           <div className="lg:col-span-1">
-            <div className="card-surface p-4 sticky top-24">
+            <div className="card-surface p-4 sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto">
               <h3 className="heading-tight text-foreground mb-4">Add Fields</h3>
               <div className="space-y-2">
-                {FIELD_TYPES.map((type) => (
+                {FIELD_TYPES.filter((t) => t.input || t.value === 'statement' || t.value === 'page_break').map((type) => (
                   <button
                     key={type.value}
                     onClick={() => addField(type.value)}
@@ -502,6 +560,39 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                     <span className="text-sm font-medium text-foreground">{type.label}</span>
                   </button>
                 ))}
+              </div>
+
+              {/* Content blocks — grouped per BLOCK_LIBRARY (Content / Media / Layout) */}
+              <div className="mt-6 pt-4 border-t border-border">
+                <h3 className="heading-tight text-foreground mb-1">Add Content</h3>
+                <p className="text-xs text-muted-foreground mb-4">Non-question blocks that interleave with your questions.</p>
+                {(['content', 'media', 'layout'] as BlockGroup[]).map((group) => {
+                  const entries = BLOCK_LIBRARY.filter((b) => b.group === group)
+                  if (entries.length === 0) return null
+                  return (
+                    <div key={group} className="mb-4 last:mb-0">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                        {BLOCK_GROUP_LABELS[group]}
+                      </p>
+                      <div className="space-y-2">
+                        {entries.map((b) => {
+                          const Icon = BLOCK_ICONS[b.icon] || LayoutGrid
+                          return (
+                            <button
+                              key={b.type}
+                              onClick={() => addBlock(b.type)}
+                              title={b.description}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 border border-border rounded-md hover:bg-secondary text-left transition-colors"
+                            >
+                              <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
+                              <span className="text-sm font-medium text-foreground">{b.label}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           </div>
@@ -557,6 +648,36 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                     />
                     <span className="text-sm text-foreground">Allow multiple submissions per visitor</span>
                   </label>
+                  {/* Presentation mode — selects how the whole block list is rendered */}
+                  <div className="pt-3 border-t border-border">
+                    <p className="text-sm font-medium text-foreground mb-1">Presentation mode</p>
+                    <p className="text-xs text-muted-foreground mb-3">How questions and content blocks are presented to respondents.</p>
+                    <div className="space-y-2">
+                      {PRESENTATION_MODES.map((mode) => {
+                        const active = getPresentation(form) === mode
+                        const info = PRESENTATION_LABELS[mode]
+                        return (
+                          <button
+                            key={mode}
+                            type="button"
+                            onClick={() => setPresentation(mode)}
+                            className={`w-full flex items-start gap-3 text-left px-3 py-2.5 border rounded-md transition-colors ${
+                              active ? 'border-foreground bg-secondary' : 'border-border hover:bg-secondary/60'
+                            }`}
+                          >
+                            <span className={`mt-0.5 w-4 h-4 rounded-full border shrink-0 flex items-center justify-center ${active ? 'border-foreground' : 'border-input'}`}>
+                              {active && <span className="w-2 h-2 rounded-full bg-foreground" />}
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block text-sm font-medium text-foreground">{info.label}</span>
+                              <span className="block text-xs text-muted-foreground">{info.description}</span>
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
                   {/* Welcome screen */}
                   <div className="pt-3 border-t border-border">
                     <label className="flex items-center gap-3 cursor-pointer mb-2">
@@ -927,6 +1048,57 @@ function SortableField({ field, index, allFields, quizEnabled, expanded, onToggl
         <button onClick={() => onDelete(field.id)} className="text-muted-foreground hover:text-destructive" aria-label="Delete page break">
           <Trash2 className="w-5 h-5" />
         </button>
+      </div>
+    )
+  }
+
+  // ---- Content block row ----
+  // Content blocks (heading/text/image/…) are presentational, collect no answer,
+  // and have no label/required/options. Render a lighter, visually distinct row
+  // with the block icon + a "Content" badge + a preview snippet. They stay in the
+  // SAME sortable list (shared `position`) and edit via the same settings PATCH.
+  if (isContentBlock(field.field_type)) {
+    const Icon = BLOCK_ICONS[BLOCK_LIBRARY.find((b) => b.type === field.field_type)?.icon || ''] || LayoutGrid
+    const preview = blockPreview(field)
+    return (
+      <div ref={setNodeRef} style={style} className="rounded-lg border border-dashed border-border bg-secondary/40 p-4">
+        <div className="flex items-start gap-3">
+          <button
+            {...attributes}
+            {...listeners}
+            className="text-muted-foreground/50 hover:text-muted-foreground mt-1 cursor-grab active:cursor-grabbing touch-none"
+            aria-label="Drag to reorder"
+          >
+            <GripVertical className="w-5 h-5" />
+          </button>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-muted-foreground text-sm font-medium w-5 shrink-0">{index + 1}</span>
+              <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
+              <span className="text-sm font-medium text-foreground shrink-0">{meta?.label || field.field_type}</span>
+              <Badge variant="outline" className="shrink-0">Content</Badge>
+              {preview && <span className="text-sm text-muted-foreground truncate">{preview}</span>}
+              <button
+                onClick={onToggleExpand}
+                className="ml-auto flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground shrink-0"
+              >
+                <Settings2 className="w-4 h-4" /> Edit
+                {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              </button>
+            </div>
+
+            {expanded && (
+              <div className="pl-8 pt-3 mt-2 border-t border-border">
+                <BlockEditor field={field} onUpdateSetting={onUpdateSetting as any} />
+              </div>
+            )}
+          </div>
+
+          <button onClick={() => onDelete(field.id)} className="text-muted-foreground hover:text-destructive mt-1" aria-label="Delete block">
+            <Trash2 className="w-5 h-5" />
+          </button>
+        </div>
       </div>
     )
   }

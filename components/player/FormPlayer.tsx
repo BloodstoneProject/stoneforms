@@ -10,7 +10,12 @@ import { ReactionBar } from '@/components/player/ReactionBar'
 import { GamifyHud } from '@/components/player/GamifyHud'
 import { MilestoneBanner } from '@/components/player/MilestoneBanner'
 import { RewardBadge } from '@/components/player/RewardScreen'
+import { ContentBlock } from '@/components/player/ContentBlock'
+import { ClassicView } from '@/components/player/ClassicView'
+import { MagazineView } from '@/components/player/MagazineView'
 import { ArrowRight, ArrowLeft, Check } from 'lucide-react'
+import { getPresentation } from '@/lib/blocks'
+import { isInputField, isContentBlock } from '@/lib/field-types'
 import {
   type FormTheme, DEFAULT_THEME, fontStack, googleFontHref, buttonRadius, backgroundCss,
 } from '@/lib/themes'
@@ -201,6 +206,9 @@ export default function FormPlayer({
   const confettiRef = useRef<ConfettiHandle | null>(null)
 
   const showProgressBar = settings.showProgressBar !== false
+  // Presentation mode selects the RENDERER over the same block list. Default
+  // 'conversational' keeps the original Typeform-style behaviour byte-identical.
+  const presentation = getPresentation(settings)
   const welcomeEnabled = settings.welcome?.enabled !== false
   const current = questions.find((q) => q.id === currentId)
   const index = orderedIds.indexOf(currentId)
@@ -377,8 +385,7 @@ export default function FormPlayer({
   // A question is "reactable" when it's an actual answerable question (not a
   // structural/display field). Reactions never appear on these.
   const isReactable = (q: Question): boolean =>
-    q.type !== 'statement' &&
-    q.type !== 'page_break' &&
+    isInputField(q.type) &&
     q.type !== 'hidden' &&
     q.type !== 'calculator' &&
     q.type !== 'payment'
@@ -387,6 +394,9 @@ export default function FormPlayer({
   // when the answer is acceptable. Shared by the single-question path and the
   // paged path (which validates every question on a page).
   const validateQuestion = (q: Question): string | null => {
+    // Content blocks (heading/image/divider/…) and other non-input blocks collect
+    // no answer and are never required — they never block navigation/submit.
+    if (!isInputField(q.type)) return null
     if (q.type === 'statement' || q.type === 'page_break') return null // no answer
     if (q.type === 'calculator') return null // computed display, never blocks
     if (q.type === 'payment') return null // disclosure panel, paid on submit, never blocks
@@ -757,6 +767,65 @@ export default function FormPlayer({
     )
   }
 
+  // ---- CLASSIC / MAGAZINE PRESENTATION MODES ----------------------------
+  // These share the welcome/closed/complete/quiz/redirect/payment machinery
+  // above and the single source of truth below (answers, validateQuestion,
+  // handleSubmit, theme). They render the SAME block list (positions preserved)
+  // and their final action calls the existing handleSubmit. Conversational mode
+  // (the default) never reaches here, so its behaviour is untouched.
+  // `visibleFlow` = all blocks minus hidden fields, in position order.
+  if (presentation === 'classic') {
+    return (
+      <>
+        {gamifyOn && (
+          <Confetti ref={confettiRef} colors={confettiColors} interactive={celebrating && !reduceMotion} zIndex={celebrating ? 60 : 30} />
+        )}
+        <ClassicView
+          formTitle={formTitle}
+          formDescription={formDescription}
+          blocks={visibleFlow}
+          answers={answers}
+          errors={errors}
+          setAnswer={setAnswer}
+          validateQuestion={validateQuestion}
+          setErrors={setErrors}
+          onSubmit={handleSubmit}
+          submitting={submitting}
+          submitError={submitError}
+          theme={theme}
+          hideBranding={hideBranding}
+          showProgressBar={showProgressBar}
+        />
+      </>
+    )
+  }
+
+  if (presentation === 'magazine') {
+    return (
+      <>
+        {gamifyOn && (
+          <Confetti ref={confettiRef} colors={confettiColors} interactive={celebrating && !reduceMotion} zIndex={celebrating ? 60 : 30} />
+        )}
+        <MagazineView
+          formTitle={formTitle}
+          formDescription={formDescription}
+          blocks={visibleFlow}
+          answers={answers}
+          errors={errors}
+          setAnswer={setAnswer}
+          validateQuestion={validateQuestion}
+          setErrors={setErrors}
+          onSubmit={handleSubmit}
+          submitting={submitting}
+          submitError={submitError}
+          theme={theme}
+          hideBranding={hideBranding}
+          reduceMotion={reduceMotion}
+        />
+      </>
+    )
+  }
+
   // ---- PAGE MODE — render every question of the current page together ----
   // Gated entirely behind hasPageBreaks so forms with no page breaks never reach
   // this branch and keep the byte-for-byte original single-question behaviour.
@@ -818,14 +887,18 @@ export default function FormPlayer({
             <div className="space-y-12">
               {page.map((q) => (
                 <div key={q.id}>
-                  <QuestionRenderer
-                    question={q}
-                    value={answers[q.id]}
-                    error={errors[q.id]}
-                    onChange={(v) => setAnswer(q.id, v)}
-                    allAnswers={answers}
-                    theme={{ primaryColor: c.primary, backgroundColor: c.background, textColor: c.text }}
-                  />
+                  {isContentBlock(q.type) ? (
+                    <ContentBlock block={q} theme={theme} />
+                  ) : (
+                    <QuestionRenderer
+                      question={q}
+                      value={answers[q.id]}
+                      error={errors[q.id]}
+                      onChange={(v) => setAnswer(q.id, v)}
+                      allAnswers={answers}
+                      theme={{ primaryColor: c.primary, backgroundColor: c.background, textColor: c.text }}
+                    />
+                  )}
                   {reactionsOn && isReactable(q) && (
                     <ReactionBar
                       value={reactions[q.id]}
@@ -941,14 +1014,20 @@ export default function FormPlayer({
             </div>
           )}
 
-          <QuestionRenderer
-            question={current}
-            value={answers[current.id]}
-            error={errors[current.id]}
-            onChange={(v) => setAnswer(current.id, v)}
-            allAnswers={answers}
-            theme={{ primaryColor: c.primary, backgroundColor: c.background, textColor: c.text }}
-          />
+          {isContentBlock(current.type) ? (
+            // Content blocks render as a no-input "slide" (like statement) — the
+            // Continue button advances; nothing is required.
+            <ContentBlock block={current} theme={theme} />
+          ) : (
+            <QuestionRenderer
+              question={current}
+              value={answers[current.id]}
+              error={errors[current.id]}
+              onChange={(v) => setAnswer(current.id, v)}
+              allAnswers={answers}
+              theme={{ primaryColor: c.primary, backgroundColor: c.background, textColor: c.text }}
+            />
+          )}
 
           {reactionsOn && current && isReactable(current) && (
             <ReactionBar
