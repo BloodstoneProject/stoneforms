@@ -28,7 +28,16 @@ import {
   CreditCard,
   SeparatorHorizontal,
   Copy,
-  Trash2
+  Trash2,
+  Heading,
+  Image as ImageIcon,
+  Code2,
+  Quote as QuoteIcon,
+  MousePointerClick,
+  Minus,
+  MoveVertical,
+  LayoutGrid,
+  AppWindow
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
@@ -70,6 +79,17 @@ const questionTypeIcons: Record<QuestionType, any> = {
   page_break: SeparatorHorizontal,
   video: Video,
   audio: Mic,
+  // ---- Content blocks ----
+  heading: Heading,
+  text_block: AlignLeft,
+  image: ImageIcon,
+  embed: AppWindow,
+  html: Code2,
+  divider: Minus,
+  spacer: MoveVertical,
+  quote: QuoteIcon,
+  button: MousePointerClick,
+  section: LayoutGrid,
 }
 
 const questionTypes: { type: QuestionType; label: string }[] = [

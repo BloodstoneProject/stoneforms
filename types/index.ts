@@ -25,7 +25,18 @@ export type QuestionType =
   | 'payment'
   | 'page_break'
   | 'video'
-  | 'audio';
+  | 'audio'
+  // ---- Content blocks (non-input; see lib/blocks.ts for settings shapes) ----
+  | 'heading'
+  | 'text_block'
+  | 'image'
+  | 'embed'
+  | 'html'
+  | 'divider'
+  | 'spacer'
+  | 'quote'
+  | 'button'
+  | 'section';
 
 export interface Choice {
   id: string;

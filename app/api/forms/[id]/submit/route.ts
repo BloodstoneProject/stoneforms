@@ -12,6 +12,7 @@ import { verifyRecaptcha } from '@/lib/recaptcha'
 import { computeCalc } from '@/lib/calc'
 import { dispatchIntegrations } from '@/lib/integrations/dispatch'
 import { createCheckoutForSubmission } from '@/lib/stripe-connect'
+import { isInputField } from '@/lib/field-types'
 
 // POST /api/forms/[id]/submit - Submit form response
 export async function POST(
@@ -135,6 +136,9 @@ export async function POST(
 
     const requiredFields = fields?.filter(f => f.required) || []
     for (const field of requiredFields) {
+      // Content blocks (heading, image, divider, …) and other non-input blocks
+      // collect no answer — never require them, even if `required` got set.
+      if (!isInputField(field.field_type)) continue
       // Consent: required means the box must be ticked (answer exactly true).
       if (field.field_type === 'consent') {
         if (responses?.[field.id] !== true) {
