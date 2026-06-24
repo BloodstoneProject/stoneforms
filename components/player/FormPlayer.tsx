@@ -556,7 +556,8 @@ function FormPlayerInner({
     return Array.from(new Set(pal.filter(Boolean).concat(text)))
   }, [theme.colors])
 
-  // Toggle a reaction for a question + a tiny localized confetti pop at the tap.
+  // Toggle a reaction for a question. (Confetti pop removed — no confetti fires
+  // until the final screen.)
   const handleReaction = useCallback(
     (qid: string, emoji: ReactionEmoji, point: { x: number; y: number }) => {
       setReactions((prev) => {
@@ -565,7 +566,6 @@ function FormPlayerInner({
         else next[qid] = emoji
         return next
       })
-      if (!reduceMotion) confettiRef.current?.pop(point.x, point.y, confettiColors)
     },
     [reduceMotion, confettiColors]
   )
@@ -603,10 +603,8 @@ function FormPlayerInner({
           celebratedRef.current = [...celebratedRef.current, ...crossed]
           bonus = crossed.length * MILESTONE_BONUS
           setBanner({ token: Date.now(), label: milestoneLabel(top), xp: bonus })
-          if (!reduceMotion) {
-            confettiRef.current?.fire({ count: 110, power: 11, colors: confettiColors })
-            startCelebration()
-          }
+          // Confetti intentionally suppressed at milestones — it now fires only on
+          // the final screen. XP + the milestone banner still celebrate progress.
         }
       }
       if (gained + bonus > 0) setXp((x) => x + gained + bonus)
@@ -729,11 +727,7 @@ function FormPlayerInner({
       })
     }
     if (resolution.end) setResolvedEndingId(resolution.endingId)
-    // Small celebratory pop on the button as we advance (skipped on submit, which
-    // gets the finale on the reward screen instead).
-    if (gamifyOn && next !== 'end' && !reduceMotion) {
-      confettiRef.current?.fire({ count: 14, power: 7, colors: confettiColors })
-    }
+    // No confetti as we advance — celebration is reserved for the final screen.
     if (next === 'end') {
       // Award the final question + completion bonus before submitting.
       if (gamifyOn) {
@@ -807,9 +801,7 @@ function FormPlayerInner({
       if (gamifyOn) setXp((x) => x + awardPageXp() + COMPLETION_BONUS)
       handleSubmit(); return
     }
-    if (gamifyOn && !reduceMotion) {
-      confettiRef.current?.fire({ count: 14, power: 7, colors: confettiColors })
-    }
+    // No confetti as we advance — celebration is reserved for the final screen.
     // Page-based milestone progress: percent through the pages.
     const prevP = Math.round(((safePage + 1) / pages.length) * 100)
     const nextP = Math.round(((safePage + 2) / pages.length) * 100)
@@ -822,10 +814,7 @@ function FormPlayerInner({
         celebratedRef.current = [...celebratedRef.current, ...crossed]
         bonus = crossed.length * MILESTONE_BONUS
         setBanner({ token: Date.now(), label: milestoneLabel(top), xp: bonus })
-        if (!reduceMotion) {
-          confettiRef.current?.fire({ count: 110, power: 11, colors: confettiColors })
-          startCelebration()
-        }
+        // Confetti intentionally suppressed at milestones — fires only on the final screen.
       }
     }
     if (gamifyOn && pageGained + bonus > 0) setXp((x) => x + pageGained + bonus)
