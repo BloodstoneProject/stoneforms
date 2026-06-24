@@ -9,6 +9,9 @@ import { Star, Check, Heart, ThumbsUp, Circle } from 'lucide-react'
 import { FileUploadField } from '@/components/player/FileUploadField'
 import { SignatureField } from '@/components/player/SignatureField'
 import { AddressField } from '@/components/player/AddressField'
+import { ContactInfoField } from '@/components/player/ContactInfoField'
+import { MatrixField } from '@/components/player/MatrixField'
+import { SchedulingField } from '@/components/player/SchedulingField'
 import { ConsentField } from '@/components/player/ConsentField'
 import { CalculatorField } from '@/components/player/CalculatorField'
 import { PaymentField } from '@/components/player/PaymentField'
@@ -575,6 +578,36 @@ function renderQuestionInput(
         <AddressField
           value={value && typeof value === 'object' ? value : undefined}
           onChange={onChange}
+          theme={{ primaryColor: theme.primaryColor, textColor: theme.textColor }}
+        />
+      )
+
+    case 'contact_info':
+      return (
+        <ContactInfoField
+          value={value && typeof value === 'object' ? value : undefined}
+          onChange={onChange}
+          settings={(settingsOf(question).contact as any) || undefined}
+          theme={{ primaryColor: theme.primaryColor, textColor: theme.textColor }}
+        />
+      )
+
+    case 'matrix':
+      return (
+        <MatrixField
+          value={value && typeof value === 'object' && !Array.isArray(value) ? value : undefined}
+          onChange={onChange}
+          settings={(settingsOf(question).matrix as any) || undefined}
+          theme={{ primaryColor: theme.primaryColor, textColor: theme.textColor }}
+        />
+      )
+
+    case 'scheduling':
+      return (
+        <SchedulingField
+          value={value && typeof value === 'object' && !Array.isArray(value) ? value : undefined}
+          onChange={onChange}
+          settings={(settingsOf(question).scheduling as any) || undefined}
           theme={{ primaryColor: theme.primaryColor, textColor: theme.textColor }}
         />
       )

@@ -38,6 +38,22 @@ export function stringifyValue(value: any, fieldType?: string): string {
       const joined = parts.filter((p) => typeof p === 'string' && p.trim()).join(', ')
       if (joined) return joined
     }
+    // Contact-info object: { firstName?, lastName?, email?, phone?, company? }
+    if (fieldType === 'contact_info' || 'firstName' in value || 'lastName' in value) {
+      const parts = [
+        [value.firstName, value.lastName].filter((p) => typeof p === 'string' && p.trim()).join(' ').trim(),
+        value.email, value.phone, value.company,
+      ]
+      const joined = parts.filter((p) => typeof p === 'string' && p.trim()).join(', ')
+      if (joined) return joined
+    }
+    // Scheduling object: { date: 'YYYY-MM-DD', time: 'HH:MM' }
+    if (fieldType === 'scheduling' || ('date' in value && 'time' in value)) {
+      const date = typeof value.date === 'string' ? value.date.trim() : ''
+      const time = typeof value.time === 'string' ? value.time.trim() : ''
+      const joined = [date, time].filter(Boolean).join(' ')
+      if (joined) return joined
+    }
     // Generic object: flatten key: value pairs.
     try {
       const entries = Object.entries(value)
@@ -85,12 +101,34 @@ export function buildAnswerPairs(
   return pairs
 }
 
+// Pull the first contact_info field's object value out of a submission, if any.
+// contact_info stores { firstName?, lastName?, email?, phone?, company? } exactly
+// like address — the CRM upsert + auto-responder read name/email/phone from it.
+function getContactInfo(
+  fields: FieldLike[],
+  responses: Record<string, any>
+): { firstName?: string; lastName?: string; email?: string; phone?: string; company?: string } | null {
+  const list = Array.isArray(fields) ? fields : []
+  for (const f of list) {
+    if (!f || f.field_type !== 'contact_info') continue
+    const v = responses?.[f.id]
+    if (v && typeof v === 'object' && !Array.isArray(v)) return v
+  }
+  return null
+}
+
 // Best-effort detection of the respondent's email address.
 export function detectEmail(
   fields: FieldLike[],
   responses: Record<string, any>
 ): string | null {
   const list = Array.isArray(fields) ? fields : []
+
+  // Prefer a contact_info block's email sub-field.
+  const ci = getContactInfo(list, responses)
+  if (ci && typeof ci.email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ci.email.trim())) {
+    return ci.email.trim()
+  }
 
   // Prefer an explicit email field type.
   const emailField = list.find((f) => f && f.field_type === 'email')
@@ -130,6 +168,14 @@ export function detectName(
   let first: string | undefined
   let last: string | undefined
 
+  // Prefer a contact_info block's first/last name sub-fields.
+  const ci = getContactInfo(list, responses)
+  if (ci) {
+    if (typeof ci.firstName === 'string' && ci.firstName.trim()) first = ci.firstName.trim()
+    if (typeof ci.lastName === 'string' && ci.lastName.trim()) last = ci.lastName.trim()
+    if (first || last) return { first, last }
+  }
+
   for (const f of list) {
     if (!f) continue
     const label = (f.label || '').toLowerCase()
@@ -156,6 +202,10 @@ export function detectPhone(
 ): string | null {
   const list = Array.isArray(fields) ? fields : []
 
+  // Prefer a contact_info block's phone sub-field.
+  const ci = getContactInfo(list, responses)
+  if (ci && typeof ci.phone === 'string' && ci.phone.trim()) return ci.phone.trim().slice(0, 64)
+
   const phoneField = list.find((f) => f && f.field_type === 'phone')
   if (phoneField) {
     const v = responses?.[phoneField.id]
@@ -179,6 +229,11 @@ export function detectCompany(
   responses: Record<string, any>
 ): string | null {
   const list = Array.isArray(fields) ? fields : []
+
+  // Prefer a contact_info block's company sub-field.
+  const ci = getContactInfo(list, responses)
+  if (ci && typeof ci.company === 'string' && ci.company.trim()) return ci.company.trim().slice(0, 255)
+
   for (const f of list) {
     if (!f) continue
     const label = (f.label || '').toLowerCase()

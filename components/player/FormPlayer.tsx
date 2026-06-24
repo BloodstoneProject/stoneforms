@@ -13,6 +13,8 @@ import { RewardBadge } from '@/components/player/RewardScreen'
 import { ContentBlock } from '@/components/player/ContentBlock'
 import { ClassicView } from '@/components/player/ClassicView'
 import { MagazineView } from '@/components/player/MagazineView'
+import { resolveContactConfig, CONTACT_SUBFIELDS, type ContactSettings } from '@/components/player/ContactInfoField'
+import type { MatrixSettings } from '@/components/player/MatrixField'
 import { ArrowRight, ArrowLeft, Check, Loader2 } from 'lucide-react'
 import { getPresentation } from '@/lib/blocks'
 import { isInputField, isContentBlock } from '@/lib/field-types'
@@ -646,6 +648,32 @@ function FormPlayerInner({
     if (q.type === 'signature') {
       empty = typeof a !== 'string' || a.trim() === ''
     }
+    // Contact info is empty unless every enabled+required sub-field is filled.
+    if (q.type === 'contact_info') {
+      const cv = (a && typeof a === 'object') ? a : {}
+      const cfg = resolveContactConfig((q.properties?.contact as ContactSettings) || undefined)
+      const missingRequired = CONTACT_SUBFIELDS.some(
+        (f) => cfg[f.key].enabled && cfg[f.key].required && !(typeof cv[f.key] === 'string' && cv[f.key].trim())
+      )
+      empty = missingRequired
+    }
+    // Matrix is empty unless every row has a selection.
+    if (q.type === 'matrix') {
+      const mv = (a && typeof a === 'object' && !Array.isArray(a)) ? a : {}
+      const ms = (q.properties?.matrix as MatrixSettings) || {}
+      const rows = Array.isArray(ms.rows) ? ms.rows : []
+      empty = rows.length === 0
+        ? true
+        : rows.some((row) => {
+            const cell = mv[row.id]
+            return ms.allowMultiple ? !(Array.isArray(cell) && cell.length > 0) : !cell
+          })
+    }
+    // Scheduling is empty unless both a date and a time are chosen.
+    if (q.type === 'scheduling') {
+      const sv = (a && typeof a === 'object' && !Array.isArray(a)) ? a : {}
+      empty = !(typeof sv.date === 'string' && sv.date && typeof sv.time === 'string' && sv.time)
+    }
     if (q.required && empty) return 'This question is required'
     if (q.type === 'address' && !empty) {
       const addr = (a && typeof a === 'object') ? a : {}
@@ -655,6 +683,14 @@ function FormPlayerInner({
     }
     if (q.type === 'email' && a && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a)) {
       return 'Please enter a valid email address'
+    }
+    // Contact info: validate the email sub-field's format when it has a value.
+    if (q.type === 'contact_info') {
+      const cv = (a && typeof a === 'object') ? a : {}
+      const cfg = resolveContactConfig((q.properties?.contact as ContactSettings) || undefined)
+      if (cfg.email.enabled && typeof cv.email === 'string' && cv.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cv.email.trim())) {
+        return 'Please enter a valid email address'
+      }
     }
     if (q.type === 'url' && a) {
       try { new URL(/^https?:\/\//i.test(a) ? a : `https://${a}`) } catch { return 'Please enter a valid URL' }

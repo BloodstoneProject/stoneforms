@@ -20,6 +20,7 @@ type QBreakdown =
   | { kind: 'scale'; total: number; average: number; min: number; max: number; distribution: { value: number; count: number }[] }
   | { kind: 'nps'; total: number; score: number; detractors: number; passives: number; promoters: number }
   | { kind: 'yesno'; total: number; yes: number; no: number }
+  | { kind: 'matrix'; total: number; columns: { label: string }[]; rows: { label: string; total: number; counts: { label: string; count: number }[] }[] }
 
 interface QuestionBreakdown {
   questionId: string
@@ -339,6 +340,39 @@ function QuestionCard({ q, index }: { q: QuestionBreakdown; index: number }) {
               </div>
             )
           })}
+        </div>
+      )}
+
+      {b.kind === 'matrix' && (
+        <div className="mt-4 space-y-4">
+          {b.rows.map((row) => (
+            <div key={row.label}>
+              <div className="flex items-center justify-between text-sm mb-1.5">
+                <span className="text-foreground font-medium pr-4">{row.label}</span>
+                <span className="text-muted-foreground shrink-0 tabular-nums">{row.total} {row.total === 1 ? 'pick' : 'picks'}</span>
+              </div>
+              <div className="space-y-1.5 pl-1">
+                {row.counts.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No selections</p>
+                ) : (
+                  row.counts.map((c) => {
+                    const pct = row.total > 0 ? Math.round((c.count / row.total) * 100) : 0
+                    return (
+                      <div key={c.label}>
+                        <div className="flex items-center justify-between text-xs mb-0.5">
+                          <span className="text-muted-foreground truncate pr-4">{c.label}</span>
+                          <span className="text-muted-foreground shrink-0 tabular-nums">{c.count} · {pct}%</span>
+                        </div>
+                        <div className="h-2.5 bg-secondary rounded-full overflow-hidden">
+                          <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

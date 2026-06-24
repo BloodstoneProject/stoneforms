@@ -28,6 +28,7 @@ interface Field {
   id: string
   label: string
   field_type: string
+  settings?: Record<string, any> | null
 }
 
 // Render a composite address object as a readable comma string.
@@ -37,10 +38,50 @@ function formatAddress(value: any): string {
   return parts.filter((p) => typeof p === 'string' && p.trim()).join(', ')
 }
 
-// Safely turn any answer value (string, number, boolean, string[], address
-// object, signature data-URL) into display text.
-function formatAnswer(value: any, fieldType?: string): string {
+// Render a contact_info object { firstName?, lastName?, email?, phone?, company? }.
+function formatContact(value: any): string {
+  if (!value || typeof value !== 'object') return ''
+  const name = [value.firstName, value.lastName].filter((p) => typeof p === 'string' && p.trim()).join(' ').trim()
+  const parts = [name, value.email, value.phone, value.company]
+  return parts.filter((p) => typeof p === 'string' && p.trim()).join(', ')
+}
+
+// Render a matrix object { [rowId]: colId | colId[] } as "RowLabel: ColumnLabel"
+// pairs, resolving ids to labels from the field's settings.matrix when available.
+function formatMatrix(value: any, settings?: Record<string, any> | null): string {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return ''
+  const rows = Array.isArray(settings?.matrix?.rows) ? settings!.matrix.rows : []
+  const cols = Array.isArray(settings?.matrix?.columns) ? settings!.matrix.columns : []
+  const rowLabel = (id: string) => rows.find((r: any) => r.id === id)?.label || id
+  const colLabel = (id: string) => cols.find((c: any) => c.id === id)?.label || id
+  const pairs: string[] = []
+  for (const [rowId, sel] of Object.entries(value)) {
+    if (sel === null || sel === undefined || sel === '') continue
+    const colText = Array.isArray(sel) ? sel.map(colLabel).join(' / ') : colLabel(String(sel))
+    pairs.push(`${rowLabel(rowId)}: ${colText}`)
+  }
+  return pairs.join('; ')
+}
+
+// Render a scheduling object { date, time } as "YYYY-MM-DD HH:MM".
+function formatScheduling(value: any): string {
+  if (!value || typeof value !== 'object') return ''
+  return [value.date, value.time].filter((p) => typeof p === 'string' && p.trim()).join(' ')
+}
+
+// Safely turn any answer value (string, number, boolean, string[], address /
+// contact_info / matrix / scheduling object, signature data-URL) into display text.
+function formatAnswer(value: any, fieldType?: string, settings?: Record<string, any> | null): string {
   if (value === null || value === undefined) return ''
+  if (fieldType === 'contact_info' || (value && typeof value === 'object' && !Array.isArray(value) && ('firstName' in value || 'lastName' in value))) {
+    return formatContact(value)
+  }
+  if (fieldType === 'matrix') {
+    return formatMatrix(value, settings)
+  }
+  if (fieldType === 'scheduling' || (value && typeof value === 'object' && !Array.isArray(value) && 'date' in value && 'time' in value)) {
+    return formatScheduling(value)
+  }
   if (fieldType === 'address' || (value && typeof value === 'object' && !Array.isArray(value) && ('line1' in value || 'city' in value || 'postal' in value))) {
     return formatAddress(value)
   }
@@ -54,8 +95,8 @@ function formatAnswer(value: any, fieldType?: string): string {
 }
 
 // Escape a value for safe CSV output (RFC 4180): wrap in quotes, double inner quotes.
-function csvCell(value: any, fieldType?: string): string {
-  return `"${formatAnswer(value, fieldType).replace(/"/g, '""')}"`
+function csvCell(value: any, fieldType?: string, settings?: Record<string, any> | null): string {
+  return `"${formatAnswer(value, fieldType, settings).replace(/"/g, '""')}"`
 }
 
 // Escape an already-formatted plain string for CSV.
@@ -166,7 +207,7 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
     const rowCells = responses.map(response => {
       const cells = [
         csvText(new Date(response.created_at).toLocaleString()),
-        ...fields.map(field => csvCell(response.answers[field.id], field.field_type)),
+        ...fields.map(field => csvCell(response.answers[field.id], field.field_type, field.settings)),
       ]
       if (hasQuiz) {
         const q = response.metadata?.quiz
@@ -523,7 +564,7 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
                         {new Date(response.created_at).toLocaleString()}
                       </td>
                       {fields.slice(0, 3).map(field => {
-                        const text = formatAnswer(response.answers[field.id], field.field_type)
+                        const text = formatAnswer(response.answers[field.id], field.field_type, field.settings)
                         return (
                           <td key={field.id} className="px-6 py-4 text-sm text-foreground">
                             {text ? text.slice(0, 50) : '-'}
@@ -673,7 +714,7 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
                       </div>
                     ) : (
                       <div className="p-4 bg-secondary rounded-md text-foreground whitespace-pre-wrap break-words">
-                        {formatAnswer(raw, field.field_type) || '(No answer)'}
+                        {formatAnswer(raw, field.field_type, field.settings) || '(No answer)'}
                       </div>
                     )}
                   </div>

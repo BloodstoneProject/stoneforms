@@ -127,9 +127,21 @@ export async function POST(
       .eq('form_id', params.id)
       .order('position')
 
+    // Contact-info sub-field defaults (mirror components/player/ContactInfoField
+    // CONTACT_DEFAULTS). Server-side so we can validate required sub-fields.
+    const CONTACT_DEFAULTS: Record<string, { enabled: boolean; required: boolean }> = {
+      firstName: { enabled: true, required: false },
+      lastName: { enabled: true, required: false },
+      email: { enabled: true, required: true },
+      phone: { enabled: false, required: false },
+      company: { enabled: false, required: false },
+    }
+    const CONTACT_KEYS = ['firstName', 'lastName', 'email', 'phone', 'company']
+
     // Validate required fields (handles strings, arrays, booleans, numbers,
-    // address objects and signature data-URL strings).
-    const isEmpty = (v: any, fieldType?: string) => {
+    // address / contact_info / matrix / scheduling objects and signature
+    // data-URL strings).
+    const isEmpty = (v: any, fieldType?: string, settings?: any) => {
       // Address: empty unless line1, city and postal are all present.
       if (fieldType === 'address') {
         const a = (v && typeof v === 'object') ? v : {}
@@ -138,6 +150,33 @@ export async function POST(
           typeof a.city === 'string' && a.city.trim() &&
           typeof a.postal === 'string' && a.postal.trim()
         )
+      }
+      // Contact info: empty unless every enabled+required sub-field is filled.
+      if (fieldType === 'contact_info') {
+        const a = (v && typeof v === 'object') ? v : {}
+        const cfgFields = (settings?.contact?.fields as Record<string, any>) || {}
+        return CONTACT_KEYS.some((k) => {
+          const enabled = cfgFields[k]?.enabled ?? CONTACT_DEFAULTS[k].enabled
+          const required = cfgFields[k]?.required ?? CONTACT_DEFAULTS[k].required
+          if (!enabled || !required) return false
+          return !(typeof a[k] === 'string' && a[k].trim())
+        })
+      }
+      // Matrix: empty unless every configured row has a selection.
+      if (fieldType === 'matrix') {
+        const a = (v && typeof v === 'object' && !Array.isArray(v)) ? v : {}
+        const rows = Array.isArray(settings?.matrix?.rows) ? settings.matrix.rows : []
+        const allowMultiple = settings?.matrix?.allowMultiple === true
+        if (rows.length === 0) return true
+        return rows.some((row: any) => {
+          const cell = a[row.id]
+          return allowMultiple ? !(Array.isArray(cell) && cell.length > 0) : !cell
+        })
+      }
+      // Scheduling: empty unless both a date and a time were chosen.
+      if (fieldType === 'scheduling') {
+        const a = (v && typeof v === 'object' && !Array.isArray(v)) ? v : {}
+        return !(typeof a.date === 'string' && a.date && typeof a.time === 'string' && a.time)
       }
       // Signature: empty when the data-URL string is blank.
       if (fieldType === 'signature') {
@@ -169,7 +208,7 @@ export async function POST(
       if (field.field_type === 'calculator') continue
       // Payment is a disclosure panel collected on submit — never block on it.
       if (field.field_type === 'payment') continue
-      if (isEmpty(responses?.[field.id], field.field_type)) {
+      if (isEmpty(responses?.[field.id], field.field_type, field.settings)) {
         return NextResponse.json({
           error: `${field.label} is required`
         }, { status: 400 })

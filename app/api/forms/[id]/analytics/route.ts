@@ -29,7 +29,7 @@ export async function GET(
   // Ordered fields for the drop-off funnel and per-question breakdowns.
   const { data: fields } = await supabase
     .from('form_fields')
-    .select('id, label, position, field_type, options')
+    .select('id, label, position, field_type, options, settings')
     .eq('form_id', params.id)
     .order('position', { ascending: true })
 
@@ -140,7 +140,7 @@ export async function GET(
   // yes_no -> yes/no counts.
   const BREAKDOWN_TYPES = new Set([
     'multiple_choice', 'picture_choice', 'dropdown', 'checkboxes', 'ranking',
-    'rating', 'opinion_scale', 'nps', 'yes_no', 'consent',
+    'rating', 'opinion_scale', 'nps', 'yes_no', 'consent', 'matrix',
   ])
 
   // Build option label lookup per field (for picture_choice / choice that store
@@ -166,12 +166,15 @@ export async function GET(
     | { kind: 'scale'; total: number; average: number; min: number; max: number; distribution: { value: number; count: number }[] }
     | { kind: 'nps'; total: number; score: number; detractors: number; passives: number; promoters: number }
     | { kind: 'yesno'; total: number; yes: number; no: number }
+    | { kind: 'matrix'; total: number; columns: { label: string }[]; rows: { label: string; total: number; counts: { label: string; count: number }[] }[] }
 
   // Accumulators per field.
   const choiceCounts: Record<string, Record<string, number>> = {}
   const scaleValues: Record<string, number[]> = {}
   const npsAcc: Record<string, { d: number; p: number; pr: number; total: number }> = {}
   const yesNoAcc: Record<string, { yes: number; no: number }> = {}
+  // matrix: fieldId -> rowId -> colId -> count, plus a count of responses that answered.
+  const matrixAcc: Record<string, { byRow: Record<string, Record<string, number>>; total: number }> = {}
 
   const toNumber = (v: any): number | null => {
     const n = typeof v === 'number' ? v : Number(v)
@@ -214,6 +217,22 @@ export async function GET(
         const truthy = raw === true || raw === 'true' || raw === 'Yes' || raw === 'yes' || raw === 1 || raw === '1'
         if (truthy) yesNoAcc[f.id].yes++
         else yesNoAcc[f.id].no++
+      } else if (type === 'matrix') {
+        // raw = { [rowId]: colId | colId[] }. Tally each row's chosen column(s).
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue
+        if (!matrixAcc[f.id]) matrixAcc[f.id] = { byRow: {}, total: 0 }
+        const acc = matrixAcc[f.id]
+        acc.total++
+        for (const [rowId, sel] of Object.entries(raw)) {
+          if (sel === null || sel === undefined || sel === '') continue
+          if (!acc.byRow[rowId]) acc.byRow[rowId] = {}
+          const cols = Array.isArray(sel) ? sel : [sel]
+          for (const colId of cols) {
+            if (colId === null || colId === undefined || colId === '') continue
+            const key = String(colId)
+            acc.byRow[rowId][key] = (acc.byRow[rowId][key] || 0) + 1
+          }
+        }
       }
     }
   }
@@ -270,6 +289,35 @@ export async function GET(
         questionBreakdowns.push({
           questionId: f.id, label, fieldType: type,
           breakdown: { kind: 'yesno', total, yes: acc.yes, no: acc.no },
+        })
+      }
+    } else if (matrixAcc[f.id]) {
+      const acc = matrixAcc[f.id]
+      if (acc.total > 0) {
+        const cfg = (f as any).settings?.matrix || {}
+        const cfgRows: { id: string; label: string }[] = Array.isArray(cfg.rows) ? cfg.rows : []
+        const cfgCols: { id: string; label: string }[] = Array.isArray(cfg.columns) ? cfg.columns : []
+        const colLabel = (id: string) => cfgCols.find((c) => c.id === id)?.label || id
+        // Per-row column distribution. Prefer configured row order; fall back to
+        // any row ids present in the data.
+        const rowIds = cfgRows.length ? cfgRows.map((r) => r.id) : Object.keys(acc.byRow)
+        const rows = rowIds.map((rowId) => {
+          const counts = acc.byRow[rowId] || {}
+          const rowTotal = Object.values(counts).reduce((s, n) => s + n, 0)
+          const distribution = Object.entries(counts)
+            .map(([colId, count]) => ({ label: colLabel(colId), count }))
+            .sort((a, b) => b.count - a.count)
+          const rowLabel = cfgRows.find((r) => r.id === rowId)?.label || rowId
+          return { label: rowLabel, total: rowTotal, counts: distribution }
+        })
+        questionBreakdowns.push({
+          questionId: f.id, label, fieldType: type,
+          breakdown: {
+            kind: 'matrix',
+            total: acc.total,
+            columns: cfgCols.map((c) => ({ label: c.label })),
+            rows,
+          },
         })
       }
     }

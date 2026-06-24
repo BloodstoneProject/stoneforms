@@ -24,6 +24,9 @@ export type FieldType =
   | 'picture_choice'
   | 'signature'
   | 'address'
+  | 'contact_info'
+  | 'matrix'
+  | 'scheduling'
   | 'consent'
   | 'calculator'
   | 'payment'
@@ -87,6 +90,9 @@ export const FIELD_TYPES: FieldTypeMeta[] = [
   { value: 'date', label: 'Date', icon: '📅', hasOptions: false, valueKind: 'string', category: 'date', input: true },
   { value: 'signature', label: 'Signature', icon: '✍️', hasOptions: false, valueKind: 'string', category: 'media', input: true },
   { value: 'address', label: 'Address', icon: '🏠', hasOptions: false, valueKind: 'object', category: 'text', input: true },
+  { value: 'contact_info', label: 'Contact Info', icon: '👤', hasOptions: false, valueKind: 'object', category: 'text', input: true },
+  { value: 'matrix', label: 'Matrix / Grid', icon: '▦', hasOptions: false, valueKind: 'object', category: 'choice', input: true },
+  { value: 'scheduling', label: 'Scheduling', icon: '🗓️', hasOptions: false, valueKind: 'object', category: 'date', input: true },
   { value: 'file_upload', label: 'File Upload', icon: '📎', hasOptions: false, valueKind: 'file', category: 'media', input: true },
   { value: 'payment', label: 'Payment', icon: '💳', hasOptions: false, valueKind: 'none', category: 'payment', input: true },
   // hidden carries a tracking value into responses, so it counts as input.
@@ -133,6 +139,22 @@ export const FIELD_TYPES: FieldTypeMeta[] = [
 //                              // dropdown / picture_choice
 //   <text>.settings        = { maxLength?: number, default?: string }
 //                              // applies to short_text / long_text
+//   contact_info.settings  = { contact: { fields: {
+//                              firstName: { enabled, required },
+//                              lastName:  { enabled, required },
+//                              email:     { enabled, required },
+//                              phone:     { enabled, required },
+//                              company:   { enabled, required } } } }
+//                              // value = { firstName?, lastName?, email?, phone?, company? }
+//   matrix.settings        = { matrix: { rows: [{id,label}],
+//                              columns: [{id,label}], allowMultiple?: boolean } }
+//                              // value = { [rowId]: columnId } or
+//                              //         { [rowId]: columnId[] } when allowMultiple
+//   scheduling.settings    = { scheduling: { days: { mon..sun: boolean },
+//                              startTime: 'HH:MM', endTime: 'HH:MM',
+//                              slotMinutes: number, maxDaysAhead?: number,
+//                              leadDays?: number, timezoneLabel?: string } }
+//                              // value = { date: 'YYYY-MM-DD', time: 'HH:MM' }
 //
 // Per-field MEDIA placement lives on settings.media — see FieldMedia/MediaLayout
 // in lib/themes.ts: settings.media = { url?, layout?, focalX?, focalY?, brightness? }.

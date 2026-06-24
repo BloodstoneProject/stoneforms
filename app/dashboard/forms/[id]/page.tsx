@@ -314,6 +314,11 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
     const defaultOptions = fieldHasOptions(fieldType)
       ? ['Option 1', 'Option 2', 'Option 3']
       : null
+    // Seed sensible default settings for object fields that need pre-populated
+    // config to be usable (matrix needs rows/columns; scheduling a day window).
+    const defaultSettings = defaultFieldSettings(fieldType)
+    // Expand the settings panel for fields whose config the author must edit.
+    const NEEDS_EXPAND = new Set(['matrix', 'scheduling', 'contact_info'])
     try {
       const res = await fetch(`/api/forms/${formId}/fields`, {
         method: 'POST',
@@ -323,13 +328,14 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
           label: 'Untitled question',
           required: false,
           options: defaultOptions,
+          ...(defaultSettings ? { settings: defaultSettings } : {}),
         }),
       })
       if (!res.ok) return
       const data = await res.json()
       if (data.field) {
         setFields((prev) => [...prev, data.field])
-        if (fieldHasOptions(fieldType)) setExpandedSettingsId(data.field.id)
+        if (fieldHasOptions(fieldType) || NEEDS_EXPAND.has(fieldType)) setExpandedSettingsId(data.field.id)
       }
     } catch (error) {
       console.error('Failed to add field:', error)
@@ -1151,6 +1157,54 @@ const SCORABLE_NUMERIC = new Set(['rating', 'opinion_scale', 'number'])
 // Field types whose answers can feed a calculator term (numeric-ish).
 const CALC_SOURCE_TYPES = new Set(['number', 'rating', 'opinion_scale', 'yes_no', 'consent'])
 
+// Seed default settings for newly-added object fields so they're immediately
+// usable. Returns null for types that don't need seeding (most fields).
+function defaultFieldSettings(fieldType: string): Record<string, any> | null {
+  const rid = () => `m_${Math.random().toString(36).slice(2, 9)}`
+  if (fieldType === 'matrix') {
+    return {
+      matrix: {
+        rows: [
+          { id: rid(), label: 'Row 1' },
+          { id: rid(), label: 'Row 2' },
+        ],
+        columns: [
+          { id: rid(), label: 'Disagree' },
+          { id: rid(), label: 'Neutral' },
+          { id: rid(), label: 'Agree' },
+        ],
+        allowMultiple: false,
+      },
+    }
+  }
+  if (fieldType === 'scheduling') {
+    return {
+      scheduling: {
+        days: { mon: true, tue: true, wed: true, thu: true, fri: true, sat: false, sun: false },
+        startTime: '09:00',
+        endTime: '17:00',
+        slotMinutes: 30,
+        maxDaysAhead: 30,
+        leadDays: 0,
+      },
+    }
+  }
+  if (fieldType === 'contact_info') {
+    return {
+      contact: {
+        fields: {
+          firstName: { enabled: true, required: false },
+          lastName: { enabled: true, required: false },
+          email: { enabled: true, required: true },
+          phone: { enabled: false, required: false },
+          company: { enabled: false, required: false },
+        },
+      },
+    }
+  }
+  return null
+}
+
 interface CalcTerm { fieldId: string; weight: number }
 interface CalcConfig { terms?: CalcTerm[]; constant?: number; prefix?: string; suffix?: string }
 
@@ -1387,7 +1441,7 @@ function SortableField({ field, index, allFields, quizEnabled, expanded, onToggl
                 <PaymentConfig field={field} onUpdateSetting={onUpdateSetting} />
               )}
 
-              {!fieldHasOptions(field.field_type) && field.field_type !== 'yes_no' && field.field_type !== 'consent' && field.field_type !== 'calculator' && field.field_type !== 'payment' && (
+              {!fieldHasOptions(field.field_type) && field.field_type !== 'yes_no' && field.field_type !== 'consent' && field.field_type !== 'calculator' && field.field_type !== 'payment' && field.field_type !== 'contact_info' && field.field_type !== 'matrix' && field.field_type !== 'scheduling' && (
                 <div>
                   <label className="block text-xs font-medium text-muted-foreground mb-1">Placeholder</label>
                   <input
@@ -1875,6 +1929,18 @@ function FieldTypeSettings({
     )
   }
 
+  if (t === 'contact_info') {
+    return <ContactInfoSettings field={field} onUpdateSetting={onUpdateSetting} />
+  }
+
+  if (t === 'matrix') {
+    return <MatrixSettings field={field} onUpdateSetting={onUpdateSetting} />
+  }
+
+  if (t === 'scheduling') {
+    return <SchedulingSettings field={field} onUpdateSetting={onUpdateSetting} />
+  }
+
   if (t === 'short_text' || t === 'long_text') {
     return (
       <div className="rounded-lg border border-border p-3 space-y-3">
@@ -1896,6 +1962,242 @@ function FieldTypeSettings({
   }
 
   return null
+}
+
+// ---- Contact info settings: toggle which sub-fields are enabled/required. ----
+// Writes field.settings.contact = { fields: { firstName:{enabled,required}, … } }.
+const CONTACT_SUBFIELD_META: { key: 'firstName' | 'lastName' | 'email' | 'phone' | 'company'; label: string }[] = [
+  { key: 'firstName', label: 'First name' },
+  { key: 'lastName', label: 'Last name' },
+  { key: 'email', label: 'Email' },
+  { key: 'phone', label: 'Phone' },
+  { key: 'company', label: 'Company' },
+]
+const CONTACT_SUBFIELD_DEFAULTS: Record<string, { enabled: boolean; required: boolean }> = {
+  firstName: { enabled: true, required: false },
+  lastName: { enabled: true, required: false },
+  email: { enabled: true, required: true },
+  phone: { enabled: false, required: false },
+  company: { enabled: false, required: false },
+}
+
+function ContactInfoSettings({
+  field, onUpdateSetting,
+}: { field: Field; onUpdateSetting: (field: Field, key: string, value: any) => void }) {
+  const contact = (field.settings?.contact as { fields?: Record<string, { enabled?: boolean; required?: boolean }> }) || {}
+  const fieldsCfg = contact.fields || {}
+  const cfgFor = (key: string) => ({
+    enabled: fieldsCfg[key]?.enabled ?? CONTACT_SUBFIELD_DEFAULTS[key].enabled,
+    required: fieldsCfg[key]?.required ?? CONTACT_SUBFIELD_DEFAULTS[key].required,
+  })
+  const write = (key: string, patch: { enabled?: boolean; required?: boolean }) => {
+    const cur = cfgFor(key)
+    const nextFields = { ...fieldsCfg, [key]: { ...cur, ...patch } }
+    onUpdateSetting(field, 'contact', { ...contact, fields: nextFields })
+  }
+
+  return (
+    <div className="rounded-lg border border-border p-3 space-y-2">
+      <p className="text-xs font-medium text-foreground">Contact fields</p>
+      <p className="text-xs text-muted-foreground">Choose which fields to collect and which are required.</p>
+      <div className="space-y-1.5 pt-1">
+        {CONTACT_SUBFIELD_META.map(({ key, label }) => {
+          const c = cfgFor(key)
+          return (
+            <div key={key} className="flex items-center justify-between gap-3 py-1">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={c.enabled}
+                  onChange={(e) => write(key, { enabled: e.target.checked })}
+                  className="rounded"
+                />
+                <span className="text-sm text-foreground">{label}</span>
+              </label>
+              <label className={`flex items-center gap-2 cursor-pointer ${c.enabled ? '' : 'opacity-40 pointer-events-none'}`}>
+                <input
+                  type="checkbox"
+                  checked={c.required}
+                  disabled={!c.enabled}
+                  onChange={(e) => write(key, { required: e.target.checked })}
+                  className="rounded"
+                />
+                <span className="text-xs text-muted-foreground">Required</span>
+              </label>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ---- Matrix settings: add/remove/edit rows + columns, allowMultiple toggle. ----
+// Writes field.settings.matrix = { rows:[{id,label}], columns:[{id,label}], allowMultiple? }.
+interface MatrixItem { id: string; label: string }
+interface MatrixConfigShape { rows?: MatrixItem[]; columns?: MatrixItem[]; allowMultiple?: boolean }
+
+function matrixId() {
+  return `m_${Math.random().toString(36).slice(2, 9)}`
+}
+
+function MatrixSettings({
+  field, onUpdateSetting,
+}: { field: Field; onUpdateSetting: (field: Field, key: string, value: any) => void }) {
+  const matrix = (field.settings?.matrix as MatrixConfigShape) || {}
+  const rows: MatrixItem[] = Array.isArray(matrix.rows) ? matrix.rows : []
+  const columns: MatrixItem[] = Array.isArray(matrix.columns) ? matrix.columns : []
+  const write = (patch: Partial<MatrixConfigShape>) => onUpdateSetting(field, 'matrix', { ...matrix, ...patch })
+
+  const editList = (which: 'rows' | 'columns') => {
+    const list = which === 'rows' ? rows : columns
+    const set = (next: MatrixItem[]) => write({ [which]: next } as Partial<MatrixConfigShape>)
+    return {
+      list,
+      add: () => set([...list, { id: matrixId(), label: '' }]),
+      update: (i: number, label: string) => set(list.map((it, idx) => (idx === i ? { ...it, label } : it))),
+      remove: (i: number) => set(list.filter((_, idx) => idx !== i)),
+    }
+  }
+
+  const rowOps = editList('rows')
+  const colOps = editList('columns')
+
+  const ListEditor = ({ title, ops, placeholder }: { title: string; ops: ReturnType<typeof editList>; placeholder: string }) => (
+    <div className="space-y-2">
+      <p className="text-xs font-medium text-foreground">{title}</p>
+      {ops.list.map((it, i) => (
+        <div key={it.id} className="flex items-center gap-2">
+          <input
+            type="text"
+            value={it.label}
+            onChange={(e) => ops.update(i, e.target.value)}
+            placeholder={`${placeholder} ${i + 1}`}
+            className={FT_INPUT_CLASS}
+          />
+          <button type="button" onClick={() => ops.remove(i)} className="text-destructive hover:text-destructive/80" aria-label={`Remove ${placeholder.toLowerCase()} ${i + 1}`}>
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      ))}
+      <button type="button" onClick={ops.add} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+        <Plus className="w-4 h-4" /> Add {placeholder.toLowerCase()}
+      </button>
+    </div>
+  )
+
+  return (
+    <div className="rounded-lg border border-border p-3 space-y-4">
+      <p className="text-xs font-medium text-foreground">Matrix / grid</p>
+      <ListEditor title="Rows (statements)" ops={rowOps} placeholder="Row" />
+      <ListEditor title="Columns (choices)" ops={colOps} placeholder="Column" />
+      <label className="flex items-center gap-2 cursor-pointer pt-1 border-t border-border">
+        <input
+          type="checkbox"
+          checked={matrix.allowMultiple === true}
+          onChange={(e) => write({ allowMultiple: e.target.checked })}
+          className="rounded mt-2"
+        />
+        <span className="text-sm text-foreground mt-2">Allow multiple selections per row (checkboxes)</span>
+      </label>
+    </div>
+  )
+}
+
+// ---- Scheduling settings: weekday toggles, time window, slot length, lead/max. ----
+// Writes field.settings.scheduling = { days:{mon..sun}, startTime, endTime,
+// slotMinutes, maxDaysAhead?, leadDays?, timezoneLabel? }.
+const SCHED_WEEKDAYS: { key: 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun'; label: string }[] = [
+  { key: 'mon', label: 'Mon' }, { key: 'tue', label: 'Tue' }, { key: 'wed', label: 'Wed' },
+  { key: 'thu', label: 'Thu' }, { key: 'fri', label: 'Fri' }, { key: 'sat', label: 'Sat' }, { key: 'sun', label: 'Sun' },
+]
+const SCHED_DAY_DEFAULTS: Record<string, boolean> = { mon: true, tue: true, wed: true, thu: true, fri: true, sat: false, sun: false }
+
+interface SchedulingConfigShape {
+  days?: Record<string, boolean>
+  startTime?: string
+  endTime?: string
+  slotMinutes?: number
+  maxDaysAhead?: number
+  leadDays?: number
+  timezoneLabel?: string
+}
+
+function SchedulingSettings({
+  field, onUpdateSetting,
+}: { field: Field; onUpdateSetting: (field: Field, key: string, value: any) => void }) {
+  const sched = (field.settings?.scheduling as SchedulingConfigShape) || {}
+  const days = sched.days || {}
+  const write = (patch: Partial<SchedulingConfigShape>) => onUpdateSetting(field, 'scheduling', { ...sched, ...patch })
+  const dayOn = (k: string) => days[k] ?? SCHED_DAY_DEFAULTS[k]
+  const toggleDay = (k: string) => write({ days: { ...SCHED_DAY_DEFAULTS, ...days, [k]: !dayOn(k) } })
+  const num = (v: string) => (v === '' ? undefined : Number(v))
+
+  return (
+    <div className="rounded-lg border border-border p-3 space-y-3">
+      <p className="text-xs font-medium text-foreground">Scheduling</p>
+
+      <div>
+        <label className={FT_LABEL_CLASS}>Available days</label>
+        <div className="flex flex-wrap gap-1.5">
+          {SCHED_WEEKDAYS.map(({ key, label }) => {
+            const on = dayOn(key)
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => toggleDay(key)}
+                className={`px-2.5 py-1 rounded-md text-xs border transition-colors ${
+                  on ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-input hover:text-foreground'
+                }`}
+              >
+                {label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={FT_LABEL_CLASS}>Start time</label>
+          <input type="time" value={sched.startTime ?? '09:00'} onChange={(e) => write({ startTime: e.target.value })} className={FT_INPUT_CLASS} />
+        </div>
+        <div>
+          <label className={FT_LABEL_CLASS}>End time</label>
+          <input type="time" value={sched.endTime ?? '17:00'} onChange={(e) => write({ endTime: e.target.value })} className={FT_INPUT_CLASS} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        <div>
+          <label className={FT_LABEL_CLASS}>Slot length (min)</label>
+          <input type="number" min={5} step={5} value={sched.slotMinutes ?? ''} placeholder="30"
+            onChange={(e) => write({ slotMinutes: num(e.target.value) })} className={FT_INPUT_CLASS} />
+        </div>
+        <div>
+          <label className={FT_LABEL_CLASS}>Lead days</label>
+          <input type="number" min={0} value={sched.leadDays ?? ''} placeholder="0"
+            onChange={(e) => write({ leadDays: num(e.target.value) })} className={FT_INPUT_CLASS} />
+        </div>
+        <div>
+          <label className={FT_LABEL_CLASS}>Max days ahead</label>
+          <input type="number" min={1} value={sched.maxDaysAhead ?? ''} placeholder="30"
+            onChange={(e) => write({ maxDaysAhead: num(e.target.value) })} className={FT_INPUT_CLASS} />
+        </div>
+      </div>
+
+      <div>
+        <label className={FT_LABEL_CLASS}>Timezone label (optional)</label>
+        <input type="text" value={sched.timezoneLabel ?? ''} placeholder="e.g. London (GMT)"
+          onChange={(e) => write({ timezoneLabel: e.target.value || undefined })} className={FT_INPUT_CLASS} />
+      </div>
+
+      <p className="text-xs text-muted-foreground">
+        Defaults: Mon–Fri, 09:00–17:00, 30-min slots, 30 days ahead. No double-booking prevention.
+      </p>
+    </div>
+  )
 }
 
 // Reusable upload button: POSTs a chosen image to /api/upload and returns the
