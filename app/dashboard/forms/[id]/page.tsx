@@ -20,6 +20,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import ShareModal from '@/components/forms/share-modal'
+import { AIFormGenerator } from '@/components/forms/AIFormGenerator'
 import FieldOptionsEditor from '@/components/forms/field-options-editor'
 import BlockEditor, { blockPreview } from '@/components/forms/BlockEditor'
 import { Badge } from '@/components/ui/badge'
@@ -310,6 +311,41 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
     }
   }
 
+  // Append AI-generated questions as real fields. The /api/ai/generate route
+  // returns normalized questions ({ type, label, required, choices:[{label,value}] });
+  // map each to a form_fields row via the SAME fields API addField uses. Choice
+  // labels become the builder's string[] options shape. Persisted sequentially so
+  // server-assigned positions stay in order.
+  const handleAIGenerated = async (questions: any[]) => {
+    if (!Array.isArray(questions)) return
+    for (const q of questions) {
+      const fieldType: string = q?.type || 'short_text'
+      const choiceLabels = Array.isArray(q?.choices)
+        ? q.choices.map((c: any) => String(c?.label || '').trim()).filter(Boolean)
+        : []
+      const options = fieldHasOptions(fieldType)
+        ? (choiceLabels.length ? choiceLabels : ['Option 1', 'Option 2', 'Option 3'])
+        : null
+      try {
+        const res = await fetch(`/api/forms/${formId}/fields`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            field_type: fieldType,
+            label: q?.label || 'Untitled question',
+            required: !!q?.required,
+            options,
+          }),
+        })
+        if (!res.ok) continue
+        const data = await res.json()
+        if (data.field) setFields((prev) => [...prev, data.field])
+      } catch (error) {
+        console.error('Failed to add AI-generated field:', error)
+      }
+    }
+  }
+
   // Add a CONTENT block. Reuses the EXACT same fields API as questions: a block
   // is a form_fields row whose field_type is the block type and whose content
   // lives in settings (seeded from defaultBlockSettings). No new API.
@@ -549,6 +585,10 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
           {/* Field Types + Content Blocks Sidebar */}
           <div className="lg:col-span-1">
             <div className="card-surface p-4 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
+              <div className="mb-4 pb-4 border-b border-border [&_button]:w-full [&_button]:justify-center">
+                <AIFormGenerator onFormGenerated={handleAIGenerated} />
+                <p className="text-xs text-muted-foreground mt-2">Describe your form and let AI draft the questions.</p>
+              </div>
               <h3 className="heading-tight text-foreground mb-4">Add Fields</h3>
               <div className="space-y-2">
                 {FIELD_TYPES.filter((t) => t.input || t.value === 'statement' || t.value === 'page_break').map((type) => (

@@ -24,18 +24,38 @@ export function AIFormGenerator({ onFormGenerated }: AIFormGeneratorProps) {
   const [questionCount, setQuestionCount] = useState(5)
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedQuestions, setGeneratedQuestions] = useState<any[]>([])
+  const [errorMessage, setErrorMessage] = useState('')
 
   const handleGenerate = async () => {
     setIsGenerating(true)
-    
-    // Simulate AI generation
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    // Mock generated questions based on description
-    const mockQuestions = generateMockQuestions(description, formType, questionCount)
-    
-    setGeneratedQuestions(mockQuestions)
-    setIsGenerating(false)
+    setErrorMessage('')
+
+    try {
+      const res = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description, formType, questionCount }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setGeneratedQuestions(data.questions)
+      } else if (res.status === 503) {
+        // Not configured (no API key) — fall back to mock silently.
+        setGeneratedQuestions(generateMockQuestions(description, formType, questionCount))
+      } else {
+        // Generation failed (500) or other error — show a message and fall back to mock.
+        setErrorMessage(
+          "AI generation didn't work this time, so we've created a starter form you can edit."
+        )
+        setGeneratedQuestions(generateMockQuestions(description, formType, questionCount))
+      }
+    } catch {
+      // Network/parse error — fall back to mock silently.
+      setGeneratedQuestions(generateMockQuestions(description, formType, questionCount))
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   const handleUseQuestions = () => {
@@ -43,6 +63,7 @@ export function AIFormGenerator({ onFormGenerated }: AIFormGeneratorProps) {
     setIsOpen(false)
     setDescription('')
     setGeneratedQuestions([])
+    setErrorMessage('')
   }
 
   return (
@@ -144,6 +165,13 @@ export function AIFormGenerator({ onFormGenerated }: AIFormGeneratorProps) {
                       ))}
                     </div>
                   </div>
+
+                  {/* Error Message */}
+                  {errorMessage && (
+                    <p className="text-sm text-destructive" role="alert">
+                      {errorMessage}
+                    </p>
+                  )}
 
                   {/* Generate Button */}
                   <Button
