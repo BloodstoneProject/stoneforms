@@ -6,6 +6,7 @@ import Link from 'next/link'
 import {
   ArrowLeft, Loader2, Plus, Trash2, Mail, Webhook, Copy, Check,
   Power, Bell, Reply, MessageSquare, FileText, Send as SendIcon,
+  Table2, Users, BarChart3,
 } from 'lucide-react'
 import GoogleSheetsConnect from '@/components/forms/GoogleSheetsConnect'
 import IntegrationCard from '@/components/integrations/IntegrationCard'
@@ -47,8 +48,19 @@ export default function IntegrationsPage({ params }: { params: Promise<{ id: str
   const [hookError, setHookError] = useState<string | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
-  // Third-party integrations (Slack / Notion / Mailchimp), keyed by type.
+  // Third-party integrations (Slack / Notion / Mailchimp / Airtable / CRM), keyed by type.
   const [integrations, setIntegrations] = useState<Record<string, { config: any; enabled: boolean }>>({})
+
+  // Sync to CRM (form_integrations row of type 'crm').
+  const [crmEnabled, setCrmEnabled] = useState(false)
+  const [savingCrm, setSavingCrm] = useState(false)
+  const [crmSaved, setCrmSaved] = useState(false)
+
+  // Tracking pixels (persisted to forms.settings.tracking).
+  const [ga4Id, setGa4Id] = useState('')
+  const [metaPixelId, setMetaPixelId] = useState('')
+  const [savingTracking, setSavingTracking] = useState(false)
+  const [trackingSaved, setTrackingSaved] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -66,6 +78,8 @@ export default function IntegrationsPage({ params }: { params: Promise<{ id: str
           setAutoEnabled(!!s.autoResponder?.enabled)
           setAutoSubject(s.autoResponder?.subject || '')
           setAutoMessage(s.autoResponder?.message || '')
+          setGa4Id(s.tracking?.ga4MeasurementId || '')
+          setMetaPixelId(s.tracking?.metaPixelId || '')
         }
         if (notifData.settings) {
           setNotifyOn(notifData.settings.notify_on_submission ?? true)
@@ -78,6 +92,7 @@ export default function IntegrationsPage({ params }: { params: Promise<{ id: str
             map[row.type] = { config: row.config || {}, enabled: row.enabled }
           }
           setIntegrations(map)
+          setCrmEnabled(!!(map.crm && map.crm.enabled))
         }
       } finally {
         setLoading(false)
@@ -118,6 +133,50 @@ export default function IntegrationsPage({ params }: { params: Promise<{ id: str
       if (res.ok) { setSettings(nextSettings); setAutoSaved(true); setTimeout(() => setAutoSaved(false), 2000) }
     } finally {
       setSavingAuto(false)
+    }
+  }
+
+  const toggleCrm = async (next: boolean) => {
+    setSavingCrm(true)
+    setCrmSaved(false)
+    try {
+      const res = await fetch(`/api/forms/${formId}/integrations-config`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'crm', config: {}, enabled: next, action: 'save' }),
+      })
+      if (res.ok) {
+        setCrmEnabled(next)
+        setCrmSaved(true)
+        setTimeout(() => setCrmSaved(false), 2000)
+      }
+    } finally {
+      setSavingCrm(false)
+    }
+  }
+
+  const saveTracking = async () => {
+    setSavingTracking(true)
+    setTrackingSaved(false)
+    try {
+      const tracking: { ga4MeasurementId?: string; metaPixelId?: string } = {}
+      const ga4 = ga4Id.trim()
+      const meta = metaPixelId.trim()
+      if (ga4) tracking.ga4MeasurementId = ga4
+      if (meta) tracking.metaPixelId = meta
+      const nextSettings = { ...settings, tracking }
+      const res = await fetch(`/api/forms/${formId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ settings: nextSettings }),
+      })
+      if (res.ok) {
+        setSettings(nextSettings)
+        setTrackingSaved(true)
+        setTimeout(() => setTrackingSaved(false), 2000)
+      }
+    } finally {
+      setSavingTracking(false)
     }
   }
 
@@ -407,6 +466,101 @@ export default function IntegrationsPage({ params }: { params: Promise<{ id: str
           initialEnabled={integrations.mailchimp?.enabled}
           connected={!!integrations.mailchimp}
         />
+
+        {/* Airtable */}
+        <IntegrationCard
+          formId={formId}
+          type={'airtable' as any}
+          title="Airtable"
+          description="Create an Airtable record for each submission. Answers are matched to columns by label, so name your Airtable columns to match your form field labels."
+          icon={<Table2 className="w-5 h-5 text-muted-foreground" />}
+          fields={[
+            {
+              key: 'token',
+              label: 'Personal access token',
+              type: 'password',
+              placeholder: 'pat...',
+              help: 'Create a token at airtable.com/create/tokens with data.records:write scope on your base.',
+            },
+            {
+              key: 'baseId',
+              label: 'Base ID',
+              placeholder: 'appXXXXXXXXXXXXXX',
+              help: 'The base ID (starts with "app") from airtable.com/api or your base URL.',
+            },
+            {
+              key: 'tableName',
+              label: 'Table name',
+              placeholder: 'e.g. Submissions',
+              help: 'The exact name of the table to add records to.',
+            },
+          ]}
+          initialConfig={integrations.airtable?.config}
+          initialEnabled={integrations.airtable?.enabled}
+          connected={!!integrations.airtable}
+        />
+
+        {/* Sync to internal CRM */}
+        <section className="card-surface p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Users className="w-5 h-5 text-muted-foreground" />
+            <h2 className="heading-tight text-foreground">Sync to CRM</h2>
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">
+            Add or update a contact in your Stoneforms CRM for every submission. Email is required to
+            create a contact; name, phone and company are detected from the form automatically.
+          </p>
+          <label className="flex items-center gap-3 cursor-pointer mb-4">
+            <input
+              type="checkbox"
+              checked={crmEnabled}
+              onChange={(e) => toggleCrm(e.target.checked)}
+              disabled={savingCrm}
+              className="rounded"
+            />
+            <span className="text-sm text-foreground">Sync respondents to my CRM contacts</span>
+          </label>
+          {crmSaved && <p className="text-sm text-muted-foreground">Saved ✓</p>}
+        </section>
+
+        {/* Tracking pixels */}
+        <section className="card-surface p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <BarChart3 className="w-5 h-5 text-muted-foreground" />
+            <h2 className="heading-tight text-foreground">Tracking pixels</h2>
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">
+            Fire analytics events from the public form. View and submission events are sent to Google
+            Analytics 4 and the Meta Pixel when an ID is set.
+          </p>
+          <label className="block text-xs font-medium text-foreground mb-1">GA4 Measurement ID</label>
+          <input
+            type="text"
+            value={ga4Id}
+            onChange={(e) => setGa4Id(e.target.value)}
+            placeholder="G-XXXXXXXXXX"
+            autoComplete="off"
+            className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground mb-1"
+          />
+          <p className="text-xs text-muted-foreground mb-3">Google Analytics → Admin → Data Streams → your stream.</p>
+          <label className="block text-xs font-medium text-foreground mb-1">Meta Pixel ID</label>
+          <input
+            type="text"
+            value={metaPixelId}
+            onChange={(e) => setMetaPixelId(e.target.value)}
+            placeholder="123456789012345"
+            autoComplete="off"
+            className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground mb-1"
+          />
+          <p className="text-xs text-muted-foreground mb-4">Meta Events Manager → Data Sources → your pixel.</p>
+          <button
+            onClick={saveTracking}
+            disabled={savingTracking}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm disabled:opacity-50"
+          >
+            {savingTracking ? 'Saving…' : trackingSaved ? 'Saved ✓' : 'Save tracking'}
+          </button>
+        </section>
 
         {/* Zapier / Make */}
         <ZapierCard formId={formId} formUrl={`/f/${formId}`} />

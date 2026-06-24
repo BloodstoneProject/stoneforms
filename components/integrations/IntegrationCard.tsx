@@ -13,7 +13,7 @@ export interface IntegrationField {
 
 interface IntegrationCardProps {
   formId: string
-  type: 'slack' | 'notion' | 'mailchimp'
+  type: 'slack' | 'notion' | 'mailchimp' | 'airtable'
   title: string
   description: string
   icon: React.ReactNode

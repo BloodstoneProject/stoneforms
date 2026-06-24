@@ -147,3 +147,69 @@ export function detectName(
 
   return { first, last }
 }
+
+// Best-effort detection of the respondent's phone number. Prefers an explicit
+// phone field type, then falls back to a label that looks like a phone field.
+export function detectPhone(
+  fields: FieldLike[],
+  responses: Record<string, any>
+): string | null {
+  const list = Array.isArray(fields) ? fields : []
+
+  const phoneField = list.find((f) => f && f.field_type === 'phone')
+  if (phoneField) {
+    const v = responses?.[phoneField.id]
+    if (typeof v === 'string' && v.trim()) return v.trim().slice(0, 64)
+  }
+
+  for (const f of list) {
+    if (!f) continue
+    const label = (f.label || '').toLowerCase()
+    if (!/phone|mobile|tel/.test(label)) continue
+    const v = responses?.[f.id]
+    if (typeof v === 'string' && v.trim()) return v.trim().slice(0, 64)
+  }
+
+  return null
+}
+
+// Best-effort detection of a company/organisation answer.
+export function detectCompany(
+  fields: FieldLike[],
+  responses: Record<string, any>
+): string | null {
+  const list = Array.isArray(fields) ? fields : []
+  for (const f of list) {
+    if (!f) continue
+    const label = (f.label || '').toLowerCase()
+    if (!/company|organi[sz]ation|business|employer/.test(label)) continue
+    const v = responses?.[f.id]
+    if (typeof v === 'string' && v.trim()) return v.trim().slice(0, 255)
+  }
+  return null
+}
+
+export interface DetectedContact {
+  email: string | null
+  first?: string
+  last?: string
+  phone: string | null
+  company: string | null
+}
+
+// Pull a single contact (email/name/phone/company) out of a submission for the
+// internal CRM upsert. Email is the dedupe key, so callers should bail when it's
+// null.
+export function detectContact(
+  fields: FieldLike[],
+  responses: Record<string, any>
+): DetectedContact {
+  const { first, last } = detectName(fields, responses)
+  return {
+    email: detectEmail(fields, responses),
+    first,
+    last,
+    phone: detectPhone(fields, responses),
+    company: detectCompany(fields, responses),
+  }
+}

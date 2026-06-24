@@ -4,15 +4,18 @@
 //   slack:     { webhookUrl }
 //   notion:    { token, databaseId, titleProperty? }
 //   mailchimp: { apiKey, audienceId, tags? }
+//   airtable:  { token, baseId, tableName }
+//   crm:       {} (a flag — enabling the row turns on the internal CRM upsert)
 
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 import { sendSlackMessage } from '@/lib/integrations/slack'
 import { createNotionPage } from '@/lib/integrations/notion'
 import { syncMailchimpMember } from '@/lib/integrations/mailchimp'
+import { createAirtableRecord } from '@/lib/integrations/airtable'
 import type { AnswerPair } from '@/lib/integrations/format'
 
-const VALID_TYPES = new Set(['slack', 'notion', 'mailchimp'])
+const VALID_TYPES = new Set(['slack', 'notion', 'mailchimp', 'airtable', 'crm'])
 
 async function requireOwner(formId: string) {
   const supabase = createServerSupabaseClient()
@@ -50,6 +53,12 @@ function cleanConfig(type: string, config: any): Record<string, any> {
         ? c.tags
         : String(c.tags).split(',').map((t: string) => t.trim()).filter(Boolean)
     }
+  } else if (type === 'airtable') {
+    if (c.token) out.token = String(c.token).trim()
+    if (c.baseId) out.baseId = String(c.baseId).trim()
+    if (c.tableName) out.tableName = String(c.tableName).trim()
+  } else if (type === 'crm') {
+    // CRM has no credentials; the row's `enabled` flag is the whole config.
   }
   return out
 }
@@ -185,6 +194,23 @@ async function runTest(type: string, config: any, formTitle: string): Promise<vo
     })
     if (result.skipped) throw new Error('No email detected in the sample.')
     return
+  }
+  if (type === 'airtable') {
+    if (!config.token || !config.baseId || !config.tableName) {
+      throw new Error('Enter an Airtable token, base ID and table name first.')
+    }
+    await createAirtableRecord({
+      token: config.token,
+      baseId: config.baseId,
+      tableName: config.tableName,
+      formTitle: `${formTitle} (test)`,
+      pairs,
+    })
+    return
+  }
+  if (type === 'crm') {
+    // No external service to hit; enabling the integration is all that's needed.
+    throw new Error('No test needed — enable Sync to CRM to upsert contacts on submission.')
   }
   throw new Error('Unknown integration type')
 }
