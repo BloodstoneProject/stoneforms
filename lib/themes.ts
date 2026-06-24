@@ -12,6 +12,25 @@ export interface ThemeColors {
   buttonText: string
 }
 
+// Per-field media placement (lives on field.settings.media, NOT on the theme).
+// Documented here as the canonical shape so the editor/player agree:
+//   field.settings.media = {
+//     url?: string            // image/video URL
+//     layout?: MediaLayout    // how the media sits relative to the question
+//     focalX?: number         // 0..1 horizontal focal point for cover/wallpaper
+//     focalY?: number         // 0..1 vertical focal point
+//     brightness?: number     // 0..1 dim overlay (1 = full brightness)
+//   }
+export type MediaLayout = 'inline' | 'split-left' | 'split-right' | 'cover' | 'float' | 'wallpaper'
+
+export interface FieldMedia {
+  url?: string
+  layout?: MediaLayout
+  focalX?: number
+  focalY?: number
+  brightness?: number
+}
+
 export interface FormTheme {
   id: string
   name: string
@@ -23,6 +42,15 @@ export interface FormTheme {
   // Optional per-form brand logo. When set, it's shown on the player's welcome
   // screen. Undefined = no logo (today's behaviour, fully backward-compatible).
   logoUrl?: string
+  // ---- Optional premium theming (all default to undefined = today's behaviour) ----
+  // Full-bleed background image URL for the whole form (behind questions).
+  backgroundImage?: string
+  // 0..1 dim overlay applied over backgroundImage (1 = full brightness).
+  backgroundBrightness?: number
+  // Custom favicon shown on hosted/public form pages.
+  faviconUrl?: string
+  // Author-supplied CSS injected into the player (advanced; sanitised downstream).
+  customCss?: string
 }
 
 // Curated Google Fonts. `stack` is the CSS fallback.
@@ -107,6 +135,11 @@ export function normalizeTheme(raw: any): FormTheme {
     logoUrl: (typeof raw.logoUrl === 'string' && raw.logoUrl.trim())
       ? raw.logoUrl
       : (typeof raw.logo === 'string' && raw.logo.trim() ? raw.logo : undefined),
+    // New optional premium fields — passed through when present, else undefined.
+    backgroundImage: typeof raw.backgroundImage === 'string' && raw.backgroundImage.trim() ? raw.backgroundImage : undefined,
+    backgroundBrightness: typeof raw.backgroundBrightness === 'number' ? raw.backgroundBrightness : undefined,
+    faviconUrl: typeof raw.faviconUrl === 'string' && raw.faviconUrl.trim() ? raw.faviconUrl : undefined,
+    customCss: typeof raw.customCss === 'string' && raw.customCss.trim() ? raw.customCss : undefined,
   }
 }
 

@@ -26,10 +26,10 @@ export async function GET(
     return NextResponse.json({ error: 'Form not found' }, { status: 404 })
   }
 
-  // Ordered fields for the drop-off funnel.
+  // Ordered fields for the drop-off funnel and per-question breakdowns.
   const { data: fields } = await supabase
     .from('form_fields')
-    .select('id, label, position')
+    .select('id, label, position, field_type, options')
     .eq('form_id', params.id)
     .order('position', { ascending: true })
 
@@ -99,7 +99,7 @@ export async function GET(
   // metadata.reactions simply contribute nothing.
   const { data: reactionRows } = await supabase
     .from('submissions')
-    .select('metadata')
+    .select('answers, metadata')
     .eq('form_id', params.id)
     .limit(20000)
 
@@ -132,11 +132,183 @@ export async function GET(
       return { questionId: f.id, label: labelById[f.id] || 'Untitled', total, emojis }
     })
 
+  // ---- Per-question answer breakdowns ----
+  // Aggregate from submission.answers (already fetched above as reactionRows).
+  // Choice/checkbox/dropdown/picture_choice -> option counts.
+  // rating / opinion_scale -> average + distribution.
+  // nps -> detractor/passive/promoter buckets + NPS score.
+  // yes_no -> yes/no counts.
+  const BREAKDOWN_TYPES = new Set([
+    'multiple_choice', 'picture_choice', 'dropdown', 'checkboxes', 'ranking',
+    'rating', 'opinion_scale', 'nps', 'yes_no', 'consent',
+  ])
+
+  // Build option label lookup per field (for picture_choice / choice that store
+  // values; we surface the label when available, else the raw value).
+  const optionLabel: Record<string, Record<string, string>> = {}
+  for (const f of fields || []) {
+    if (!Array.isArray((f as any).options)) continue
+    const map: Record<string, string> = {}
+    for (const opt of (f as any).options as any[]) {
+      if (opt && typeof opt === 'object') {
+        const val = opt.value ?? opt.label ?? opt.id
+        const lab = opt.label ?? opt.text ?? opt.value ?? opt.id
+        if (val != null) map[String(val)] = String(lab)
+      } else if (opt != null) {
+        map[String(opt)] = String(opt)
+      }
+    }
+    optionLabel[f.id] = map
+  }
+
+  type QBreakdown =
+    | { kind: 'choice'; total: number; options: { label: string; count: number }[] }
+    | { kind: 'scale'; total: number; average: number; min: number; max: number; distribution: { value: number; count: number }[] }
+    | { kind: 'nps'; total: number; score: number; detractors: number; passives: number; promoters: number }
+    | { kind: 'yesno'; total: number; yes: number; no: number }
+
+  // Accumulators per field.
+  const choiceCounts: Record<string, Record<string, number>> = {}
+  const scaleValues: Record<string, number[]> = {}
+  const npsAcc: Record<string, { d: number; p: number; pr: number; total: number }> = {}
+  const yesNoAcc: Record<string, { yes: number; no: number }> = {}
+
+  const toNumber = (v: any): number | null => {
+    const n = typeof v === 'number' ? v : Number(v)
+    return Number.isFinite(n) ? n : null
+  }
+
+  for (const row of reactionRows || []) {
+    const answers = (row?.answers as any) || {}
+    if (!answers || typeof answers !== 'object') continue
+    for (const f of fields || []) {
+      if (!BREAKDOWN_TYPES.has(f.field_type)) continue
+      const raw = answers[f.id]
+      if (raw === null || raw === undefined || raw === '') continue
+      const type = f.field_type
+
+      if (type === 'multiple_choice' || type === 'picture_choice' || type === 'dropdown' || type === 'checkboxes' || type === 'ranking') {
+        if (!choiceCounts[f.id]) choiceCounts[f.id] = {}
+        const vals = Array.isArray(raw) ? raw : [raw]
+        for (const v of vals) {
+          if (v === null || v === undefined || v === '') continue
+          const key = String(v)
+          choiceCounts[f.id][key] = (choiceCounts[f.id][key] || 0) + 1
+        }
+      } else if (type === 'rating' || type === 'opinion_scale') {
+        const n = toNumber(raw)
+        if (n === null) continue
+        if (!scaleValues[f.id]) scaleValues[f.id] = []
+        scaleValues[f.id].push(n)
+      } else if (type === 'nps') {
+        const n = toNumber(raw)
+        if (n === null) continue
+        if (!npsAcc[f.id]) npsAcc[f.id] = { d: 0, p: 0, pr: 0, total: 0 }
+        const acc = npsAcc[f.id]
+        acc.total++
+        if (n <= 6) acc.d++
+        else if (n <= 8) acc.p++
+        else acc.pr++
+      } else if (type === 'yes_no' || type === 'consent') {
+        if (!yesNoAcc[f.id]) yesNoAcc[f.id] = { yes: 0, no: 0 }
+        const truthy = raw === true || raw === 'true' || raw === 'Yes' || raw === 'yes' || raw === 1 || raw === '1'
+        if (truthy) yesNoAcc[f.id].yes++
+        else yesNoAcc[f.id].no++
+      }
+    }
+  }
+
+  // Shape per-question breakdowns in field order; only include answered questions.
+  const questionBreakdowns: { questionId: string; label: string; fieldType: string; breakdown: QBreakdown }[] = []
+  for (const f of fields || []) {
+    const label = labelById[f.id] || 'Untitled'
+    const type = f.field_type
+
+    if (choiceCounts[f.id]) {
+      const lut = optionLabel[f.id] || {}
+      const entries = Object.entries(choiceCounts[f.id])
+        .map(([value, count]) => ({ label: lut[value] || value, count }))
+        .sort((a, b) => b.count - a.count)
+      const total = entries.reduce((s, e) => s + e.count, 0)
+      if (total > 0) {
+        questionBreakdowns.push({
+          questionId: f.id, label, fieldType: type,
+          breakdown: { kind: 'choice', total, options: entries },
+        })
+      }
+    } else if (scaleValues[f.id]) {
+      const vals = scaleValues[f.id]
+      const total = vals.length
+      if (total > 0) {
+        const sum = vals.reduce((s, v) => s + v, 0)
+        const average = Math.round((sum / total) * 100) / 100
+        const min = Math.min(...vals)
+        const max = Math.max(...vals)
+        const distMap: Record<number, number> = {}
+        for (const v of vals) distMap[v] = (distMap[v] || 0) + 1
+        const distribution = Object.entries(distMap)
+          .map(([value, count]) => ({ value: Number(value), count }))
+          .sort((a, b) => a.value - b.value)
+        questionBreakdowns.push({
+          questionId: f.id, label, fieldType: type,
+          breakdown: { kind: 'scale', total, average, min, max, distribution },
+        })
+      }
+    } else if (npsAcc[f.id]) {
+      const acc = npsAcc[f.id]
+      if (acc.total > 0) {
+        const score = Math.round(((acc.pr - acc.d) / acc.total) * 100)
+        questionBreakdowns.push({
+          questionId: f.id, label, fieldType: type,
+          breakdown: { kind: 'nps', total: acc.total, score, detractors: acc.d, passives: acc.p, promoters: acc.pr },
+        })
+      }
+    } else if (yesNoAcc[f.id]) {
+      const acc = yesNoAcc[f.id]
+      const total = acc.yes + acc.no
+      if (total > 0) {
+        questionBreakdowns.push({
+          questionId: f.id, label, fieldType: type,
+          breakdown: { kind: 'yesno', total, yes: acc.yes, no: acc.no },
+        })
+      }
+    }
+  }
+
+  // ---- Source / UTM attribution ----
+  // Aggregate metadata.url_params.{source,medium,campaign} across submissions.
+  const sourceCounts: Record<string, number> = {}
+  const mediumCounts: Record<string, number> = {}
+  const campaignCounts: Record<string, number> = {}
+  let attributedSubs = 0
+  for (const row of reactionRows || []) {
+    const up = (row?.metadata as any)?.url_params
+    if (!up || typeof up !== 'object') continue
+    const source = up.source ?? up.utm_source
+    const medium = up.medium ?? up.utm_medium
+    const campaign = up.campaign ?? up.utm_campaign
+    let touched = false
+    if (typeof source === 'string' && source.trim()) { sourceCounts[source] = (sourceCounts[source] || 0) + 1; touched = true }
+    if (typeof medium === 'string' && medium.trim()) { mediumCounts[medium] = (mediumCounts[medium] || 0) + 1; touched = true }
+    if (typeof campaign === 'string' && campaign.trim()) { campaignCounts[campaign] = (campaignCounts[campaign] || 0) + 1; touched = true }
+    if (touched) attributedSubs++
+  }
+  const toSorted = (m: Record<string, number>) =>
+    Object.entries(m).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count)
+  const sources = {
+    attributed: attributedSubs,
+    bySource: toSorted(sourceCounts),
+    byMedium: toSorted(mediumCounts),
+    byCampaign: toSorted(campaignCounts),
+  }
+
   return NextResponse.json({
     totals: { views: totalViews, submissions: totalSubmissions, completionRate },
     responsesByDay,
     funnel,
     fieldCount: (fields || []).length,
     reactions: { total: totalReactions, questions: reactionQuestions },
+    questionBreakdowns,
+    sources,
   })
 }

@@ -5,7 +5,7 @@ import { use, useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
-  ArrowLeft, Plus, Trash2, GripVertical, Eye, Share2,
+  ArrowLeft, Plus, Trash2, Copy, GripVertical, Eye, Share2, Upload,
   Settings2, ChevronDown, ChevronUp, Check, Loader2, Globe, Pencil, BarChart3, Webhook, Palette, GitBranch,
   Heading, AlignLeft, Quote, MousePointerClick, Image as ImageIcon, Video, AppWindow, Code2, Minus, MoveVertical, LayoutGrid,
   type LucideIcon,
@@ -24,7 +24,8 @@ import { AIFormGenerator } from '@/components/forms/AIFormGenerator'
 import FieldOptionsEditor from '@/components/forms/field-options-editor'
 import BlockEditor, { blockPreview } from '@/components/forms/BlockEditor'
 import { Badge } from '@/components/ui/badge'
-import { FIELD_TYPES, fieldHasOptions, getFieldMeta, isContentBlock } from '@/lib/field-types'
+import { FIELD_TYPES, fieldHasOptions, getFieldMeta, isContentBlock, isInputField } from '@/lib/field-types'
+import type { FieldMedia, MediaLayout } from '@/lib/themes'
 import {
   BLOCK_LIBRARY, defaultBlockSettings, PRESENTATION_MODES, getPresentation,
   type BlockGroup, type PresentationMode,
@@ -75,8 +76,9 @@ interface FormSettings {
   requireEmail?: boolean
   redirectUrl?: string
   customEndingMessage?: string
-  welcome?: { enabled?: boolean; title?: string; description?: string; buttonText?: string }
+  welcome?: { enabled?: boolean; title?: string; description?: string; buttonText?: string; imageUrl?: string; showTime?: boolean; estimatedMinutes?: number }
   ending?: { title?: string; message?: string }
+  access?: { password?: string }
   quiz?: QuizConfig
   schedule?: FormSchedule
   recaptcha?: { enabled?: boolean }
@@ -207,6 +209,29 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
       else schedule[key] = value
       return { ...prev, settings: { ...(prev.settings || {}), schedule } }
     })
+  }
+
+  // ---- Password protection ----
+  // Stores settings.access.password as a sha256 HEX hash (never the plaintext).
+  // Hashing happens in the browser via SubtleCrypto so the raw password never
+  // hits the wire. Clearing the field removes the access block entirely.
+  const setAccessPassword = async (plaintext: string) => {
+    if (!plaintext) {
+      setForm((prev) => {
+        if (!prev) return prev
+        const settings = { ...(prev.settings || {}) }
+        delete (settings as any).access
+        return { ...prev, settings }
+      })
+      return
+    }
+    const enc = new TextEncoder().encode(plaintext)
+    const digest = await crypto.subtle.digest('SHA-256', enc)
+    const hex = Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('')
+    setForm((prev) => prev ? {
+      ...prev,
+      settings: { ...(prev.settings || {}), access: { ...((prev.settings as any)?.access || {}), password: hex } },
+    } : prev)
   }
 
   const updateRecaptchaSetting = (enabled: boolean) => {
@@ -406,6 +431,37 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
       await fetch(`/api/forms/${formId}/fields/${fieldId}`, { method: 'DELETE' })
     } catch (error) {
       console.error('Failed to delete field:', error)
+    }
+  }
+
+  // Duplicate a field: clone it via POST at the slot RIGHT AFTER the original
+  // (the fields route shifts later rows down for us), then refetch so every
+  // row's server-assigned position stays consistent.
+  const duplicateField = async (fieldId: string) => {
+    const source = fields.find((f) => f.id === fieldId)
+    if (!source) return
+    const sourceIndex = fields.findIndex((f) => f.id === fieldId)
+    try {
+      const res = await fetch(`/api/forms/${formId}/fields`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          field_type: source.field_type,
+          label: source.label,
+          placeholder: source.placeholder,
+          required: source.required,
+          options: source.options,
+          settings: source.settings || {},
+          position: sourceIndex + 1,
+        }),
+      })
+      if (!res.ok) return
+      // Positions of later rows shifted server-side — refetch to resync local state.
+      const fieldsRes = await fetch(`/api/forms/${formId}/fields`)
+      const fieldsData = await fieldsRes.json()
+      if (fieldsData.fields) setFields(fieldsData.fields)
+    } catch (error) {
+      console.error('Failed to duplicate field:', error)
     }
   }
 
@@ -741,6 +797,35 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                           className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground" placeholder="Welcome subtitle" />
                         <input type="text" value={form.settings?.welcome?.buttonText || ''} onChange={(e) => updateNestedSetting('welcome', 'buttonText', e.target.value)}
                           className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground" placeholder="Start button text (default: Start)" />
+
+                        {/* Welcome image — real upload, with URL paste fallback */}
+                        <div>
+                          <label className="block text-xs font-medium text-muted-foreground mb-1">Welcome image (optional)</label>
+                          <div className="flex items-center gap-2">
+                            <ImageUploadButton onUploaded={(url) => updateNestedSetting('welcome', 'imageUrl', url)} />
+                            <input type="url" value={form.settings?.welcome?.imageUrl || ''} onChange={(e) => updateNestedSetting('welcome', 'imageUrl', e.target.value)}
+                              className="flex-1 text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground" placeholder="…or paste an image URL" />
+                            {form.settings?.welcome?.imageUrl && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={form.settings.welcome.imageUrl} alt="" className="w-10 h-10 object-cover rounded border border-border shrink-0" />
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Estimated time / question count */}
+                        <label className="flex items-center gap-2 cursor-pointer pt-1">
+                          <input type="checkbox" checked={!!form.settings?.welcome?.showTime}
+                            onChange={(e) => updateNestedSetting('welcome', 'showTime', e.target.checked)} className="rounded" />
+                          <span className="text-sm text-foreground">Show estimated time &amp; question count</span>
+                        </label>
+                        {form.settings?.welcome?.showTime && (
+                          <div>
+                            <label className="block text-xs font-medium text-muted-foreground mb-1">Estimated minutes (blank = auto from question count)</label>
+                            <input type="number" min={1} value={form.settings?.welcome?.estimatedMinutes ?? ''}
+                              onChange={(e) => updateNestedSetting('welcome', 'estimatedMinutes', e.target.value === '' ? undefined : Number(e.target.value))}
+                              className="w-40 text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground" placeholder="Auto" />
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -792,6 +877,14 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                     {slugStatus.kind === 'error' && <p className="text-xs text-destructive mt-1">{slugStatus.message}</p>}
                     {slugStatus.kind === 'saved' && <p className="text-xs text-muted-foreground mt-1">Custom link saved.</p>}
                     <p className="text-xs text-muted-foreground mt-1">3-40 chars: lowercase letters, numbers, hyphens. Leave blank to use the default link.</p>
+                  </div>
+
+                  {/* Password protection */}
+                  <div className="pt-3 border-t border-border">
+                    <PasswordProtectField
+                      hasPassword={!!form.settings?.access?.password}
+                      onSet={setAccessPassword}
+                    />
                   </div>
 
                   {/* Quiz mode */}
@@ -977,6 +1070,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                         onUpdate={updateField}
                         onUpdateSetting={updateFieldSetting}
                         onDelete={deleteField}
+                        onDuplicate={duplicateField}
                       />
                     ))}
                   </div>
@@ -1049,6 +1143,7 @@ interface SortableFieldProps {
   onUpdate: (id: string, updates: Partial<Field>) => void
   onUpdateSetting: (field: Field, key: string, value: any) => void
   onDelete: (id: string) => void
+  onDuplicate: (id: string) => void
 }
 
 const SCORABLE_NUMERIC = new Set(['rating', 'opinion_scale', 'number'])
@@ -1059,13 +1154,12 @@ const CALC_SOURCE_TYPES = new Set(['number', 'rating', 'opinion_scale', 'yes_no'
 interface CalcTerm { fieldId: string; weight: number }
 interface CalcConfig { terms?: CalcTerm[]; constant?: number; prefix?: string; suffix?: string }
 
-function SortableField({ field, index, allFields, quizEnabled, expanded, onToggleExpand, onUpdate, onUpdateSetting, onDelete }: SortableFieldProps) {
+function SortableField({ field, index, allFields, quizEnabled, expanded, onToggleExpand, onUpdate, onUpdateSetting, onDelete, onDuplicate }: SortableFieldProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: field.id })
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
   const meta = getFieldMeta(field.field_type)
   const settings = field.settings || {}
   const isNumeric = meta?.category === 'number'
-  const isText = field.field_type === 'short_text' || field.field_type === 'long_text'
   const scoring: Record<string, number> = (settings.scoring as Record<string, number>) || {}
   const showOptionScoring = quizEnabled && (field.field_type === 'multiple_choice' || field.field_type === 'dropdown' || field.field_type === 'picture_choice')
 
@@ -1140,9 +1234,14 @@ function SortableField({ field, index, allFields, quizEnabled, expanded, onToggl
             )}
           </div>
 
-          <button onClick={() => onDelete(field.id)} className="text-muted-foreground hover:text-destructive mt-1" aria-label="Delete block">
-            <Trash2 className="w-5 h-5" />
-          </button>
+          <div className="flex flex-col gap-1 mt-1">
+            <button onClick={() => onDuplicate(field.id)} className="text-muted-foreground hover:text-foreground" aria-label="Duplicate block" title="Duplicate">
+              <Copy className="w-5 h-5" />
+            </button>
+            <button onClick={() => onDelete(field.id)} className="text-muted-foreground hover:text-destructive" aria-label="Delete block">
+              <Trash2 className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
     )
@@ -1226,6 +1325,14 @@ function SortableField({ field, index, allFields, quizEnabled, expanded, onToggl
                 />
               </div>
 
+              {/* Per-field-type settings (rating/scale/nps/date/phone/choice/text) */}
+              <FieldTypeSettings field={field} onUpdateSetting={onUpdateSetting} />
+
+              {/* Per-question media (image upload + layout + focal point) */}
+              {isInputField(field.field_type) && (
+                <MediaPicker field={field} onUpdateSetting={onUpdateSetting} />
+              )}
+
               {/* Consent (GDPR) config */}
               {field.field_type === 'consent' && (
                 <div className="rounded-lg border border-border p-3 space-y-2">
@@ -1307,7 +1414,7 @@ function SortableField({ field, index, allFields, quizEnabled, expanded, onToggl
                 </div>
               )}
 
-              {isNumeric && (
+              {isNumeric && field.field_type !== 'rating' && field.field_type !== 'nps' && field.field_type !== 'opinion_scale' && (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-medium text-muted-foreground mb-1">Min</label>
@@ -1327,19 +1434,6 @@ function SortableField({ field, index, allFields, quizEnabled, expanded, onToggl
                       className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
                     />
                   </div>
-                </div>
-              )}
-
-              {isText && (
-                <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1">Max length (characters)</label>
-                  <input
-                    type="number"
-                    value={settings.maxLength ?? ''}
-                    onChange={(e) => onUpdateSetting(field, 'maxLength', e.target.value === '' ? '' : Number(e.target.value))}
-                    className="w-40 text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
-                    placeholder="No limit"
-                  />
                 </div>
               )}
 
@@ -1391,9 +1485,14 @@ function SortableField({ field, index, allFields, quizEnabled, expanded, onToggl
           )}
         </div>
 
-        <button onClick={() => onDelete(field.id)} className="text-muted-foreground hover:text-destructive mt-1.5" aria-label="Delete field">
-          <Trash2 className="w-5 h-5" />
-        </button>
+        <div className="flex flex-col gap-1 mt-1.5">
+          <button onClick={() => onDuplicate(field.id)} className="text-muted-foreground hover:text-foreground" aria-label="Duplicate field" title="Duplicate">
+            <Copy className="w-5 h-5" />
+          </button>
+          <button onClick={() => onDelete(field.id)} className="text-muted-foreground hover:text-destructive" aria-label="Delete field">
+            <Trash2 className="w-5 h-5" />
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -1596,6 +1695,401 @@ function PaymentConfig({
         Respondents fill the form, then are redirected to a secure Stripe checkout on submit. The amount is enforced
         server-side.
       </p>
+    </div>
+  )
+}
+
+const FT_INPUT_CLASS =
+  'w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground'
+const FT_LABEL_CLASS = 'block text-xs font-medium text-muted-foreground mb-1'
+
+// Choice field types that share the min/max/allowOther/randomize settings shape.
+const CHOICE_TYPES = new Set(['multiple_choice', 'checkboxes', 'dropdown', 'picture_choice'])
+const RATING_ICONS: Array<{ value: string; label: string }> = [
+  { value: 'star', label: '⭐ Star' },
+  { value: 'heart', label: '❤️ Heart' },
+  { value: 'thumb', label: '👍 Thumb' },
+  { value: 'circle', label: '⚪ Circle' },
+]
+
+// Per-field-type settings editor. Writes into field.settings via the same
+// onUpdateSetting PATCH flow questions already use. All keys match the canonical
+// shapes documented in lib/field-types.ts. Empty values are cleared by
+// updateFieldSetting (which deletes blank keys), so nothing leaks defaults.
+function FieldTypeSettings({
+  field,
+  onUpdateSetting,
+}: {
+  field: Field
+  onUpdateSetting: (field: Field, key: string, value: any) => void
+}) {
+  const s = field.settings || {}
+  const t = field.field_type
+  const num = (v: string) => (v === '' ? '' : Number(v))
+
+  if (t === 'rating') {
+    return (
+      <div className="rounded-lg border border-border p-3 space-y-3">
+        <p className="text-xs font-medium text-foreground">Rating settings</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={FT_LABEL_CLASS}>Scale (max stars)</label>
+            <input type="number" min={1} max={10} value={s.scale ?? ''} placeholder="5"
+              onChange={(e) => onUpdateSetting(field, 'scale', num(e.target.value))} className={FT_INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={FT_LABEL_CLASS}>Icon</label>
+            <select value={s.icon ?? 'star'} onChange={(e) => onUpdateSetting(field, 'icon', e.target.value)} className={FT_INPUT_CLASS}>
+              {RATING_ICONS.map((i) => <option key={i.value} value={i.value}>{i.label}</option>)}
+            </select>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">1–10. Defaults to a 5-star scale.</p>
+      </div>
+    )
+  }
+
+  if (t === 'opinion_scale') {
+    return (
+      <div className="rounded-lg border border-border p-3 space-y-3">
+        <p className="text-xs font-medium text-foreground">Opinion scale settings</p>
+        <div className="grid grid-cols-3 gap-3">
+          <div>
+            <label className={FT_LABEL_CLASS}>Min</label>
+            <input type="number" value={s.min ?? ''} placeholder="0"
+              onChange={(e) => onUpdateSetting(field, 'min', num(e.target.value))} className={FT_INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={FT_LABEL_CLASS}>Max</label>
+            <input type="number" value={s.max ?? ''} placeholder="10"
+              onChange={(e) => onUpdateSetting(field, 'max', num(e.target.value))} className={FT_INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={FT_LABEL_CLASS}>Start at</label>
+            <input type="number" value={s.startAt ?? ''} placeholder="—"
+              onChange={(e) => onUpdateSetting(field, 'startAt', num(e.target.value))} className={FT_INPUT_CLASS} />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={FT_LABEL_CLASS}>Left label</label>
+            <input type="text" value={s.leftLabel ?? ''} placeholder="Not at all"
+              onChange={(e) => onUpdateSetting(field, 'leftLabel', e.target.value)} className={FT_INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={FT_LABEL_CLASS}>Right label</label>
+            <input type="text" value={s.rightLabel ?? ''} placeholder="Extremely"
+              onChange={(e) => onUpdateSetting(field, 'rightLabel', e.target.value)} className={FT_INPUT_CLASS} />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (t === 'nps') {
+    return (
+      <div className="rounded-lg border border-border p-3 space-y-3">
+        <p className="text-xs font-medium text-foreground">Net Promoter Score (0–10)</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={FT_LABEL_CLASS}>Left label (0)</label>
+            <input type="text" value={s.leftLabel ?? ''} placeholder="Not likely"
+              onChange={(e) => onUpdateSetting(field, 'leftLabel', e.target.value)} className={FT_INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={FT_LABEL_CLASS}>Right label (10)</label>
+            <input type="text" value={s.rightLabel ?? ''} placeholder="Extremely likely"
+              onChange={(e) => onUpdateSetting(field, 'rightLabel', e.target.value)} className={FT_INPUT_CLASS} />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (t === 'date') {
+    return (
+      <div className="rounded-lg border border-border p-3 space-y-3">
+        <p className="text-xs font-medium text-foreground">Date settings</p>
+        <div>
+          <label className={FT_LABEL_CLASS}>Mode</label>
+          <select value={s.mode ?? 'date'} onChange={(e) => onUpdateSetting(field, 'mode', e.target.value)} className={FT_INPUT_CLASS}>
+            <option value="date">Date</option>
+            <option value="time">Time</option>
+            <option value="datetime">Date &amp; time</option>
+          </select>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={FT_LABEL_CLASS}>Earliest (min)</label>
+            <input type="date" value={s.min ?? ''} onChange={(e) => onUpdateSetting(field, 'min', e.target.value)} className={FT_INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={FT_LABEL_CLASS}>Latest (max)</label>
+            <input type="date" value={s.max ?? ''} onChange={(e) => onUpdateSetting(field, 'max', e.target.value)} className={FT_INPUT_CLASS} />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (t === 'phone') {
+    return (
+      <div className="rounded-lg border border-border p-3 space-y-2">
+        <p className="text-xs font-medium text-foreground">Phone settings</p>
+        <label className={FT_LABEL_CLASS}>Default country (ISO-2)</label>
+        <input type="text" maxLength={2} value={s.defaultCountry ?? ''} placeholder="GB"
+          onChange={(e) => onUpdateSetting(field, 'defaultCountry', e.target.value.toUpperCase())}
+          className={`${FT_INPUT_CLASS} w-28 font-mono uppercase`} />
+        <p className="text-xs text-muted-foreground">Two-letter code, e.g. GB, US, FR.</p>
+      </div>
+    )
+  }
+
+  if (CHOICE_TYPES.has(t)) {
+    return (
+      <div className="rounded-lg border border-border p-3 space-y-3">
+        <p className="text-xs font-medium text-foreground">Choice settings</p>
+        {(t === 'checkboxes') && (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={FT_LABEL_CLASS}>Min selections</label>
+              <input type="number" min={0} value={s.minSelect ?? ''} placeholder="Any"
+                onChange={(e) => onUpdateSetting(field, 'minSelect', num(e.target.value))} className={FT_INPUT_CLASS} />
+            </div>
+            <div>
+              <label className={FT_LABEL_CLASS}>Max selections</label>
+              <input type="number" min={1} value={s.maxSelect ?? ''} placeholder="No limit"
+                onChange={(e) => onUpdateSetting(field, 'maxSelect', num(e.target.value))} className={FT_INPUT_CLASS} />
+            </div>
+          </div>
+        )}
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" checked={!!s.allowOther} onChange={(e) => onUpdateSetting(field, 'allowOther', e.target.checked)} className="rounded" />
+          <span className="text-sm text-foreground">Allow an &ldquo;Other&rdquo; free-text option</span>
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" checked={!!s.randomize} onChange={(e) => onUpdateSetting(field, 'randomize', e.target.checked)} className="rounded" />
+          <span className="text-sm text-foreground">Randomize option order</span>
+        </label>
+      </div>
+    )
+  }
+
+  if (t === 'short_text' || t === 'long_text') {
+    return (
+      <div className="rounded-lg border border-border p-3 space-y-3">
+        <p className="text-xs font-medium text-foreground">Text settings</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={FT_LABEL_CLASS}>Max length (characters)</label>
+            <input type="number" min={1} value={s.maxLength ?? ''} placeholder="No limit"
+              onChange={(e) => onUpdateSetting(field, 'maxLength', num(e.target.value))} className={FT_INPUT_CLASS} />
+          </div>
+          <div>
+            <label className={FT_LABEL_CLASS}>Default / prefill</label>
+            <input type="text" value={s.default ?? ''} placeholder="Optional prefilled value"
+              onChange={(e) => onUpdateSetting(field, 'default', e.target.value)} className={FT_INPUT_CLASS} />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return null
+}
+
+// Reusable upload button: POSTs a chosen image to /api/upload and returns the
+// public URL. Shared by the media picker and welcome-screen image.
+function ImageUploadButton({
+  onUploaded,
+  busyLabel = 'Upload',
+}: {
+  onUploaded: (url: string) => void
+  busyLabel?: string
+}) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+
+  const handle = async (file: File) => {
+    setBusy(true)
+    setErr(null)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/upload', { method: 'POST', body: fd })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.url) { setErr(data.error || 'Upload failed'); return }
+      onUploaded(data.url)
+    } catch {
+      setErr('Upload failed')
+    } finally {
+      setBusy(false)
+      if (inputRef.current) inputRef.current.value = ''
+    }
+  }
+
+  return (
+    <>
+      <button type="button" onClick={() => inputRef.current?.click()} disabled={busy}
+        className="flex items-center gap-1.5 px-3 py-2 text-sm border border-input rounded-md hover:bg-secondary disabled:opacity-50 shrink-0">
+        {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+        {busyLabel}
+      </button>
+      <input ref={inputRef} type="file" accept="image/*" className="hidden"
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handle(f) }} />
+      {err && <span className="text-xs text-destructive">{err}</span>}
+    </>
+  )
+}
+
+const MEDIA_LAYOUTS: Array<{ value: MediaLayout; label: string }> = [
+  { value: 'inline', label: 'Inline' },
+  { value: 'split-left', label: 'Split left' },
+  { value: 'split-right', label: 'Split right' },
+  { value: 'cover', label: 'Cover' },
+  { value: 'float', label: 'Float' },
+  { value: 'wallpaper', label: 'Wallpaper' },
+]
+
+// Per-question media picker. Writes field.settings.media (FieldMedia from
+// lib/themes). Real image upload (via /api/upload) with URL paste fallback,
+// layout selector, focal point sliders and a brightness dim for cover/wallpaper.
+function MediaPicker({
+  field,
+  onUpdateSetting,
+}: {
+  field: Field
+  onUpdateSetting: (field: Field, key: string, value: any) => void
+}) {
+  const media: FieldMedia = (field.settings?.media as FieldMedia) || {}
+  const write = (patch: Partial<FieldMedia>) => {
+    const next: FieldMedia = { ...media, ...patch }
+    // Drop empty url so an unset media object stays effectively empty.
+    if (next.url === '' || next.url === undefined) {
+      const { url, ...rest } = next
+      onUpdateSetting(field, 'media', Object.keys(rest).length ? rest : undefined)
+    } else {
+      onUpdateSetting(field, 'media', next)
+    }
+  }
+  const layout = media.layout || 'inline'
+  const showFocal = layout === 'cover' || layout === 'wallpaper' || layout === 'split-left' || layout === 'split-right'
+  const showBrightness = layout === 'cover' || layout === 'wallpaper'
+
+  return (
+    <div className="rounded-lg border border-border p-3 space-y-3">
+      <p className="text-xs font-medium text-foreground">Question media (optional)</p>
+      <div className="flex items-center gap-2">
+        <ImageUploadButton onUploaded={(url) => write({ url })} />
+        <input
+          type="url"
+          value={media.url || ''}
+          onChange={(e) => write({ url: e.target.value })}
+          className={FT_INPUT_CLASS}
+          placeholder="…or paste an image URL"
+        />
+        {media.url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={media.url} alt="" className="w-10 h-10 object-cover rounded border border-border shrink-0" />
+        )}
+      </div>
+
+      {media.url && (
+        <>
+          <div>
+            <label className={FT_LABEL_CLASS}>Layout</label>
+            <select value={layout} onChange={(e) => write({ layout: e.target.value as MediaLayout })} className={FT_INPUT_CLASS}>
+              {MEDIA_LAYOUTS.map((l) => <option key={l.value} value={l.value}>{l.label}</option>)}
+            </select>
+          </div>
+
+          {showFocal && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={FT_LABEL_CLASS}>Focal X ({Math.round((media.focalX ?? 0.5) * 100)}%)</label>
+                <input type="range" min={0} max={1} step={0.01} value={media.focalX ?? 0.5}
+                  onChange={(e) => write({ focalX: Number(e.target.value) })} className="w-full" />
+              </div>
+              <div>
+                <label className={FT_LABEL_CLASS}>Focal Y ({Math.round((media.focalY ?? 0.5) * 100)}%)</label>
+                <input type="range" min={0} max={1} step={0.01} value={media.focalY ?? 0.5}
+                  onChange={(e) => write({ focalY: Number(e.target.value) })} className="w-full" />
+              </div>
+            </div>
+          )}
+
+          {showBrightness && (
+            <div>
+              <label className={FT_LABEL_CLASS}>Brightness ({Math.round((media.brightness ?? 1) * 100)}%)</label>
+              <input type="range" min={0.2} max={1} step={0.05} value={media.brightness ?? 1}
+                onChange={(e) => write({ brightness: Number(e.target.value) })} className="w-full" />
+            </div>
+          )}
+
+          <button type="button" onClick={() => onUpdateSetting(field, 'media', undefined)}
+            className="text-xs text-muted-foreground hover:text-destructive">
+            Remove media
+          </button>
+        </>
+      )}
+    </div>
+  )
+}
+
+// Password protection control. Holds the plaintext only in local state; on save
+// it's hashed to sha256 (in onSet) before being written to settings.access. The
+// stored hash is never shown back — once set we display a "protected" state.
+function PasswordProtectField({
+  hasPassword,
+  onSet,
+}: {
+  hasPassword: boolean
+  onSet: (plaintext: string) => void | Promise<void>
+}) {
+  const [value, setValue] = useState('')
+  const [editing, setEditing] = useState(false)
+
+  if (hasPassword && !editing) {
+    return (
+      <div>
+        <p className="text-sm font-medium text-foreground mb-1">Password protection</p>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">🔒 This form requires a password.</span>
+          <button type="button" onClick={() => { setValue(''); setEditing(true) }}
+            className="text-xs underline text-muted-foreground hover:text-foreground">Change</button>
+          <button type="button" onClick={() => onSet('')}
+            className="text-xs underline text-destructive hover:text-destructive/80">Remove</button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-foreground mb-1">Password protection</label>
+      <div className="flex items-center gap-2">
+        <input
+          type="password"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          className="flex-1 text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
+          placeholder="Set a password respondents must enter"
+        />
+        <button
+          type="button"
+          onClick={async () => { if (value.trim()) { await onSet(value.trim()); setValue(''); setEditing(false) } }}
+          disabled={!value.trim()}
+          className="px-3 py-2 text-sm border border-input rounded-md hover:bg-secondary disabled:opacity-50 shrink-0"
+        >
+          Save
+        </button>
+        {hasPassword && (
+          <button type="button" onClick={() => setEditing(false)}
+            className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground shrink-0">Cancel</button>
+        )}
+      </div>
+      <p className="text-xs text-muted-foreground mt-1">Hashed in your browser (SHA-256) before saving. Enforced when respondents open the form.</p>
     </div>
   )
 }

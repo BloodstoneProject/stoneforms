@@ -1,5 +1,7 @@
 'use client'
 
+import { useRef, useState } from 'react'
+import { Upload, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 // ============================================================================
@@ -33,6 +35,82 @@ interface BlockEditorProps {
 const inputClass =
   'w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground'
 const labelClass = 'block text-xs font-medium text-muted-foreground mb-1'
+
+// Image field with a real upload (POST /api/upload -> Supabase Storage) plus a
+// URL paste fallback and a small live preview. Used by image / cover_image /
+// logo blocks so creators don't have to host images themselves.
+function ImageField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string
+  value: string
+  onChange: (url: string) => void
+  placeholder?: string
+}) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+
+  const handle = async (file: File) => {
+    setBusy(true)
+    setErr(null)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/upload', { method: 'POST', body: fd })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.url) {
+        setErr(data.error || 'Upload failed')
+        return
+      }
+      onChange(data.url)
+    } catch {
+      setErr('Upload failed')
+    } finally {
+      setBusy(false)
+      if (inputRef.current) inputRef.current.value = ''
+    }
+  }
+
+  return (
+    <div>
+      {label && <label className={labelClass}>{label}</label>}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={busy}
+          className="flex items-center gap-1.5 px-3 py-2 text-sm border border-input rounded-md hover:bg-secondary disabled:opacity-50 shrink-0"
+        >
+          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+          Upload
+        </button>
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={inputClass}
+          placeholder={placeholder || '…or paste an image URL'}
+        />
+        {value && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={value} alt="" className="w-10 h-10 object-cover rounded border border-border shrink-0" />
+        )}
+      </div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handle(f) }}
+      />
+      {err && <p className="text-xs text-destructive mt-1">{err}</p>}
+    </div>
+  )
+}
 
 function AlignPicker({
   value,
@@ -124,16 +202,11 @@ export default function BlockEditor({ field, onUpdateSetting }: BlockEditorProps
     case 'image':
       return (
         <div className="space-y-3">
-          <div>
-            <label className={labelClass}>Image URL</label>
-            <input
-              type="text"
-              value={s.url ?? ''}
-              onChange={(e) => set('url', e.target.value)}
-              className={inputClass}
-              placeholder="https://example.com/image.jpg"
-            />
-          </div>
+          <ImageField
+            label="Image"
+            value={s.url ?? ''}
+            onChange={(v) => set('url', v)}
+          />
           <div>
             <label className={labelClass}>Alt text (accessibility)</label>
             <input
@@ -379,16 +452,11 @@ export default function BlockEditor({ field, onUpdateSetting }: BlockEditorProps
     case 'cover_image':
       return (
         <div className="space-y-3">
-          <div>
-            <label className={labelClass}>Image URL</label>
-            <input
-              type="text"
-              value={s.url ?? ''}
-              onChange={(e) => set('url', e.target.value)}
-              className={inputClass}
-              placeholder="https://example.com/hero.jpg"
-            />
-          </div>
+          <ImageField
+            label="Cover image"
+            value={s.url ?? ''}
+            onChange={(v) => set('url', v)}
+          />
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelClass}>Height</label>
@@ -473,16 +541,11 @@ export default function BlockEditor({ field, onUpdateSetting }: BlockEditorProps
                 placeholder="Acme Inc."
               />
             </div>
-            <div>
-              <label className={labelClass}>Avatar URL (optional)</label>
-              <input
-                type="text"
-                value={s.avatarUrl ?? ''}
-                onChange={(e) => set('avatarUrl', e.target.value)}
-                className={inputClass}
-                placeholder="https://…/avatar.jpg"
-              />
-            </div>
+            <ImageField
+              label="Avatar (optional)"
+              value={s.avatarUrl ?? ''}
+              onChange={(v) => set('avatarUrl', v)}
+            />
           </div>
         </div>
       )
@@ -516,12 +579,11 @@ export default function BlockEditor({ field, onUpdateSetting }: BlockEditorProps
               {logos.map((logo, i) => (
                 <div key={i} className="flex items-start gap-2">
                   <div className="flex-1 space-y-2">
-                    <input
-                      type="text"
+                    <ImageField
+                      label=""
                       value={logo.url ?? ''}
-                      onChange={(e) => updateLogo(i, 'url', e.target.value)}
-                      className={inputClass}
-                      placeholder="https://…/logo.svg"
+                      onChange={(v) => updateLogo(i, 'url', v)}
+                      placeholder="…or paste a logo URL"
                     />
                     <input
                       type="text"
@@ -557,16 +619,11 @@ export default function BlockEditor({ field, onUpdateSetting }: BlockEditorProps
     case 'logo':
       return (
         <div className="space-y-3">
-          <div>
-            <label className={labelClass}>Logo URL</label>
-            <input
-              type="text"
-              value={s.url ?? ''}
-              onChange={(e) => set('url', e.target.value)}
-              className={inputClass}
-              placeholder="https://example.com/logo.svg"
-            />
-          </div>
+          <ImageField
+            label="Logo"
+            value={s.url ?? ''}
+            onChange={(v) => set('url', v)}
+          />
           <div>
             <label className={labelClass}>Alt text (optional)</label>
             <input

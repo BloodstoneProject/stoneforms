@@ -19,7 +19,10 @@ import { isInputField, isContentBlock } from '@/lib/field-types'
 import {
   type FormTheme, DEFAULT_THEME, fontStack, googleFontHref, buttonRadius, backgroundCss,
 } from '@/lib/themes'
-import { nextQuestionId, progressFor, type LogicRule } from '@/lib/logic'
+import { nextQuestionId, progressFor, resolveLogic, type LogicRule } from '@/lib/logic'
+import { resolveRecall, type RecallContext } from '@/lib/recall'
+import { initVariables, applyMutation, type FormVariable } from '@/lib/variables'
+import { resolveEnding, type Ending } from '@/lib/endings'
 import type { QuizConfig, QuizOutcome } from '@/lib/quiz'
 import { computeCalc } from '@/lib/calc'
 import type { FormAvailability } from '@/lib/form-controls'
@@ -38,9 +41,19 @@ interface FormSettings {
   showProgressBar?: boolean
   redirectUrl?: string
   customEndingMessage?: string
-  welcome?: { enabled?: boolean; title?: string; description?: string; buttonText?: string }
+  welcome?: { enabled?: boolean; title?: string; description?: string; buttonText?: string; imageUrl?: string; showTime?: boolean; estimatedMinutes?: number }
   ending?: { title?: string; message?: string }
   quiz?: QuizConfig
+  // ---- Typeform-parity extensions (all optional; absent = today's behaviour) ----
+  // Author-defined variables (running counters/labels) mutated by logic rules.
+  variables?: FormVariable[]
+  // Custom multi-ending screens; logic/quiz routes to one via endingId.
+  endings?: Ending[]
+  // Client-side analytics loaders (GA4 / Meta Pixel). The loader scripts are
+  // injected elsewhere (G4); the player only fires events, guarded.
+  tracking?: { ga4MeasurementId?: string; metaPixelId?: string }
+  // Password gate. settings.access.password is a sha256 hex hash compared server-side.
+  access?: { password?: string }
   // Gamification config (owned by the other agent's builder toggle). When the
   // whole `gamify` object is undefined we DEFAULT TO ON (showcase the feature).
   // Set `gamify.enabled === false` for the plain, original experience.
@@ -53,6 +66,9 @@ declare global {
       ready: (cb: () => void) => void
       execute: (siteKey: string, opts: { action: string }) => Promise<string>
     }
+    // Analytics globals (loaders injected by G4). Optional / guarded everywhere.
+    gtag?: (...args: any[]) => void
+    fbq?: (...args: any[]) => void
   }
 }
 
@@ -83,10 +99,150 @@ interface FormPlayerProps {
 
 const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
 
-export default function FormPlayer({
+// Compute the sha256 hex of a string in the browser (Web Crypto). Used to hash
+// the entered password before sending it to the public fetch / submit, matching
+// the sha256-hex hash stored in settings.access.password.
+async function sha256Hex(input: string): Promise<string> {
+  try {
+    const enc = new TextEncoder().encode(input)
+    const buf = await crypto.subtle.digest('SHA-256', enc)
+    return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('')
+  } catch {
+    return ''
+  }
+}
+
+// ---- Public wrapper: handles the password gate, then renders the player. ----
+// When settings.access.locked is true the public fetch returned no fields; we
+// show a password prompt, re-fetch /api/public/forms/{id}?pw=<sha256> on submit,
+// and only then mount the real player with the unlocked data. Fully dormant when
+// no password is configured (the common case): renders the player directly.
+export default function FormPlayer(props: FormPlayerProps) {
+  const locked = (props.settings as any)?.access?.locked === true
+  const [unlocked, setUnlocked] = useState<{
+    questions: Question[]
+    settings: FormSettings
+    theme: FormTheme
+    hideBranding: boolean
+    availability?: FormAvailability
+    paymentsEnabled: boolean
+    formTitle: string
+    formDescription?: string
+    password: string
+  } | null>(null)
+  const [pw, setPw] = useState('')
+  const [pwError, setPwError] = useState<string | null>(null)
+  const [checking, setChecking] = useState(false)
+
+  if (!locked || unlocked) {
+    const p = unlocked
+    return (
+      <FormPlayerInner
+        formId={props.formId}
+        formTitle={p?.formTitle ?? props.formTitle}
+        formDescription={p?.formDescription ?? props.formDescription}
+        questions={p?.questions ?? props.questions}
+        settings={p?.settings ?? props.settings}
+        theme={p?.theme ?? props.theme}
+        logic={p?.settings ? (p.settings as any).__logic ?? props.logic : props.logic}
+        hideBranding={p?.hideBranding ?? props.hideBranding}
+        availability={p?.availability ?? props.availability}
+        paymentsEnabled={p?.paymentsEnabled ?? props.paymentsEnabled}
+        submitPassword={p?.password}
+      />
+    )
+  }
+
+  const theme = props.theme ?? DEFAULT_THEME
+  const c = theme.colors
+  const bg = backgroundCss(theme)
+  const ff = fontStack(theme.font)
+  const radius = buttonRadius(theme.buttonStyle)
+
+  const tryUnlock = async () => {
+    setChecking(true); setPwError(null)
+    try {
+      const hash = await sha256Hex(pw)
+      const res = await fetch(`/api/public/forms/${props.formId}?pw=${encodeURIComponent(hash)}`)
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.form || data.form.locked) {
+        setPwError('Incorrect password. Please try again.')
+        return
+      }
+      const { dbFieldsToQuestions } = await import('@/lib/form-mapping')
+      const { normalizeTheme } = await import('@/lib/themes')
+      const fetchedQuestions = dbFieldsToQuestions(data.fields || [])
+      setUnlocked({
+        questions: fetchedQuestions,
+        settings: { ...(data.form.settings || {}), __logic: data.form.logic || [] } as any,
+        theme: normalizeTheme(data.form.theme),
+        hideBranding: !!data.branding?.hide,
+        availability: data.availability,
+        paymentsEnabled: !!data.payments?.enabled,
+        formTitle: data.form.title,
+        formDescription: data.form.description,
+        password: hash,
+      })
+    } catch {
+      setPwError('Something went wrong. Please try again.')
+    } finally {
+      setChecking(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-5 sm:p-6" style={{ background: bg, fontFamily: ff }}>
+      <div className="w-full max-w-md text-center">
+        <div className="w-16 h-16 rounded-full mx-auto mb-6 flex items-center justify-center text-3xl" style={{ backgroundColor: `${c.primary}1a` }}>
+          🔒
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: c.text }}>
+          {props.formTitle || 'Password required'}
+        </h1>
+        <p className="text-base opacity-70 mb-6" style={{ color: c.text }}>
+          This form is password protected. Enter the password to continue.
+        </p>
+        <form
+          onSubmit={(e) => { e.preventDefault(); if (!checking) tryUnlock() }}
+          className="space-y-3"
+        >
+          <input
+            type="password"
+            value={pw}
+            onChange={(e) => { setPw(e.target.value); if (pwError) setPwError(null) }}
+            placeholder="Password"
+            aria-label="Form password"
+            aria-invalid={pwError ? true : undefined}
+            autoFocus
+            className="w-full rounded-lg border-2 p-4 text-lg focus:ring-2 focus:outline-none text-center"
+            style={{ borderColor: pwError ? '#dc2626' : '#e8e4db', color: c.text }}
+          />
+          {pwError && (
+            <p role="alert" aria-live="assertive" className="text-sm" style={{ color: '#dc2626' }}>{pwError}</p>
+          )}
+          <button
+            type="submit"
+            disabled={checking || !pw}
+            className="w-full inline-flex min-h-[48px] items-center justify-center gap-2 px-6 py-3.5 font-semibold text-lg disabled:opacity-60"
+            style={{ backgroundColor: c.button, color: c.buttonText, borderRadius: radius }}
+          >
+            {checking ? <><Loader2 className="w-5 h-5 animate-spin" /> Checking…</> : 'Unlock'}
+          </button>
+        </form>
+        {!props.hideBranding && (
+          <p className="text-xs mt-10 opacity-40" style={{ color: c.text }}>
+            Powered by <span className="font-semibold">Stoneforms</span>
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function FormPlayerInner({
   formId, formTitle, formDescription, questions: rawQuestions, settings = {}, theme = DEFAULT_THEME, logic = [], hideBranding = false,
-  availability, paymentsEnabled = false,
-}: FormPlayerProps) {
+  availability, paymentsEnabled = false, submitPassword,
+}: FormPlayerProps & { submitPassword?: string }) {
   // Inject the owner's payment-acceptance state into each payment field so the
   // renderer can show the right copy (secure-checkout vs informational). This is
   // a no-op for forms without a payment field.
@@ -176,6 +332,60 @@ export default function FormPlayer({
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [anim, setAnim] = useState<'in' | 'out-up' | 'out-down'>('in')
 
+  // ---- Variables (Typeform-style) --------------------------------------
+  // Author-defined counters/labels, mutated by logic rule variableMutations as
+  // the respondent advances. Initialised from settings.variables (empty {} when
+  // none). Fed into the recall context and ending copy.
+  const formVariables = useMemo<FormVariable[]>(
+    () => (Array.isArray((settings as any).variables) ? (settings as any).variables : []),
+    [settings]
+  )
+  const [variables, setVariables] = useState<Record<string, number | string>>(
+    () => initVariables(formVariables)
+  )
+  // The custom ending the matched terminal logic rule routes to (if any). Set at
+  // submit time; resolved against settings.endings for the thank-you screen.
+  const [resolvedEndingId, setResolvedEndingId] = useState<string | null>(null)
+
+  // ---- Recall ("piping") -----------------------------------------------
+  // Hidden-field values are addressable by their `ref` in {{hidden:REF}} tokens.
+  const hiddenMap = useMemo<Record<string, string>>(() => {
+    const out: Record<string, string> = {}
+    for (const q of questions) {
+      if (q.type !== 'hidden') continue
+      const ref = (q.properties?.ref || q.label || '').toString()
+      const v = answers[q.id]
+      if (ref && v !== undefined && v !== null) out[ref] = String(v)
+    }
+    return out
+  }, [questions, answers])
+
+  // Live recall context fed to every question label/description + endings.
+  const recallCtx: RecallContext = useMemo(
+    () => ({
+      answers,
+      variables,
+      hidden: hiddenMap,
+      score: typeof variables.score === 'number' ? variables.score : undefined,
+      price: typeof variables.price === 'number' ? variables.price : undefined,
+    }),
+    [answers, variables, hiddenMap]
+  )
+
+  // Resolve recall tokens in a question's label/description (cheap; pure).
+  const pipeQuestion = useCallback(
+    (q: Question): Question => {
+      const hasTokens = (q.label && q.label.includes('{{')) || (q.description && q.description.includes('{{'))
+      if (!hasTokens) return q
+      return {
+        ...q,
+        label: resolveRecall(q.label, recallCtx),
+        description: q.description ? resolveRecall(q.description, recallCtx) : q.description,
+      }
+    },
+    [recallCtx]
+  )
+
   // ---- Gamification ----------------------------------------------------
   // Default ON when settings.gamify is undefined (showcase). Off entirely when
   // gamify.enabled === false (then nothing below renders or runs).
@@ -245,7 +455,27 @@ export default function FormPlayer({
     } catch { /* never break the form */ }
   }, [formId, sessionId])
 
-  useEffect(() => { track('view') }, [track])
+  // ---- 3rd-party analytics (GA4 + Meta Pixel) --------------------------
+  // Fire events when settings.tracking is configured. The loader scripts that
+  // define window.gtag / window.fbq are injected by G4; we only fire and guard
+  // for their absence so this is a no-op when tracking isn't set up.
+  const tracking = (settings as any).tracking as { ga4MeasurementId?: string; metaPixelId?: string } | undefined
+  const fireAnalytics = useCallback(
+    (event: 'form_view' | 'form_submit') => {
+      if (!tracking) return
+      try {
+        if (tracking.ga4MeasurementId && typeof window !== 'undefined' && typeof window.gtag === 'function') {
+          window.gtag('event', event, { form_id: formId })
+        }
+        if (tracking.metaPixelId && typeof window !== 'undefined' && typeof window.fbq === 'function') {
+          window.fbq('trackCustom', event, { form_id: formId })
+        }
+      } catch { /* never break the form */ }
+    },
+    [tracking, formId]
+  )
+
+  useEffect(() => { track('view'); fireAnalytics('form_view') }, [track, fireAnalytics])
   useEffect(() => {
     if (started && current) track('step', { question_id: current.id, position: index })
   }, [started, currentId, current, index, track])
@@ -450,7 +680,19 @@ export default function FormPlayer({
 
   const goNext = () => {
     if (!validate()) return
-    const next = nextQuestionId(currentId, orderedIds, answers, logic)
+    // resolveLogic gives the next step PLUS the matched rule's variable mutations
+    // and (for terminal jumps) the target ending id, in one pass. Apply mutations
+    // to the live variables map so recall + endings see the updated values.
+    const resolution = resolveLogic(currentId, orderedIds, answers, logic)
+    const next = resolution.next
+    if (resolution.mutations.length > 0) {
+      setVariables((prev) => {
+        let st = prev
+        for (const m of resolution.mutations) st = applyMutation(st, m)
+        return st
+      })
+    }
+    if (resolution.end) setResolvedEndingId(resolution.endingId)
     // Small celebratory pop on the button as we advance (skipped on submit, which
     // gets the finale on the reward screen instead).
     if (gamifyOn && next !== 'end' && !reduceMotion) {
@@ -609,21 +851,30 @@ export default function FormPlayer({
     setSubmitting(true); setSubmitError(null)
     try {
       const recaptchaToken = await getRecaptchaToken()
+      // Persist final variable state into submissions.metadata.variables (mirrors
+      // the initVariables shape). Only when the form actually defines variables.
+      const metadata: Record<string, any> = {}
+      if (Object.keys(urlParams).length) metadata.url_params = urlParams
+      if (formVariables.length > 0) metadata.variables = variables
       const res = await fetch(`/api/forms/${formId}/submit`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           responses: answers,
           session_id: sessionId,
-          metadata: Object.keys(urlParams).length ? { url_params: urlParams } : {},
+          metadata,
           // Per-question reactions (👍 ❤️ 😮 🔥). The submit route reads body.reactions.
           ...(Object.keys(reactions).length ? { reactions } : {}),
           ...(recaptchaToken ? { recaptchaToken } : {}),
+          // Password (sha256 hex) for the server-side gate. Present only for
+          // password-protected forms that we unlocked above.
+          ...(submitPassword ? { password: submitPassword } : {}),
         }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setSubmitError(data.error || 'Failed to submit. Please try again.'); return }
-      // Successful submit — drop any saved progress.
+      // Successful submit — drop any saved progress + fire analytics.
       clearDraft()
+      fireAnalytics('form_submit')
       // Payment collection: when the form has a payment field AND the owner is
       // connected, the submit route returns a Stripe Checkout URL. Redirect the
       // respondent to the hosted checkout to pay. This takes precedence over the
@@ -634,9 +885,16 @@ export default function FormPlayer({
         window.location.href = data.checkoutUrl
         return
       }
-      // Redirect takes precedence over any ending / results screen.
-      if (settings.redirectUrl) {
-        window.location.href = /^https?:\/\//i.test(settings.redirectUrl) ? settings.redirectUrl : `https://${settings.redirectUrl}`
+      // Custom ending redirect (resolved against settings.endings) takes
+      // precedence, then the legacy settings.redirectUrl. Recall tokens in the
+      // ending's redirectUrl are resolved with the live context.
+      const endingRedirect = (() => {
+        const e = resolveEnding((settings as any).endings, { endingId: resolvedEndingId })
+        return e?.redirectUrl ? resolveRecall(e.redirectUrl, recallCtx) : ''
+      })()
+      const redirectTarget = endingRedirect || settings.redirectUrl || ''
+      if (redirectTarget) {
+        window.location.href = /^https?:\/\//i.test(redirectTarget) ? redirectTarget : `https://${redirectTarget}`
         return
       }
       // Trust the server's authoritative score for the results screen.
@@ -707,10 +965,21 @@ export default function FormPlayer({
         </div>
       )
     }
+    // Custom endings (Typeform parity): pick the ending the logic/quiz routed to
+    // (or the first), recall-render its copy, and feed it to the thank-you screen.
+    // Falls back to the legacy settings.ending / customEndingMessage when no
+    // custom endings are configured (today's behaviour, fully backward-compatible).
+    const ending = resolveEnding((settings as any).endings, { endingId: resolvedEndingId })
+    const endTitle = ending
+      ? resolveRecall(ending.title, recallCtx)
+      : (settings.ending?.title ? resolveRecall(settings.ending.title, recallCtx) : undefined)
+    const endMessage = ending
+      ? (ending.message ? resolveRecall(ending.message, recallCtx) : undefined)
+      : resolveRecall(settings.ending?.message || settings.customEndingMessage || '', recallCtx) || undefined
     return (
       <ThankYouScreen
-        title={settings.ending?.title}
-        message={settings.ending?.message || settings.customEndingMessage}
+        title={endTitle}
+        message={endMessage}
         hideBranding={hideBranding}
         theme={{ primaryColor: c.primary, backgroundColor: c.background, textColor: c.text, font: ff, buttonRadius: radius }}
         gamify={gamifyOn ? { xp } : undefined}
@@ -762,14 +1031,28 @@ export default function FormPlayer({
               loading="eager"
             />
           )}
+          {settings.welcome?.imageUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={settings.welcome.imageUrl}
+              alt=""
+              className="mx-auto mb-8 w-full max-w-md rounded-2xl object-cover"
+              loading="eager"
+            />
+          )}
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 leading-tight" style={{ color: c.text }}>
-            {settings.welcome?.title || formTitle}
+            {resolveRecall(settings.welcome?.title || formTitle || '', recallCtx)}
           </h1>
           {(settings.welcome?.description || formDescription) && (
             <p className="text-base sm:text-lg md:text-xl mb-10 opacity-70" style={{ color: c.text }}>
-              {settings.welcome?.description || formDescription}
+              {resolveRecall(settings.welcome?.description || formDescription || '', recallCtx)}
             </p>
           )}
+          {settings.welcome?.showTime && settings.welcome?.estimatedMinutes ? (
+            <p className="text-sm mb-8 opacity-60" style={{ color: c.text }}>
+              ⏱ Takes about {settings.welcome.estimatedMinutes} minute{settings.welcome.estimatedMinutes === 1 ? '' : 's'}
+            </p>
+          ) : null}
           {primaryBtn(<>{settings.welcome?.buttonText || 'Start'} <ArrowRight className="w-5 h-5" /></>, () => setStarted(true))}
           <p className="text-xs mt-6 opacity-50" style={{ color: c.text }}>press <strong>Enter</strong> ↵</p>
         </div>
@@ -805,6 +1088,7 @@ export default function FormPlayer({
           theme={theme}
           hideBranding={hideBranding}
           showProgressBar={showProgressBar}
+          logic={logic}
         />
       </>
     )
@@ -831,6 +1115,7 @@ export default function FormPlayer({
           theme={theme}
           hideBranding={hideBranding}
           reduceMotion={reduceMotion}
+          logic={logic}
         />
       </>
     )
@@ -901,7 +1186,7 @@ export default function FormPlayer({
                     <ContentBlock block={q} theme={theme} />
                   ) : (
                     <QuestionRenderer
-                      question={q}
+                      question={pipeQuestion(q)}
                       value={answers[q.id]}
                       error={errors[q.id]}
                       onChange={(v) => setAnswer(q.id, v)}
@@ -1030,7 +1315,7 @@ export default function FormPlayer({
             <ContentBlock block={current} theme={theme} />
           ) : (
             <QuestionRenderer
-              question={current}
+              question={pipeQuestion(current)}
               value={answers[current.id]}
               error={errors[current.id]}
               onChange={(v) => setAnswer(current.id, v)}

@@ -1,7 +1,9 @@
 'use client'
 
-import { Award } from 'lucide-react'
+import { Award, ArrowRight } from 'lucide-react'
 import type { QuizOutcome } from '@/lib/quiz'
+import { resolveRecall, type RecallContext } from '@/lib/recall'
+import type { Ending } from '@/lib/endings'
 
 interface QuizResultScreenProps {
   total: number
@@ -15,13 +17,37 @@ interface QuizResultScreenProps {
     font?: string
     buttonRadius?: string
   }
+  // ---- Custom endings (Typeform parity) ----
+  // A resolved Ending (lib/endings), when provided, supplies the headline /
+  // message / redirect button and takes precedence over the matched outcome
+  // copy. Its text (and the outcome text) may contain recall tokens, resolved
+  // against `recallCtx`. When absent, the screen renders exactly as before.
+  ending?: Ending | null
+  recallCtx?: RecallContext
 }
 
 // Themed quiz results screen shown after a successful submit when the form is a
 // quiz with showResults enabled. Displays score (total / max) and the matched
-// outcome's title + message.
-export function QuizResultScreen({ total, max, outcome, hideBranding = false, theme }: QuizResultScreenProps) {
+// outcome's title + message (or a custom ending when one is routed to).
+export function QuizResultScreen({ total, max, outcome, hideBranding = false, theme, ending, recallCtx }: QuizResultScreenProps) {
   const pct = max > 0 ? Math.round((total / max) * 100) : 0
+
+  // Recall context: default in the live score so {{score}} works even when the
+  // player doesn't pass one explicitly.
+  const ctx: RecallContext = { answers: {}, score: total, ...(recallCtx ?? {}) }
+  const pipe = (text?: string) => (text ? resolveRecall(text, ctx) : text)
+
+  // A custom ending wins over the matched outcome for the headline + message.
+  const headline = pipe(ending?.title ?? outcome?.title)
+  const body = pipe(ending?.message ?? outcome?.message)
+  const redirectUrl = ending?.redirectUrl
+  const buttonText = ending?.buttonText
+
+  const goToRedirect = () => {
+    if (!redirectUrl) return
+    const href = /^https?:\/\//i.test(redirectUrl) ? redirectUrl : `https://${redirectUrl}`
+    window.location.href = href
+  }
 
   return (
     <div
@@ -53,22 +79,33 @@ export function QuizResultScreen({ total, max, outcome, hideBranding = false, th
           </div>
         )}
 
-        {outcome && (
+        {headline ? (
           <>
             <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: theme.textColor }}>
-              {outcome.title}
+              {headline}
             </h1>
-            {outcome.message && (
+            {body && (
               <p className="text-lg md:text-xl opacity-70" style={{ color: theme.textColor }}>
-                {outcome.message}
+                {body}
               </p>
             )}
           </>
-        )}
-        {!outcome && (
+        ) : (
           <p className="text-lg md:text-xl opacity-70" style={{ color: theme.textColor }}>
             Thanks for completing the quiz!
           </p>
+        )}
+
+        {redirectUrl && (
+          <div className="mt-8">
+            <button
+              onClick={goToRedirect}
+              className="inline-flex items-center gap-2 px-7 py-3 font-semibold text-white transition-transform hover:scale-[1.03]"
+              style={{ backgroundColor: theme.primaryColor, borderRadius: theme.buttonRadius ?? '0.5rem' }}
+            >
+              {buttonText || 'Continue'} <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
         )}
 
         {!hideBranding && (

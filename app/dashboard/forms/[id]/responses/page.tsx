@@ -1,15 +1,27 @@
 'use client'
 import { useParams } from 'next/navigation'
 
-import { use, useState, useEffect } from 'react'
+import { use, useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Download, Upload, Trash2, Eye, Search, Calendar, TrendingUp, X, Loader2 } from 'lucide-react'
+import { ArrowLeft, Download, Upload, Trash2, Eye, Search, TrendingUp, X, Loader2, Tag, ChevronLeft, ChevronRight, FileJson, Plus } from 'lucide-react'
 
 interface Response {
   id: string
   answers: Record<string, any>
   metadata?: Record<string, any> | null
+  status?: string | null
   created_at: string
+}
+
+const PAGE_SIZE = 50
+
+// Review status options stored in metadata.status.
+const STATUS_OPTIONS = ['new', 'reviewed', 'flagged', 'archived'] as const
+const STATUS_TINTS: Record<string, string> = {
+  new: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+  reviewed: 'bg-green-500/10 text-green-600 border-green-500/20',
+  flagged: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+  archived: 'bg-secondary text-muted-foreground border-border',
 }
 
 interface Field {
@@ -60,25 +72,81 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
   const [selectedResponse, setSelectedResponse] = useState<Response | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
 
+  // Server-side filter / sort / pagination state.
+  const [completion, setCompletion] = useState<'all' | 'complete' | 'partial'>('all')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [tagFilter, setTagFilter] = useState('')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
+  const [sort, setSort] = useState<'newest' | 'oldest'>('newest')
+  const [page, setPage] = useState(0)
+  const [total, setTotal] = useState(0)
+  const [availableTags, setAvailableTags] = useState<string[]>([])
+
   useEffect(() => {
-    fetchData()
+    // Fetch fields once.
+    fetch(`/api/forms/${formId}/fields`)
+      .then((r) => r.json())
+      .then((d) => { if (d.fields) setFields(d.fields) })
+      .catch((e) => console.error('Failed to fetch fields:', e))
   }, [formId])
 
-  const fetchData = async () => {
+  const fetchResponses = useCallback(async () => {
+    setLoading(true)
     try {
-      // Fetch fields
-      const fieldsRes = await fetch(`/api/forms/${formId}/fields`)
-      const fieldsData = await fieldsRes.json()
-      if (fieldsData.fields) setFields(fieldsData.fields)
+      const qs = new URLSearchParams()
+      qs.set('limit', String(PAGE_SIZE))
+      qs.set('offset', String(page * PAGE_SIZE))
+      qs.set('sort', sort)
+      if (completion !== 'all') qs.set('completion', completion)
+      if (statusFilter) qs.set('status', statusFilter)
+      if (tagFilter) qs.set('tag', tagFilter)
+      if (searchTerm.trim()) qs.set('search', searchTerm.trim())
+      if (fromDate) qs.set('from', fromDate)
+      if (toDate) qs.set('to', toDate)
 
-      // Fetch responses
-      const responsesRes = await fetch(`/api/forms/${formId}/responses`)
-      const responsesData = await responsesRes.json()
-      if (responsesData.responses) setResponses(responsesData.responses)
+      const res = await fetch(`/api/forms/${formId}/responses?${qs.toString()}`)
+      const data = await res.json()
+      setResponses(data.responses || [])
+      setTotal(typeof data.total === 'number' ? data.total : (data.responses?.length || 0))
+      if (Array.isArray(data.tags)) setAvailableTags(data.tags)
     } catch (error) {
       console.error('Failed to fetch:', error)
     } finally {
       setLoading(false)
+    }
+  }, [formId, page, sort, completion, statusFilter, tagFilter, searchTerm, fromDate, toDate])
+
+  // Debounced refetch on any filter change.
+  useEffect(() => {
+    const t = setTimeout(() => { fetchResponses() }, 250)
+    return () => clearTimeout(t)
+  }, [fetchResponses])
+
+  // Reset to first page whenever a filter (not the page itself) changes.
+  useEffect(() => {
+    setPage(0)
+  }, [completion, statusFilter, tagFilter, searchTerm, fromDate, toDate, sort])
+
+  const fetchData = fetchResponses
+
+  // Persist status/tags for a single response (metadata-only PATCH).
+  const updateResponseMeta = async (responseId: string, patch: { status?: string | null; tags?: string[] | null }) => {
+    try {
+      const res = await fetch(`/api/forms/${formId}/responses/${responseId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      })
+      const data = await res.json()
+      if (!res.ok) return
+      const newMeta = data.metadata || {}
+      const apply = (r: Response): Response =>
+        r.id === responseId ? { ...r, metadata: { ...(r.metadata || {}), ...newMeta } } : r
+      setResponses((prev) => prev.map(apply))
+      setSelectedResponse((prev) => (prev && prev.id === responseId ? apply(prev) : prev))
+    } catch (error) {
+      console.error('Failed to update response:', error)
     }
   }
 
@@ -119,6 +187,35 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
     const a = document.createElement('a')
     a.href = url
     a.download = `form-responses-${formId}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const exportToJSON = () => {
+    if (responses.length === 0) {
+      alert('No responses to export')
+      return
+    }
+    // Map each response to a readable object keyed by field label, plus metadata.
+    const out = responses.map((response) => {
+      const obj: Record<string, any> = {
+        id: response.id,
+        submitted_at: response.created_at,
+      }
+      for (const field of fields) {
+        obj[field.label] = response.answers[field.id] ?? null
+      }
+      if (response.metadata?.status) obj.status = response.metadata.status
+      if (Array.isArray(response.metadata?.tags)) obj.tags = response.metadata.tags
+      if (response.metadata?.quiz) obj.quiz = response.metadata.quiz
+      if (response.metadata?.url_params) obj.url_params = response.metadata.url_params
+      return obj
+    })
+    const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `form-responses-${formId}.json`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -187,20 +284,22 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
       await fetch(`/api/forms/${formId}/responses/${responseId}`, {
         method: 'DELETE'
       })
-      setResponses(responses.filter(r => r.id !== responseId))
+      if (selectedResponse?.id === responseId) setSelectedResponse(null)
+      fetchResponses()
     } catch (error) {
       console.error('Failed to delete:', error)
     }
   }
 
   const deleteAllResponses = async () => {
-    if (!confirm(`Delete all ${responses.length} responses? This cannot be undone!`)) return
+    if (!confirm(`Delete all ${total} responses? This cannot be undone!`)) return
 
     try {
       await fetch(`/api/forms/${formId}/responses`, {
         method: 'DELETE'
       })
-      setResponses([])
+      setPage(0)
+      fetchResponses()
       alert('All responses deleted')
     } catch (error) {
       console.error('Failed to delete:', error)
@@ -209,37 +308,15 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
 
   const hasQuizScores = responses.some(r => r.metadata?.quiz)
 
-  const filteredResponses = responses.filter(response => {
-    if (!searchTerm) return true
-    
-    return fields.some(field => {
-      const value = formatAnswer(response.answers[field.id], field.field_type)
-      return value.toLowerCase().includes(searchTerm.toLowerCase())
-    })
-  })
+  // Responses are already filtered server-side; render them as-is.
+  const filteredResponses = responses
 
-  // Analytics
-  const stats = {
-    total: responses.length,
-    today: responses.filter(r => {
-      const date = new Date(r.created_at)
-      const today = new Date()
-      return date.toDateString() === today.toDateString()
-    }).length,
-    thisWeek: responses.filter(r => {
-      const date = new Date(r.created_at)
-      const weekAgo = new Date()
-      weekAgo.setDate(weekAgo.getDate() - 7)
-      return date > weekAgo
-    }).length,
-    completionRate: fields.length > 0 
-      ? Math.round((responses.filter(r => {
-          return fields.every(f => r.answers[f.id])
-        }).length / responses.length) * 100) || 0
-      : 0
-  }
+  const hasActiveFilters = !!(searchTerm || statusFilter || tagFilter || fromDate || toDate || completion !== 'all')
+  const pageStart = total === 0 ? 0 : page * PAGE_SIZE + 1
+  const pageEnd = Math.min((page + 1) * PAGE_SIZE, total)
+  const hasMore = (page + 1) * PAGE_SIZE < total
 
-  if (loading) {
+  if (loading && responses.length === 0) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -262,7 +339,7 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
               </Link>
               <div>
                 <h1 className="text-3xl heading-tight text-foreground">Responses</h1>
-                <p className="text-muted-foreground mt-1">{responses.length} total submissions</p>
+                <p className="text-muted-foreground mt-1">{total} total submissions</p>
               </div>
             </div>
             <div className="flex items-center gap-3 flex-wrap">
@@ -288,7 +365,15 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
                 <Download className="w-4 h-4" />
                 Export CSV
               </button>
-              {responses.length > 0 && (
+              <button
+                onClick={exportToJSON}
+                disabled={responses.length === 0}
+                className="flex items-center gap-2 px-4 py-2 border border-border rounded-md hover:bg-secondary disabled:opacity-50"
+              >
+                <FileJson className="w-4 h-4" />
+                Export JSON
+              </button>
+              {total > 0 && (
                 <button
                   onClick={deleteAllResponses}
                   className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
@@ -300,52 +385,13 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-secondary rounded-md p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total</p>
-                  <p className="text-2xl heading-tight text-foreground">{stats.total}</p>
-                </div>
-                <TrendingUp className="w-8 h-8 text-muted-foreground" />
-              </div>
-            </div>
-            <div className="bg-secondary rounded-md p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Today</p>
-                  <p className="text-2xl heading-tight text-foreground">{stats.today}</p>
-                </div>
-                <Calendar className="w-8 h-8 text-muted-foreground" />
-              </div>
-            </div>
-            <div className="bg-secondary rounded-md p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">This Week</p>
-                  <p className="text-2xl heading-tight text-foreground">{stats.thisWeek}</p>
-                </div>
-                <Calendar className="w-8 h-8 text-muted-foreground" />
-              </div>
-            </div>
-            <div className="bg-secondary rounded-md p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Completion</p>
-                  <p className="text-2xl heading-tight text-foreground">{stats.completionRate}%</p>
-                </div>
-                <TrendingUp className="w-8 h-8 text-muted-foreground" />
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Search */}
-        <div className="mb-6">
+        {/* Filter / search bar */}
+        <div className="mb-6 space-y-4">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
             <input
@@ -356,6 +402,92 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
               className="w-full pl-12 pr-4 py-3 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
             />
           </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <select
+              value={completion}
+              onChange={(e) => setCompletion(e.target.value as any)}
+              aria-label="Filter by completion"
+              className="px-3 py-2 border border-input rounded-md bg-background text-sm text-foreground focus:outline-none focus:border-foreground"
+            >
+              <option value="all">All submissions</option>
+              <option value="complete">Completed</option>
+              <option value="partial">Pending / partial</option>
+            </select>
+
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              aria-label="Filter by status"
+              className="px-3 py-2 border border-input rounded-md bg-background text-sm text-foreground focus:outline-none focus:border-foreground"
+            >
+              <option value="">Any status</option>
+              {STATUS_OPTIONS.map((s) => (
+                <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+              ))}
+            </select>
+
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as any)}
+              aria-label="Sort order"
+              className="px-3 py-2 border border-input rounded-md bg-background text-sm text-foreground focus:outline-none focus:border-foreground"
+            >
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+            </select>
+
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              From
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="px-2 py-1.5 border border-input rounded-md bg-background text-sm text-foreground focus:outline-none focus:border-foreground"
+              />
+            </label>
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              To
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="px-2 py-1.5 border border-input rounded-md bg-background text-sm text-foreground focus:outline-none focus:border-foreground"
+              />
+            </label>
+
+            {hasActiveFilters && (
+              <button
+                onClick={() => {
+                  setSearchTerm(''); setStatusFilter(''); setTagFilter('')
+                  setFromDate(''); setToDate(''); setCompletion('all')
+                }}
+                className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-4 h-4" /> Clear filters
+              </button>
+            )}
+          </div>
+
+          {/* Tag filter chips */}
+          {availableTags.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-muted-foreground inline-flex items-center gap-1"><Tag className="w-3.5 h-3.5" /> Tags:</span>
+              {availableTags.map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTagFilter(tagFilter === t ? '' : t)}
+                  className={`px-2.5 py-1 rounded-full text-xs border transition-colors ${
+                    tagFilter === t
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-secondary text-muted-foreground border-border hover:text-foreground'
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Responses Table */}
@@ -380,6 +512,7 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
                     {hasQuizScores && (
                       <th className="text-left px-6 py-4 text-sm font-medium text-foreground">Score</th>
                     )}
+                    <th className="text-left px-6 py-4 text-sm font-medium text-foreground">Status</th>
                     <th className="text-right px-6 py-4 text-sm font-medium text-foreground">Actions</th>
                   </tr>
                 </thead>
@@ -405,6 +538,27 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
                             : '-'}
                         </td>
                       )}
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-1.5 items-start">
+                          {response.metadata?.status ? (
+                            <span className={`px-2 py-0.5 rounded-full text-xs border ${STATUS_TINTS[response.metadata.status] || 'bg-secondary text-muted-foreground border-border'}`}>
+                              {response.metadata.status}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                          {Array.isArray(response.metadata?.tags) && response.metadata.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {response.metadata.tags.slice(0, 3).map((t: string) => (
+                                <span key={t} className="px-1.5 py-0.5 rounded bg-secondary border border-border text-[11px] text-muted-foreground">{t}</span>
+                              ))}
+                              {response.metadata.tags.length > 3 && (
+                                <span className="text-[11px] text-muted-foreground">+{response.metadata.tags.length - 3}</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-6 py-4 text-right">
                         <button
                           onClick={() => setSelectedResponse(response)}
@@ -428,6 +582,31 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
             </div>
           </div>
         )}
+
+        {/* Pagination controls */}
+        {total > PAGE_SIZE && (
+          <div className="mt-6 flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              Showing {pageStart}–{pageEnd} of {total}
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={page === 0}
+                className="flex items-center gap-1 px-3 py-2 border border-border rounded-md text-sm hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-4 h-4" /> Prev
+              </button>
+              <button
+                onClick={() => setPage((p) => p + 1)}
+                disabled={!hasMore}
+                className="flex items-center gap-1 px-3 py-2 border border-border rounded-md text-sm hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Next <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Response Detail Modal */}
@@ -443,6 +622,34 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
             <p className="text-sm text-muted-foreground mb-6">
               Submitted: {new Date(selectedResponse.created_at).toLocaleString()}
             </p>
+
+            {/* Status + tags editor (metadata only) */}
+            <div className="mb-6 p-4 rounded-md bg-secondary border border-border space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">Status</label>
+                <div className="flex flex-wrap gap-2">
+                  {STATUS_OPTIONS.map((s) => {
+                    const active = selectedResponse.metadata?.status === s
+                    return (
+                      <button
+                        key={s}
+                        onClick={() => updateResponseMeta(selectedResponse.id, { status: active ? null : s })}
+                        className={`px-3 py-1 rounded-full text-xs border transition-colors ${
+                          active ? (STATUS_TINTS[s] || 'bg-primary text-primary-foreground border-primary') : 'bg-card text-muted-foreground border-border hover:text-foreground'
+                        }`}
+                      >
+                        {s.charAt(0).toUpperCase() + s.slice(1)}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              <TagEditor
+                tags={Array.isArray(selectedResponse.metadata?.tags) ? selectedResponse.metadata.tags : []}
+                onChange={(tags) => updateResponseMeta(selectedResponse.id, { tags })}
+              />
+            </div>
+
             {selectedResponse.metadata?.quiz && (
               <div className="mb-6 p-4 rounded-md bg-secondary border border-border">
                 <p className="text-sm text-foreground font-medium">Quiz score</p>
@@ -476,6 +683,56 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// Add / remove tags on a single response. Calls onChange with the full new list.
+function TagEditor({ tags, onChange }: { tags: string[]; onChange: (tags: string[]) => void }) {
+  const [draft, setDraft] = useState('')
+
+  const addTag = () => {
+    const t = draft.trim()
+    if (!t || tags.includes(t)) { setDraft(''); return }
+    onChange([...tags, t])
+    setDraft('')
+  }
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-foreground mb-2">Tags</label>
+      <div className="flex flex-wrap items-center gap-2">
+        {tags.map((t) => (
+          <span key={t} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs bg-card border border-border text-foreground">
+            {t}
+            <button
+              onClick={() => onChange(tags.filter((x) => x !== t))}
+              aria-label={`Remove tag ${t}`}
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </span>
+        ))}
+        <div className="inline-flex items-center gap-1">
+          <input
+            type="text"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
+            placeholder="Add tag"
+            className="w-28 px-2 py-1 border border-input rounded-md bg-background text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
+          />
+          <button
+            onClick={addTag}
+            disabled={!draft.trim()}
+            aria-label="Add tag"
+            className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-40"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

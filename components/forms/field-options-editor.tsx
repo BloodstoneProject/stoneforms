@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Plus, Trash2, GripVertical } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { Plus, Trash2, GripVertical, Upload, Loader2 } from 'lucide-react'
 
 interface FieldOptionsEditorProps {
   options: string[]
@@ -14,6 +14,59 @@ interface FieldOptionsEditorProps {
   // editor shows a points input per option. Persisted in settings.scoring.
   scoring?: Record<string, number>
   onScoringChange?: (scoring: Record<string, number>) => void
+}
+
+// Small inline upload button used per picture-choice option. POSTs to
+// /api/upload (Supabase Storage) and hands the public URL back. URL paste stays
+// available as a fallback alongside it.
+function OptionImageUpload({ onUploaded }: { onUploaded: (url: string) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+
+  const handle = async (file: File) => {
+    setBusy(true)
+    setErr(null)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/upload', { method: 'POST', body: fd })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.url) {
+        setErr(data.error || 'Upload failed')
+        return
+      }
+      onUploaded(data.url)
+    } catch {
+      setErr('Upload failed')
+    } finally {
+      setBusy(false)
+      if (inputRef.current) inputRef.current.value = ''
+    }
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        disabled={busy}
+        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs border border-input rounded hover:bg-secondary disabled:opacity-50 shrink-0"
+        title="Upload an image"
+      >
+        {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+        Upload
+      </button>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handle(f) }}
+      />
+      {err && <span className="text-xs text-destructive">{err}</span>}
+    </>
+  )
 }
 
 export default function FieldOptionsEditor({
@@ -186,15 +239,16 @@ export default function FieldOptionsEditor({
               </button>
             </div>
 
-            {/* Picture-choice image URL */}
+            {/* Picture-choice image — real upload, with URL paste as fallback */}
             {isPicture && (
               <div className="flex items-center gap-2 pl-10">
+                <OptionImageUpload onUploaded={(url) => setImage(option, url)} />
                 <input
                   type="url"
                   value={images?.[option] || ''}
                   onChange={(e) => setImage(option, e.target.value)}
                   className="flex-1 px-3 py-1.5 border border-input rounded text-sm bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
-                  placeholder="Image URL (https://…)"
+                  placeholder="…or paste an image URL"
                 />
                 {images?.[option] && (
                   // eslint-disable-next-line @next/next/no-img-element

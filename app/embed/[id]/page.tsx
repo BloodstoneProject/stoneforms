@@ -5,10 +5,67 @@
 // to the parent window (postMessage) so embed.js can auto-resize the iframe.
 import { useParams } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
+import Script from 'next/script'
 import { Loader2 } from 'lucide-react'
 import FormPlayer from '@/components/player/FormPlayer'
 import { dbFieldsToQuestions, type DbField } from '@/lib/form-mapping'
-import { normalizeTheme } from '@/lib/themes'
+import { normalizeTheme, type FormTheme } from '@/lib/themes'
+
+// Public-surface injection for the embedded (iframe) surface: author CSS, favicon
+// and GA4 / Meta Pixel loaders. Additive — no-op until the form configures them.
+interface EmbedTracking { ga4MeasurementId?: string; metaPixelId?: string }
+
+function readEmbedTracking(settings: Record<string, any> | undefined): EmbedTracking {
+  const t = settings?.tracking
+  if (!t || typeof t !== 'object') return {}
+  return {
+    ga4MeasurementId: typeof t.ga4MeasurementId === 'string' && t.ga4MeasurementId.trim() ? t.ga4MeasurementId.trim() : undefined,
+    metaPixelId: typeof t.metaPixelId === 'string' && t.metaPixelId.trim() ? t.metaPixelId.trim() : undefined,
+  }
+}
+
+function useEmbedHead(theme: FormTheme | null) {
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    const created: HTMLElement[] = []
+    if (theme?.faviconUrl) {
+      const link = document.createElement('link')
+      link.rel = 'icon'
+      link.href = theme.faviconUrl
+      link.setAttribute('data-sf-public', 'favicon')
+      document.head.appendChild(link)
+      created.push(link)
+    }
+    if (theme?.customCss && theme.customCss.trim()) {
+      const style = document.createElement('style')
+      style.setAttribute('data-sf-public', 'custom-css')
+      style.textContent = theme.customCss
+      document.head.appendChild(style)
+      created.push(style)
+    }
+    return () => created.forEach((n) => n.parentNode?.removeChild(n))
+  }, [theme])
+}
+
+function EmbedTrackingScripts({ tracking }: { tracking: EmbedTracking }) {
+  return (
+    <>
+      {tracking.ga4MeasurementId && (
+        <>
+          <Script id="sf-ga4-src" strategy="afterInteractive" src={`https://www.googletagmanager.com/gtag/js?id=${tracking.ga4MeasurementId}`} />
+          <Script id="sf-ga4-init" strategy="afterInteractive">
+            {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${tracking.ga4MeasurementId}');`}
+          </Script>
+        </>
+      )}
+      {tracking.metaPixelId && (
+        <Script id="sf-meta-pixel" strategy="afterInteractive">
+          {`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${tracking.metaPixelId}');fbq('track','PageView');`}
+        </Script>
+      )}
+    </>
+  )
+}
 
 interface PublicForm {
   id: string
@@ -91,6 +148,11 @@ export default function EmbedFormPage() {
     }
   }, [formId, loading, form])
 
+  // Public-surface injection (favicon + custom CSS); runs unconditionally.
+  const surfaceTheme = form ? normalizeTheme(form.theme) : null
+  useEmbedHead(surfaceTheme)
+  const tracking = readEmbedTracking(form?.settings)
+
   if (loading) {
     return (
       <div ref={rootRef} className="min-h-[200px] flex items-center justify-center bg-neutral-50">
@@ -111,10 +173,11 @@ export default function EmbedFormPage() {
   }
 
   const questions = dbFieldsToQuestions(fields)
-  const theme = normalizeTheme(form.theme)
+  const theme = surfaceTheme ?? normalizeTheme(form.theme)
 
   return (
     <div ref={rootRef}>
+      <EmbedTrackingScripts tracking={tracking} />
       <FormPlayer
         formId={form.id}
         formTitle={form.title}

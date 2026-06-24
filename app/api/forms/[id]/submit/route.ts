@@ -33,7 +33,7 @@ export async function POST(
 
   try {
     const body = await request.json()
-    const { responses, session_id, metadata, recaptchaToken } = body
+    const { responses, session_id, metadata, recaptchaToken, password } = body
 
     // reCAPTCHA v3 (dormant unless RECAPTCHA_SECRET_KEY is set). Verify before
     // doing any real work so spam is cheap to reject.
@@ -67,6 +67,23 @@ export async function POST(
 
     if (form.status !== 'published') {
       return NextResponse.json({ error: 'Form is not published' }, { status: 400 })
+    }
+
+    // ---- Password gate (forms.settings.access.password = sha256 hex hash) ----
+    // When a password is configured, require the client to send a matching sha256
+    // hex hash (constant-time compare). Dormant when no password is set.
+    {
+      const access = (form.settings as any)?.access
+      const expected = typeof access?.password === 'string' ? access.password.trim().toLowerCase() : ''
+      if (expected) {
+        const provided = typeof password === 'string' ? password.trim().toLowerCase() : ''
+        const a = Buffer.from(expected)
+        const b = Buffer.from(provided)
+        const match = a.length === b.length && crypto.timingSafeEqual(a, b)
+        if (!match) {
+          return NextResponse.json({ error: 'This form is password protected.' }, { status: 403 })
+        }
+      }
     }
 
     // Re-check schedule window + response cap server-side (never trust the client).

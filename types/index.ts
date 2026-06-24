@@ -11,6 +11,7 @@ export type QuestionType =
   | 'dropdown'
   | 'rating'
   | 'opinion_scale'
+  | 'nps'
   | 'ranking'
   | 'yes_no'
   | 'date'

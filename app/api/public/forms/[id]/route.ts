@@ -42,6 +42,39 @@ export async function GET(
     return NextResponse.json({ error: 'Form not available' }, { status: 404 })
   }
 
+  // ---- Password gate (forms.settings.access.password = sha256 hex hash) ----
+  // When a password is configured and the provided ?pw= (sha256 hex of the entered
+  // password) does not match, respond WITHOUT fields and flag the form as locked.
+  // The player renders a password prompt and re-fetches with ?pw= to unlock. Fully
+  // dormant when no password is set (today's behaviour, no extra cost).
+  {
+    const access = ((formRow as any).settings || {}).access
+    const expected = typeof access?.password === 'string' ? access.password.trim().toLowerCase() : ''
+    if (expected) {
+      const url = new URL(request.url)
+      const provided = (url.searchParams.get('pw') || '').trim().toLowerCase()
+      if (provided !== expected) {
+        // Don't leak user_id / fields / real settings to a locked client. Expose
+        // only a minimal `locked` hint (on the form AND in settings.access.locked)
+        // so the player can render its password prompt without a prop change. Carry
+        // the form title through so the prompt isn't blank.
+        return NextResponse.json({
+          form: {
+            id: formRow.id,
+            title: (formRow as any).title,
+            locked: true,
+            theme: (formRow as any).theme || null,
+            settings: { access: { locked: true } },
+          },
+          fields: [],
+          branding: { hide: false },
+          availability: { open: true },
+          payments: { enabled: false },
+        })
+      }
+    }
+  }
+
   const { data: fields } = await supabase
     .from('form_fields')
     .select('id, field_type, label, placeholder, required, options, position, settings')

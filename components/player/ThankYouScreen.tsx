@@ -1,9 +1,11 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { Check } from 'lucide-react'
+import { Check, ArrowRight } from 'lucide-react'
 import { Confetti, type ConfettiHandle } from '@/components/player/Confetti'
 import { RewardBadge } from '@/components/player/RewardScreen'
+import { resolveRecall, type RecallContext } from '@/lib/recall'
+import type { Ending } from '@/lib/endings'
 
 interface ThankYouScreenProps {
   title?: string
@@ -22,6 +24,13 @@ interface ThankYouScreenProps {
   gamify?: { xp: number }
   // Palette for the confetti finale (theme-derived).
   confettiColors?: string[]
+  // ---- Custom endings (Typeform parity) ----
+  // A resolved Ending (lib/endings) takes precedence over title/message when
+  // provided. Its copy may contain recall tokens, resolved against `recallCtx`.
+  // When absent, the screen behaves exactly as before (falls back to title/
+  // message / defaults), so existing forms are unaffected.
+  ending?: Ending | null
+  recallCtx?: RecallContext
 }
 
 export function ThankYouScreen({
@@ -31,6 +40,8 @@ export function ThankYouScreen({
   theme,
   gamify,
   confettiColors,
+  ending,
+  recallCtx,
 }: ThankYouScreenProps) {
   const confettiRef = useRef<ConfettiHandle | null>(null)
   const fired = useRef(false)
@@ -42,6 +53,22 @@ export function ThankYouScreen({
     const t = setTimeout(() => confettiRef.current?.finale(confettiColors), 280)
     return () => clearTimeout(t)
   }, [gamify, confettiColors])
+
+  // Recall helper — no-op when there is no context (degrades gracefully).
+  const pipe = (text?: string) => (text ? resolveRecall(text, recallCtx ?? { answers: {} }) : text)
+
+  // A custom ending, when present, supplies title/message/redirect/button and
+  // wins over the legacy title/message props.
+  const resolvedTitle = pipe(ending?.title ?? title)
+  const resolvedMessage = pipe(ending?.message ?? message)
+  const redirectUrl = ending?.redirectUrl
+  const buttonText = ending?.buttonText
+
+  const goToRedirect = () => {
+    if (!redirectUrl) return
+    const href = /^https?:\/\//i.test(redirectUrl) ? redirectUrl : `https://${redirectUrl}`
+    window.location.href = href
+  }
 
   return (
     <div
@@ -64,11 +91,24 @@ export function ThankYouScreen({
           </div>
         )}
         <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: theme.textColor }}>
-          {title || 'Thank you!'}
+          {resolvedTitle || 'Thank you!'}
         </h1>
         <p className="text-lg md:text-xl opacity-70" style={{ color: theme.textColor }}>
-          {message || 'Your response has been recorded.'}
+          {resolvedMessage || 'Your response has been recorded.'}
         </p>
+
+        {redirectUrl && (
+          <div className="mt-8">
+            <button
+              onClick={goToRedirect}
+              className="inline-flex items-center gap-2 px-7 py-3 font-semibold text-white transition-transform hover:scale-[1.03]"
+              style={{ backgroundColor: theme.primaryColor, borderRadius: theme.buttonRadius ?? '0.5rem' }}
+            >
+              {buttonText || 'Continue'} <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+
         {!hideBranding && (
           <p className="text-xs mt-12 opacity-40" style={{ color: theme.textColor }}>
             Powered by <span className="font-semibold">Stoneforms</span>

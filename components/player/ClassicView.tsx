@@ -6,7 +6,7 @@
 // single source of truth (answers / validation / submit) owned by FormPlayer;
 // this component is pure rendering + a validate-all-then-submit handler.
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Check, Loader2 } from 'lucide-react'
 import { Question } from '@/types'
 import { QuestionRenderer } from '@/components/player/QuestionRenderer'
@@ -14,6 +14,44 @@ import { ContentBlock } from '@/components/player/ContentBlock'
 import { isInputField, isContentBlock } from '@/lib/field-types'
 import type { FormTheme } from '@/lib/themes'
 import { fontStack, buttonRadius, backgroundCss } from '@/lib/themes'
+import { resolveRecall } from '@/lib/recall'
+import { resolveLogic, type LogicRule } from '@/lib/logic'
+
+// Compose the page background. With a backgroundImage, layer a dim overlay
+// (driven by backgroundBrightness; 1 = full) over the image; otherwise fall back
+// to the theme's solid/gradient. Backward-compatible: no image => prior behaviour.
+function themeBackground(theme: FormTheme): React.CSSProperties {
+  if (theme.backgroundImage) {
+    const b = typeof theme.backgroundBrightness === 'number' ? theme.backgroundBrightness : 1
+    const dim = Math.max(0, Math.min(1, 1 - b))
+    return {
+      backgroundImage: `linear-gradient(rgba(0,0,0,${dim}), rgba(0,0,0,${dim})), url(${theme.backgroundImage})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundAttachment: 'fixed',
+    }
+  }
+  return { background: backgroundCss(theme) }
+}
+
+// Walk the ordered flow honouring jump logic to decide which blocks are visible
+// and whether an end-jump truncates the rest. Pure + defensive: when there are
+// no rules the full list is returned unchanged (today's behaviour).
+function visibleByLogic(blocks: Question[], answers: Record<string, any>, logic: LogicRule[]): Question[] {
+  if (!logic || logic.length === 0) return blocks
+  const ids = blocks.map((b) => b.id)
+  const shown = new Set<string>()
+  let cursor = ids[0]
+  let guard = 0
+  while (cursor && cursor !== 'end' && guard < ids.length + 2) {
+    guard++
+    shown.add(cursor)
+    const res = resolveLogic(cursor, ids, answers, logic)
+    if (res.end) break
+    cursor = res.next
+  }
+  return blocks.filter((b) => shown.has(b.id))
+}
 
 export interface ClassicViewProps {
   formTitle: string
@@ -32,6 +70,9 @@ export interface ClassicViewProps {
   theme: FormTheme
   hideBranding: boolean
   showProgressBar: boolean
+  // Optional jump-logic rules. When absent (today's default) every block renders
+  // and no end-jump truncation happens — fully backward-compatible.
+  logic?: LogicRule[]
 }
 
 export function ClassicView({
@@ -48,16 +89,22 @@ export function ClassicView({
   submitError,
   theme,
   hideBranding,
+  logic = [],
 }: ClassicViewProps) {
   const c = theme.colors
   const ff = fontStack(theme.font)
-  const bg = backgroundCss(theme)
+  const bgStyle = themeBackground(theme)
   const radius = buttonRadius(theme.buttonStyle)
   const [localError, setLocalError] = useState<string | null>(null)
 
   // page_break has no meaning in classic mode (everything is on one page); drop
   // it and hidden fields. Everything else renders in order.
-  const renderable = blocks.filter((b) => b.type !== 'page_break' && b.type !== 'hidden')
+  const baseRenderable = blocks.filter((b) => b.type !== 'page_break' && b.type !== 'hidden')
+  // Apply jump-logic show/hide + end-jump truncation against the live answers.
+  const renderable = useMemo(
+    () => visibleByLogic(baseRenderable, answers, logic),
+    [baseRenderable, answers, logic]
+  )
 
   const handleSubmit = () => {
     // Validate EVERY input question; collect all errors at once.
@@ -82,29 +129,37 @@ export function ClassicView({
     onSubmit()
   }
 
+  // Resolve recall tokens against the answers this view already holds.
+  const rctx = { answers }
+  const recall = (s?: string) => (s ? resolveRecall(s, rctx) : s)
+
   return (
-    <div className="min-h-screen" style={{ background: bg, fontFamily: ff }}>
+    <div className="min-h-screen" style={{ ...bgStyle, fontFamily: ff }}>
       <div className="mx-auto max-w-2xl px-4 sm:px-6 py-10 sm:py-16">
         {/* Form header */}
         <header className="mb-10 sm:mb-12">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight" style={{ color: c.text }}>
-            {formTitle}
+            {recall(formTitle)}
           </h1>
           {formDescription && (
             <p className="mt-3 text-base sm:text-lg md:text-xl opacity-70" style={{ color: c.text }}>
-              {formDescription}
+              {recall(formDescription)}
             </p>
           )}
         </header>
 
         <div className="space-y-10">
-          {renderable.map((b) => (
+          {renderable.map((b) => {
+            // Pre-resolve recall in the block's own copy so QuestionRenderer /
+            // ContentBlock display piped values without owning recall.
+            const rb: Question = { ...b, label: recall(b.label) ?? b.label, description: recall(b.description) }
+            return (
             <div key={b.id} id={`sf-block-${b.id}`}>
               {isContentBlock(b.type) ? (
-                <ContentBlock block={b} theme={theme} />
+                <ContentBlock block={rb} theme={theme} />
               ) : (
                 <QuestionRenderer
-                  question={b}
+                  question={rb}
                   value={answers[b.id]}
                   error={errors[b.id]}
                   onChange={(v) => setAnswer(b.id, v)}
@@ -113,7 +168,8 @@ export function ClassicView({
                 />
               )}
             </div>
-          ))}
+            )
+          })}
         </div>
 
         {(submitError || localError) && (

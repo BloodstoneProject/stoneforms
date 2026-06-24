@@ -1,25 +1,44 @@
 'use client'
 import { useParams } from 'next/navigation'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type CSSProperties } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Eye, Loader2, Check, ArrowRight } from 'lucide-react'
 import {
   PRESET_THEMES, THEME_FONTS, normalizeTheme, fontStack, googleFontHref,
-  buttonRadius, backgroundCss, type FormTheme, type ButtonStyle,
+  buttonRadius, backgroundCss, type FormTheme, type ButtonStyle, type MediaLayout,
 } from '@/lib/themes'
+
+const MEDIA_LAYOUTS: { value: MediaLayout; label: string }[] = [
+  { value: 'inline', label: 'Inline' },
+  { value: 'split-left', label: 'Split left' },
+  { value: 'split-right', label: 'Split right' },
+  { value: 'cover', label: 'Cover' },
+  { value: 'float', label: 'Float' },
+  { value: 'wallpaper', label: 'Wallpaper' },
+]
 
 export default function DesignStudioPage() {
   const { id } = (useParams() as any)
   const [theme, setTheme] = useState<FormTheme>(PRESET_THEMES[0])
+  // Default per-question media layout. Not part of the normalized FormTheme
+  // shape, so it's tracked alongside and merged back into the saved theme JSON.
+  const [defaultMediaLayout, setDefaultMediaLayout] = useState<MediaLayout>('inline')
   const [formTitle, setFormTitle] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [customFont, setCustomFont] = useState('')
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     fetch(`/api/forms/${id}`).then((r) => r.json()).then((data) => {
-      if (data.form) { setFormTitle(data.form.title); setTheme(normalizeTheme(data.form.theme)) }
+      if (data.form) {
+        setFormTitle(data.form.title)
+        setTheme(normalizeTheme(data.form.theme))
+        const dml = data.form.theme?.defaultMediaLayout
+        if (typeof dml === 'string') setDefaultMediaLayout(dml as MediaLayout)
+      }
     }).finally(() => setLoading(false))
   }, [id])
 
@@ -37,11 +56,34 @@ export default function DesignStudioPage() {
 
   const save = async () => {
     setSaving(true); setSaved(false)
+    // Merge the default media layout into the persisted theme JSON. It's stored
+    // on forms.theme JSONB; normalizeTheme ignores it, the player reads it as a
+    // fallback when a field has no explicit media.layout.
+    const payload = { ...theme, defaultMediaLayout }
     const res = await fetch(`/api/forms/${id}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ theme }),
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ theme: payload }),
     })
     setSaving(false)
     if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2000) }
+  }
+
+  // Upload a file to /api/upload and return its public URL.
+  const uploadFile = async (file: File): Promise<string | null> => {
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/upload', { method: 'POST', body: fd })
+      const data = await res.json().catch(() => ({}))
+      return res.ok && typeof data.url === 'string' ? data.url : null
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const applyCustomFont = () => {
+    const f = customFont.trim()
+    if (f) update({ font: f })
   }
 
   if (loading) {
@@ -50,6 +92,18 @@ export default function DesignStudioPage() {
 
   const c = theme.colors
   const radius = buttonRadius(theme.buttonStyle)
+
+  // Compose the preview background: solid/gradient base, optional image on top,
+  // optional dim overlay driven by backgroundBrightness (1 = full brightness).
+  const brightness = typeof theme.backgroundBrightness === 'number' ? theme.backgroundBrightness : 1
+  const dim = Math.max(0, Math.min(1, 1 - brightness))
+  const previewBg: CSSProperties = theme.backgroundImage
+    ? {
+        backgroundImage: `linear-gradient(rgba(0,0,0,${dim}), rgba(0,0,0,${dim})), url(${theme.backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }
+    : { background: backgroundCss(theme) }
 
   return (
     <div className="min-h-screen bg-background">
@@ -121,6 +175,23 @@ export default function DesignStudioPage() {
                 </button>
               ))}
             </div>
+            <div className="mt-3 pt-3 border-t border-border">
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Any Google Font</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={customFont}
+                  onChange={(e) => setCustomFont(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') applyCustomFont() }}
+                  placeholder="e.g. Montserrat"
+                  className="flex-1 text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
+                />
+                <button onClick={applyCustomFont} className="px-3 py-2 border border-border rounded-md text-sm hover:bg-secondary">Use</button>
+              </div>
+              {!THEME_FONTS.some((f) => f.family === theme.font) && (
+                <p className="text-xs text-muted-foreground mt-1.5">Active: <span className="font-semibold" style={{ fontFamily: fontStack(theme.font) }}>{theme.font}</span></p>
+              )}
+            </div>
           </section>
 
           {/* Brand */}
@@ -175,13 +246,119 @@ export default function DesignStudioPage() {
               )}
             </div>
           </section>
+
+          {/* Background image */}
+          <section className="card-surface p-5">
+            <h2 className="heading-tight text-foreground mb-3">Background image</h2>
+            <label className="block text-xs font-medium text-muted-foreground mb-1">Image URL</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={theme.backgroundImage ?? ''}
+                onChange={(e) => update({ backgroundImage: e.target.value || undefined })}
+                placeholder="https://example.com/bg.jpg"
+                className="flex-1 text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
+              />
+              <label className="px-3 py-2 border border-border rounded-md text-sm hover:bg-secondary cursor-pointer whitespace-nowrap">
+                {uploading ? '…' : 'Upload'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    const url = await uploadFile(file)
+                    if (url) update({ backgroundImage: url })
+                    e.target.value = ''
+                  }}
+                />
+              </label>
+            </div>
+            {theme.backgroundImage && (
+              <button onClick={() => update({ backgroundImage: undefined })} className="text-xs text-muted-foreground mt-1.5 hover:text-foreground underline">Remove image</button>
+            )}
+            <div className="mt-4">
+              <label className="block text-xs font-medium text-muted-foreground mb-1">
+                Brightness ({Math.round((typeof theme.backgroundBrightness === 'number' ? theme.backgroundBrightness : 1) * 100)}%)
+              </label>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={Math.round((typeof theme.backgroundBrightness === 'number' ? theme.backgroundBrightness : 1) * 100)}
+                onChange={(e) => update({ backgroundBrightness: Number(e.target.value) / 100 })}
+                className="w-full"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Dim the image so question text stays readable.</p>
+            </div>
+          </section>
+
+          {/* Media layout default */}
+          <section className="card-surface p-5">
+            <h2 className="heading-tight text-foreground mb-3">Default question media layout</h2>
+            <div className="grid grid-cols-3 gap-2">
+              {MEDIA_LAYOUTS.map((m) => (
+                <button key={m.value} onClick={() => setDefaultMediaLayout(m.value)}
+                  className="py-2 text-sm rounded-md border-2 transition-all"
+                  style={{ borderColor: defaultMediaLayout === m.value ? c.primary : '#e7e5e4' }}>
+                  {m.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">Used when a question has media but no layout of its own.</p>
+          </section>
+
+          {/* Favicon */}
+          <section className="card-surface p-5">
+            <h2 className="heading-tight text-foreground mb-3">Favicon</h2>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={theme.faviconUrl ?? ''}
+                onChange={(e) => update({ faviconUrl: e.target.value || undefined })}
+                placeholder="https://example.com/favicon.png"
+                className="flex-1 text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
+              />
+              <label className="px-3 py-2 border border-border rounded-md text-sm hover:bg-secondary cursor-pointer whitespace-nowrap">
+                {uploading ? '…' : 'Upload'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    const url = await uploadFile(file)
+                    if (url) update({ faviconUrl: url })
+                    e.target.value = ''
+                  }}
+                />
+              </label>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Shown in the browser tab on hosted/public form pages.</p>
+          </section>
+
+          {/* Custom CSS */}
+          <section className="card-surface p-5">
+            <h2 className="heading-tight text-foreground mb-3">Custom CSS</h2>
+            <textarea
+              value={theme.customCss ?? ''}
+              onChange={(e) => update({ customCss: e.target.value || undefined })}
+              rows={6}
+              spellCheck={false}
+              placeholder={'.sf-cta { letter-spacing: 0.02em; }'}
+              className="w-full text-xs font-mono border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
+            />
+            <p className="text-xs text-muted-foreground mt-1">Advanced. Injected into the public form. Avoid breaking layout.</p>
+          </section>
         </div>
 
         {/* Live preview */}
         <div className="lg:col-span-3">
           <div className="sticky top-24 rounded-lg border border-border overflow-hidden">
             <div className="px-4 py-2 bg-muted text-xs text-muted-foreground border-b border-border">Live preview</div>
-            <div className="min-h-[460px] flex items-center justify-center p-10" style={{ background: backgroundCss(theme), fontFamily: fontStack(theme.font) }}>
+            <div className="min-h-[460px] flex items-center justify-center p-10" style={{ ...previewBg, fontFamily: fontStack(theme.font) }}>
               <div className="w-full max-w-md">
                 <div className="text-sm font-medium mb-4" style={{ color: c.primary }}>1 →</div>
                 <h2 className="text-3xl font-bold mb-2" style={{ color: c.text }}>How happy are you with our service?</h2>

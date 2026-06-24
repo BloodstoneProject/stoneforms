@@ -18,6 +18,42 @@ import { ContentBlock } from '@/components/player/ContentBlock'
 import { isInputField, isContentBlock } from '@/lib/field-types'
 import type { FormTheme } from '@/lib/themes'
 import { fontStack, buttonRadius, backgroundCss } from '@/lib/themes'
+import { resolveRecall } from '@/lib/recall'
+import { resolveLogic, type LogicRule } from '@/lib/logic'
+
+// Compose the outer background. With a backgroundImage, layer a dim overlay
+// (backgroundBrightness; 1 = full) over the image; otherwise theme solid/gradient.
+function themeBackground(theme: FormTheme): React.CSSProperties {
+  if (theme.backgroundImage) {
+    const b = typeof theme.backgroundBrightness === 'number' ? theme.backgroundBrightness : 1
+    const dim = Math.max(0, Math.min(1, 1 - b))
+    return {
+      backgroundImage: `linear-gradient(rgba(0,0,0,${dim}), rgba(0,0,0,${dim})), url(${theme.backgroundImage})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundAttachment: 'fixed',
+    }
+  }
+  return { background: backgroundCss(theme) }
+}
+
+// Truncate the flow at the first end-jump and drop logic-skipped blocks. Pure;
+// no rules => unchanged list (today's behaviour).
+function visibleByLogic(blocks: Question[], answers: Record<string, any>, logic: LogicRule[]): Question[] {
+  if (!logic || logic.length === 0) return blocks
+  const ids = blocks.map((b) => b.id)
+  const shown = new Set<string>()
+  let cursor = ids[0]
+  let guard = 0
+  while (cursor && cursor !== 'end' && guard < ids.length + 2) {
+    guard++
+    shown.add(cursor)
+    const res = resolveLogic(cursor, ids, answers, logic)
+    if (res.end) break
+    cursor = res.next
+  }
+  return blocks.filter((b) => shown.has(b.id))
+}
 
 export interface MagazineViewProps {
   formTitle: string
@@ -34,6 +70,8 @@ export interface MagazineViewProps {
   theme: FormTheme
   hideBranding: boolean
   reduceMotion: boolean
+  // Optional jump-logic rules. Absent (today's default) => no show/hide changes.
+  logic?: LogicRule[]
 }
 
 // Max blocks per auto-chunked page (when no section/page_break boundary).
@@ -72,15 +110,21 @@ export function MagazineView(props: MagazineViewProps) {
   const {
     formTitle, formDescription, blocks, answers, errors, setAnswer,
     validateQuestion, setErrors, onSubmit, submitting, submitError, theme,
-    hideBranding, reduceMotion,
+    hideBranding, reduceMotion, logic = [],
   } = props
 
   const c = theme.colors
   const ff = fontStack(theme.font)
+  const bgStyle = themeBackground(theme)
   const bg = backgroundCss(theme)
   const radius = buttonRadius(theme.buttonStyle)
 
-  const contentPages = useMemo(() => paginate(blocks), [blocks])
+  // Resolve recall tokens against the answers this view already holds.
+  const recall = useCallback((s?: string) => (s ? resolveRecall(s, { answers }) : s), [answers])
+
+  // Apply jump-logic show/hide + end-jump truncation before pagination.
+  const logicBlocks = useMemo(() => visibleByLogic(blocks, answers, logic), [blocks, answers, logic])
+  const contentPages = useMemo(() => paginate(logicBlocks), [logicBlocks])
 
   const [isDesktop, setIsDesktop] = useState(false)
   // Desktop = render 2-page spreads; mobile = 1 page at a time.
@@ -210,15 +254,18 @@ export function MagazineView(props: MagazineViewProps) {
     if (lf.kind === 'cover') {
       return (
         <div className="h-full flex flex-col items-center justify-center text-center px-6 sm:px-8 py-10 sm:py-12">
-          <div className="mb-6 text-xs tracking-[0.3em] uppercase opacity-50" style={{ color: c.primary }}>
-            Stoneforms
-          </div>
+          {/* White-label: only show the wordmark when branding isn't hidden. */}
+          {!hideBranding && (
+            <div className="mb-6 text-xs tracking-[0.3em] uppercase opacity-50" style={{ color: c.primary }}>
+              Stoneforms
+            </div>
+          )}
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight" style={{ color: c.text }}>
-            {formTitle}
+            {recall(formTitle)}
           </h1>
           {formDescription && (
             <p className="mt-4 text-base sm:text-lg opacity-70 max-w-md" style={{ color: c.text }}>
-              {formDescription}
+              {recall(formDescription)}
             </p>
           )}
           <div className="mt-10 text-sm opacity-60 flex items-center gap-2" style={{ color: c.text }}>
@@ -230,13 +277,15 @@ export function MagazineView(props: MagazineViewProps) {
     return (
       <div className="h-full overflow-y-auto px-5 sm:px-8 md:px-10 py-8 sm:py-10 sf-mag-scroll">
         <div className="space-y-8 max-w-xl mx-auto">
-          {lf.page.map((b) => (
+          {lf.page.map((b) => {
+            const rb: Question = { ...b, label: recall(b.label) ?? b.label, description: recall(b.description) }
+            return (
             <div key={b.id} id={`sf-block-${b.id}`}>
               {isContentBlock(b.type) ? (
-                <ContentBlock block={b} theme={theme} density="compact" />
+                <ContentBlock block={rb} theme={theme} density="compact" />
               ) : (
                 <QuestionRenderer
-                  question={b}
+                  question={rb}
                   value={answers[b.id]}
                   error={errors[b.id]}
                   onChange={(v) => setAnswer(b.id, v)}
@@ -245,7 +294,8 @@ export function MagazineView(props: MagazineViewProps) {
                 />
               )}
             </div>
-          ))}
+            )
+          })}
         </div>
         {/* Page footer: little folio number */}
         <div className="mt-10 text-center text-xs opacity-40" style={{ color: c.text }}>
@@ -286,7 +336,7 @@ export function MagazineView(props: MagazineViewProps) {
   return (
     <div
       className="min-h-screen flex flex-col items-center"
-      style={{ background: bg, fontFamily: ff }}
+      style={{ ...bgStyle, fontFamily: ff }}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >

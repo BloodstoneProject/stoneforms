@@ -15,6 +15,7 @@ export type FieldType =
   | 'yes_no'
   | 'rating'
   | 'opinion_scale'
+  | 'nps'
   | 'ranking'
   | 'date'
   | 'file_upload'
@@ -80,6 +81,7 @@ export const FIELD_TYPES: FieldTypeMeta[] = [
   { value: 'consent', label: 'Consent (GDPR)', icon: '🛡️', hasOptions: false, valueKind: 'boolean', category: 'choice', input: true },
   { value: 'rating', label: 'Rating', icon: '⭐', hasOptions: false, valueKind: 'number', category: 'number', input: true },
   { value: 'opinion_scale', label: 'Opinion Scale', icon: '📊', hasOptions: false, valueKind: 'number', category: 'number', input: true },
+  { value: 'nps', label: 'Net Promoter Score', icon: '📈', hasOptions: false, valueKind: 'number', category: 'number', input: true },
   { value: 'calculator', label: 'Calculator', icon: '🧮', hasOptions: false, valueKind: 'number', category: 'number', input: true },
   { value: 'ranking', label: 'Ranking', icon: '🔢', hasOptions: true, valueKind: 'string[]', category: 'choice', input: true },
   { value: 'date', label: 'Date', icon: '📅', hasOptions: false, valueKind: 'string', category: 'date', input: true },
@@ -110,6 +112,30 @@ export const FIELD_TYPES: FieldTypeMeta[] = [
   { value: 'logo_strip', label: 'Logo Strip', icon: '🏷️', hasOptions: false, valueKind: 'none', category: 'media', input: false },
   { value: 'logo', label: 'Logo', icon: '🔰', hasOptions: false, valueKind: 'none', category: 'media', input: false },
 ]
+
+// ---- Canonical per-field-type `settings` shapes (form_fields.settings) ----
+// Documented here for downstream agents (editor + player). All keys optional;
+// players must default sensibly. Stored in the field's `settings` JSONB object.
+//
+//   rating.settings        = { scale?: number /* def 5 */,
+//                              icon?: 'star' | 'heart' | 'thumb' | 'circle' }
+//   opinion_scale.settings = { min?: number, max?: number /* def 10 */,
+//                              startAt?: number,
+//                              leftLabel?: string, rightLabel?: string }
+//   nps.settings           = { leftLabel?: string, rightLabel?: string }
+//                              // 0..10 scale is fixed by definition
+//   date.settings          = { min?: string, max?: string,
+//                              mode?: 'date' | 'time' | 'datetime' }
+//   phone.settings         = { defaultCountry?: string /* ISO-2, e.g. 'GB' */ }
+//   <choice>.settings      = { minSelect?: number, maxSelect?: number,
+//                              allowOther?: boolean, randomize?: boolean }
+//                              // applies to multiple_choice / checkboxes /
+//                              // dropdown / picture_choice
+//   <text>.settings        = { maxLength?: number, default?: string }
+//                              // applies to short_text / long_text
+//
+// Per-field MEDIA placement lives on settings.media — see FieldMedia/MediaLayout
+// in lib/themes.ts: settings.media = { url?, layout?, focalX?, focalY?, brightness? }.
 
 const BY_VALUE: Record<string, FieldTypeMeta> = Object.fromEntries(
   FIELD_TYPES.map((f) => [f.value, f])
