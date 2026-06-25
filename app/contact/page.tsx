@@ -83,8 +83,8 @@ export default function ContactPage() {
               <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-2 transition-colors duration-500 hover:border-white/20">
                 <div className="rounded-xl border border-white/5 p-6 text-center" style={{ backgroundColor: '#131313' }}>
                   <MessageSquare className="mx-auto mb-3 h-6 w-6" strokeWidth={1.75} style={{ color: LIME }} />
-                  <h3 className="text-sm font-semibold text-white" style={grotesk}>Chat</h3>
-                  <p className="mt-1 text-sm text-white/50">Live chat support</p>
+                  <h3 className="text-sm font-semibold text-white" style={grotesk}>Message us</h3>
+                  <p className="mt-1 text-sm text-white/50">Drop us a note below</p>
                 </div>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-2 transition-colors duration-500 hover:border-white/20">
