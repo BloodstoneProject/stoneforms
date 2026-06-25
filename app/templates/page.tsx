@@ -152,6 +152,7 @@ export default function TemplatesPage() {
                 {section.items.map((t, i) => (
                   <Reveal key={t.id} delay={Math.min(i, 5) * 60}>
                     <TemplateCard
+                      href={`/templates/${t.id}`}
                       icon={t.icon}
                       name={t.name}
                       description={t.description}
@@ -195,15 +196,17 @@ export default function TemplatesPage() {
   )
 }
 
-// Double-bezel template card. Whole card links to signup (logged-out
-// marketing visitor → /auth/signup). Lime category chip + lift on hover.
+// Double-bezel template card. Links to the template detail page so visitors can
+// preview before signing up (the detail page's CTA → /auth/signup).
 function TemplateCard({
+  href,
   icon,
   name,
   description,
   category,
   meta,
 }: {
+  href: string
   icon: string
   name: string
   description: string
@@ -212,7 +215,7 @@ function TemplateCard({
 }) {
   return (
     <Link
-      href="/auth/signup"
+      href={href}
       className="group block h-full transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1"
     >
       <Bezel className="h-full">

@@ -1,10 +1,44 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
-import { Mail, MessageSquare, HelpCircle } from 'lucide-react'
+import { Mail, MessageSquare, HelpCircle, Check } from 'lucide-react'
 import { BrandShell, Reveal, Eyebrow, LIME, grotesk } from '@/components/marketing/brand'
 
 export default function ContactPage() {
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+  const [error, setError] = useState('')
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setStatus('sending')
+    setError('')
+    const fd = new FormData(e.currentTarget)
+    const payload = {
+      name: String(fd.get('name') || ''),
+      email: String(fd.get('email') || ''),
+      message: String(fd.get('message') || ''),
+      company: String(fd.get('company') || ''), // honeypot
+    }
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) {
+        setStatus('sent')
+      } else {
+        setStatus('error')
+        setError(data.error || 'Something went wrong. Please try again.')
+      }
+    } catch {
+      setStatus('error')
+      setError('Network error. Please try again.')
+    }
+  }
+
   return (
     <BrandShell>
       <section className="relative z-10 px-6 pt-40 pb-16 sm:px-12">
@@ -67,50 +101,80 @@ export default function ContactPage() {
 
           <Reveal delay={80}>
             <div className="rounded-[1.75rem] border border-white/10 bg-white/[0.02] p-2">
-              <form
-                className="space-y-5 rounded-[calc(1.75rem-0.5rem)] border border-white/5 p-6 sm:p-8"
-                style={{ backgroundColor: '#131313' }}
-              >
-                <div>
-                  <label htmlFor="contact-name" className="mb-2 block text-sm font-medium text-white/80">Name</label>
-                  <input
-                    id="contact-name"
-                    name="name"
-                    type="text"
-                    autoComplete="name"
-                    required
-                    className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder:text-white/30 transition-colors focus:border-[#C6F24E] focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="contact-email" className="mb-2 block text-sm font-medium text-white/80">Email</label>
-                  <input
-                    id="contact-email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder:text-white/30 transition-colors focus:border-[#C6F24E] focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="contact-message" className="mb-2 block text-sm font-medium text-white/80">Message</label>
-                  <textarea
-                    id="contact-message"
-                    name="message"
-                    rows={6}
-                    required
-                    className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder:text-white/30 transition-colors focus:border-[#C6F24E] focus:outline-none"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full rounded-full py-3 text-sm font-semibold text-black transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.98]"
-                  style={{ backgroundColor: LIME }}
+              {status === 'sent' ? (
+                <div
+                  className="flex flex-col items-center rounded-[calc(1.75rem-0.5rem)] border border-white/5 px-6 py-16 text-center"
+                  style={{ backgroundColor: '#131313' }}
                 >
-                  Send Message
-                </button>
-              </form>
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: LIME }}>
+                    <Check className="h-6 w-6 text-black" strokeWidth={2.5} />
+                  </span>
+                  <h3 className="mt-5 text-xl font-semibold text-white" style={grotesk}>Message sent.</h3>
+                  <p className="mt-2 max-w-sm text-sm text-white/55">
+                    Thanks for reaching out — we&apos;ll get back to you at the email you provided.
+                  </p>
+                </div>
+              ) : (
+                <form
+                  onSubmit={handleSubmit}
+                  className="space-y-5 rounded-[calc(1.75rem-0.5rem)] border border-white/5 p-6 sm:p-8"
+                  style={{ backgroundColor: '#131313' }}
+                >
+                  {/* Honeypot — hidden from humans, catches bots. */}
+                  <div className="absolute h-0 w-0 overflow-hidden" aria-hidden>
+                    <label>
+                      Company
+                      <input name="company" type="text" tabIndex={-1} autoComplete="off" />
+                    </label>
+                  </div>
+                  <div>
+                    <label htmlFor="contact-name" className="mb-2 block text-sm font-medium text-white/80">Name</label>
+                    <input
+                      id="contact-name"
+                      name="name"
+                      type="text"
+                      autoComplete="name"
+                      required
+                      disabled={status === 'sending'}
+                      className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder:text-white/30 transition-colors focus:border-[#C6F24E] focus:outline-none disabled:opacity-50"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="contact-email" className="mb-2 block text-sm font-medium text-white/80">Email</label>
+                    <input
+                      id="contact-email"
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      disabled={status === 'sending'}
+                      className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder:text-white/30 transition-colors focus:border-[#C6F24E] focus:outline-none disabled:opacity-50"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="contact-message" className="mb-2 block text-sm font-medium text-white/80">Message</label>
+                    <textarea
+                      id="contact-message"
+                      name="message"
+                      rows={6}
+                      required
+                      disabled={status === 'sending'}
+                      className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder:text-white/30 transition-colors focus:border-[#C6F24E] focus:outline-none disabled:opacity-50"
+                    />
+                  </div>
+                  {status === 'error' && (
+                    <p className="text-sm text-red-400" role="alert">{error}</p>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={status === 'sending'}
+                    className="w-full rounded-full py-3 text-sm font-semibold text-black transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.98] disabled:opacity-70"
+                    style={{ backgroundColor: LIME }}
+                  >
+                    {status === 'sending' ? 'Sending…' : 'Send message'}
+                  </button>
+                </form>
+              )}
             </div>
           </Reveal>
         </div>
