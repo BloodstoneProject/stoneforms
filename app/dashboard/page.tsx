@@ -91,7 +91,7 @@ export default function DashboardHome() {
       <div className="min-h-screen bg-background">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
           <div className="mb-8">
-            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">Dashboard</h1>
+            <h1 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">Dashboard</h1>
             <p className="text-muted-foreground mt-1">You're on the {planName} plan.</p>
           </div>
           <GettingStarted
@@ -113,7 +113,7 @@ export default function DashboardHome() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">Dashboard</h1>
+            <h1 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">Dashboard</h1>
             <p className="text-muted-foreground mt-1">You're on the {planName} plan.</p>
           </div>
           <Button onClick={createForm} disabled={creating} className="self-start sm:self-auto">
@@ -135,7 +135,7 @@ export default function DashboardHome() {
         {/* Recent forms */}
         <div className="card-surface">
           <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-            <h2 className="font-semibold tracking-tight text-foreground">Recent forms</h2>
+            <h2 className="font-display font-semibold tracking-tight text-foreground">Recent forms</h2>
             <Link href="/dashboard/forms" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
               View all <ArrowRight className="w-4 h-4" />
             </Link>

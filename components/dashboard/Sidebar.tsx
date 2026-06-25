@@ -46,9 +46,11 @@ export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
 
   const navLinkClass = (isActive: boolean) =>
     cn(
-      'flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+      'relative flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+      // Active items carry a lime left-bar + lime icon accent on the calm
+      // neutral surface, so the brand reads without a dark takeover.
       isActive
-        ? 'bg-secondary text-foreground'
+        ? 'bg-secondary text-foreground before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-1 before:rounded-full before:bg-primary [&>svg]:text-[hsl(var(--foreground))]'
         : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
     )
 
@@ -56,8 +58,19 @@ export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
     <>
       {/* Logo */}
       <div className="flex h-16 items-center justify-between border-b border-border px-6">
-        <Link href="/dashboard" className="flex items-center">
-          <span className="text-xl font-semibold tracking-tight text-foreground">
+        <Link href="/dashboard" className="flex items-center gap-2.5">
+          {/* Lime rounded-square brand mark */}
+          <span
+            aria-hidden="true"
+            className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-bold"
+            style={{ fontFamily: 'var(--font-grotesk)' }}
+          >
+            S
+          </span>
+          <span
+            className="text-xl font-semibold tracking-tight text-foreground"
+            style={{ fontFamily: 'var(--font-grotesk)' }}
+          >
             Stoneforms
           </span>
         </Link>

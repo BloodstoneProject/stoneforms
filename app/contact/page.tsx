@@ -2,70 +2,119 @@
 
 import Link from 'next/link'
 import { Mail, MessageSquare, HelpCircle } from 'lucide-react'
-import { MarketingNav } from '@/components/marketing/MarketingNav'
+import { BrandShell, Reveal, Eyebrow, LIME, grotesk } from '@/components/marketing/brand'
 
 export default function ContactPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <MarketingNav />
-
-      <section className="pt-40 pb-16 px-6 sm:px-12">
-        <div className="max-w-3xl mx-auto text-center">
-          <span className="inline-block px-3 py-1 border border-border bg-secondary rounded-full text-xs font-medium text-muted-foreground tracking-wide mb-8">Contact</span>
-          <h1 className="text-5xl sm:text-6xl font-semibold leading-[1.05] tracking-tight mb-6">
-            Get in touch.
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Have a question? We'd love to hear from you.
-          </p>
+    <BrandShell>
+      <section className="relative z-10 px-6 pt-40 pb-16 sm:px-12">
+        <div className="mx-auto max-w-3xl text-center">
+          <Reveal>
+            <div className="flex justify-center">
+              <Eyebrow>Contact</Eyebrow>
+            </div>
+          </Reveal>
+          <Reveal delay={80}>
+            <h1
+              className="mt-6 text-5xl font-semibold leading-[1.05] tracking-tight sm:text-7xl"
+              style={grotesk}
+            >
+              Get in touch.
+            </h1>
+          </Reveal>
+          <Reveal delay={140}>
+            <p className="mt-6 text-lg text-white/55">
+              Have a question? We&apos;d love to hear from you.
+            </p>
+          </Reveal>
         </div>
       </section>
 
-      <section className="pb-28 px-6 sm:px-12">
-        <div className="max-w-3xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-4 mb-8">
-            <div className="p-6 bg-card border border-border rounded-lg text-center">
-              <Mail className="w-6 h-6 text-foreground mx-auto mb-3" />
-              <h3 className="text-sm font-semibold mb-1">Email</h3>
-              <a href="mailto:hello@bloodstone.co.uk" className="text-sm text-muted-foreground hover:text-foreground transition-colors">hello@bloodstone.co.uk</a>
+      <section className="relative z-10 px-6 pb-28 sm:px-12">
+        <div className="mx-auto max-w-3xl">
+          <Reveal>
+            <div className="mb-6 grid gap-4 md:grid-cols-3">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-2 transition-colors duration-500 hover:border-white/20">
+                <div className="rounded-xl border border-white/5 p-6 text-center" style={{ backgroundColor: '#131313' }}>
+                  <Mail className="mx-auto mb-3 h-6 w-6" strokeWidth={1.75} style={{ color: LIME }} />
+                  <h3 className="text-sm font-semibold text-white" style={grotesk}>Email</h3>
+                  <a
+                    href="mailto:hello@bloodstone.co.uk"
+                    className="mt-1 inline-block text-sm text-white/50 transition-colors hover:text-white"
+                  >
+                    hello@bloodstone.co.uk
+                  </a>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-2 transition-colors duration-500 hover:border-white/20">
+                <div className="rounded-xl border border-white/5 p-6 text-center" style={{ backgroundColor: '#131313' }}>
+                  <MessageSquare className="mx-auto mb-3 h-6 w-6" strokeWidth={1.75} style={{ color: LIME }} />
+                  <h3 className="text-sm font-semibold text-white" style={grotesk}>Chat</h3>
+                  <p className="mt-1 text-sm text-white/50">Live chat support</p>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-2 transition-colors duration-500 hover:border-white/20">
+                <div className="rounded-xl border border-white/5 p-6 text-center" style={{ backgroundColor: '#131313' }}>
+                  <HelpCircle className="mx-auto mb-3 h-6 w-6" strokeWidth={1.75} style={{ color: LIME }} />
+                  <h3 className="text-sm font-semibold text-white" style={grotesk}>Help</h3>
+                  <Link href="/help" className="mt-1 inline-block text-sm text-white/50 transition-colors hover:text-white">
+                    Help Center
+                  </Link>
+                </div>
+              </div>
             </div>
-            <div className="p-6 bg-card border border-border rounded-lg text-center">
-              <MessageSquare className="w-6 h-6 text-foreground mx-auto mb-3" />
-              <h3 className="text-sm font-semibold mb-1">Chat</h3>
-              <p className="text-sm text-muted-foreground">Live chat support</p>
-            </div>
-            <div className="p-6 bg-card border border-border rounded-lg text-center">
-              <HelpCircle className="w-6 h-6 text-foreground mx-auto mb-3" />
-              <h3 className="text-sm font-semibold mb-1">Help</h3>
-              <Link href="/help" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Help Center</Link>
-            </div>
-          </div>
+          </Reveal>
 
-          <form className="space-y-5 p-6 sm:p-8 bg-card border border-border rounded-lg">
-            <div>
-              <label htmlFor="contact-name" className="block text-sm font-medium mb-2">Name</label>
-              <input id="contact-name" name="name" type="text" autoComplete="name" required className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors" />
+          <Reveal delay={80}>
+            <div className="rounded-[1.75rem] border border-white/10 bg-white/[0.02] p-2">
+              <form
+                className="space-y-5 rounded-[calc(1.75rem-0.5rem)] border border-white/5 p-6 sm:p-8"
+                style={{ backgroundColor: '#131313' }}
+              >
+                <div>
+                  <label htmlFor="contact-name" className="mb-2 block text-sm font-medium text-white/80">Name</label>
+                  <input
+                    id="contact-name"
+                    name="name"
+                    type="text"
+                    autoComplete="name"
+                    required
+                    className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder:text-white/30 transition-colors focus:border-[#C6F24E] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="contact-email" className="mb-2 block text-sm font-medium text-white/80">Email</label>
+                  <input
+                    id="contact-email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder:text-white/30 transition-colors focus:border-[#C6F24E] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="contact-message" className="mb-2 block text-sm font-medium text-white/80">Message</label>
+                  <textarea
+                    id="contact-message"
+                    name="message"
+                    rows={6}
+                    required
+                    className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder:text-white/30 transition-colors focus:border-[#C6F24E] focus:outline-none"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full rounded-full py-3 text-sm font-semibold text-black transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.98]"
+                  style={{ backgroundColor: LIME }}
+                >
+                  Send Message
+                </button>
+              </form>
             </div>
-            <div>
-              <label htmlFor="contact-email" className="block text-sm font-medium mb-2">Email</label>
-              <input id="contact-email" name="email" type="email" autoComplete="email" required className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors" />
-            </div>
-            <div>
-              <label htmlFor="contact-message" className="block text-sm font-medium mb-2">Message</label>
-              <textarea id="contact-message" name="message" rows={6} required className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors resize-none" />
-            </div>
-            <button type="submit" className="w-full py-2.5 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors">
-              Send Message
-            </button>
-          </form>
+          </Reveal>
         </div>
       </section>
-
-      <footer className="border-t border-border py-16 px-6 sm:px-12">
-        <div className="max-w-7xl mx-auto text-center text-sm text-muted-foreground">
-          © 2024 Stoneforms. All rights reserved.
-        </div>
-      </footer>
-    </div>
+    </BrandShell>
   )
 }

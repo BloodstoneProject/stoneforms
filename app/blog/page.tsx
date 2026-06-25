@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { Calendar, User, ArrowRight } from 'lucide-react'
-import { MarketingNav } from '@/components/marketing/MarketingNav'
+import { Calendar, User, ArrowUpRight } from 'lucide-react'
+import { BrandShell, Reveal, Eyebrow, LIME, grotesk } from '@/components/marketing/brand'
 
 export default function BlogPage() {
   const posts = [
@@ -75,94 +75,126 @@ export default function BlogPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <MarketingNav
-        fixed={false}
-        active="/blog"
-        links={[
-          { href: '/features', label: 'Features' },
-          { href: '/templates', label: 'Templates' },
-          { href: '/pricing', label: 'Pricing' },
-          { href: '/blog', label: 'Blog' },
-        ]}
-      />
-
+    <BrandShell>
       {/* Hero */}
-      <section className="py-20 px-6 border-b border-border">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-5xl sm:text-6xl font-semibold tracking-tight text-foreground mb-6">Blog</h1>
-          <p className="text-lg text-muted-foreground">
-            Tips, guides, and insights to help you get the most out of your forms
-          </p>
+      <section className="relative z-10 px-6 pt-40 pb-24 sm:px-12">
+        <div className="mx-auto max-w-5xl">
+          <Reveal>
+            <Eyebrow>The Field Notes</Eyebrow>
+          </Reveal>
+          <Reveal delay={80}>
+            <h1
+              className="mt-6 text-5xl font-semibold tracking-tight sm:text-7xl"
+              style={grotesk}
+            >
+              Blog.
+            </h1>
+          </Reveal>
+          <Reveal delay={140}>
+            <p className="mt-6 max-w-xl text-lg text-white/55">
+              Tips, guides, and blunt takes to help you build forms people actually finish.
+            </p>
+          </Reveal>
         </div>
       </section>
 
       {/* Posts Grid */}
-      <section className="py-16 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {posts.map(post => (
-              <Link
-                key={post.id}
-                href={`/blog/${post.slug}`}
-                className="group"
-              >
-                <div className="aspect-video bg-muted border border-border rounded-lg overflow-hidden mb-4">
-                  <img
-                    src={post.image}
-                    alt={post.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-                <div className="mb-3">
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    {post.category}
-                  </span>
-                </div>
-                <h2 className="text-lg font-semibold tracking-tight text-foreground mb-3 group-hover:text-muted-foreground transition-colors">
-                  {post.title}
-                </h2>
-                <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                  {post.excerpt}
-                </p>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <User className="w-4 h-4" />
-                    <span>{post.author}</span>
+      <section className="relative z-10 px-6 pb-28 sm:px-12">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {posts.map((post, i) => (
+              <Reveal key={post.id} delay={(i % 3) * 80}>
+                <Link href={`/blog/${post.slug}`} className="group block h-full">
+                  <div className="flex h-full flex-col rounded-[1.75rem] border border-white/10 bg-white/[0.02] p-2 transition-colors duration-500 hover:border-white/20">
+                    <div className="overflow-hidden rounded-[calc(1.75rem-0.5rem)] border border-white/5">
+                      <div className="aspect-video overflow-hidden">
+                        <img
+                          src={post.image}
+                          alt={post.title}
+                          className="h-full w-full object-cover transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105"
+                        />
+                      </div>
+                      <div className="flex flex-1 flex-col p-6">
+                        <div className="flex items-center justify-between">
+                          <span
+                            className="text-[10px] font-medium uppercase tracking-[0.22em]"
+                            style={{ color: LIME }}
+                          >
+                            {post.category}
+                          </span>
+                          <span className="text-[11px] text-white/35">{post.readTime}</span>
+                        </div>
+                        <h2
+                          className="mt-4 text-lg font-semibold leading-snug tracking-tight text-white transition-colors group-hover:text-white"
+                          style={grotesk}
+                        >
+                          {post.title}
+                        </h2>
+                        <p className="mt-3 line-clamp-2 text-sm text-white/50">
+                          {post.excerpt}
+                        </p>
+                        <div className="mt-6 flex items-center gap-4 border-t border-white/10 pt-4 text-xs text-white/40">
+                          <span className="flex items-center gap-1.5">
+                            <User className="h-3.5 w-3.5" strokeWidth={1.75} />
+                            {post.author}
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <Calendar className="h-3.5 w-3.5" strokeWidth={1.75} />
+                            {new Date(post.date).toLocaleDateString()}
+                          </span>
+                          <ArrowUpRight
+                            className="ml-auto h-4 w-4 text-white/30 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[#C6F24E]"
+                            strokeWidth={2}
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    <span>{new Date(post.date).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              </Link>
+                </Link>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
 
       {/* Newsletter */}
-      <section className="py-20 px-6 bg-secondary border-t border-border">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground mb-4">
-            Subscribe to our Newsletter
-          </h2>
-          <p className="text-lg text-muted-foreground mb-8">
-            Get the latest tips and updates delivered to your inbox
-          </p>
-          <div className="flex gap-3 max-w-md mx-auto">
-            <input
-              type="email"
-              aria-label="Email address"
-              placeholder="Enter your email"
-              className="flex-1 px-3 py-2 bg-background border border-input rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors"
-            />
-            <button className="px-5 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm font-medium">
-              Subscribe
-            </button>
-          </div>
+      <section className="relative z-10 px-6 pb-28 sm:px-12">
+        <div className="mx-auto max-w-5xl">
+          <Reveal>
+            <div className="rounded-[1.75rem] border border-white/10 bg-white/[0.02] p-2">
+              <div
+                className="rounded-[calc(1.75rem-0.5rem)] border border-white/5 px-6 py-14 text-center sm:px-12"
+                style={{ backgroundColor: '#131313' }}
+              >
+                <h2
+                  className="text-3xl font-semibold tracking-tight sm:text-4xl"
+                  style={grotesk}
+                >
+                  Subscribe to the newsletter.
+                </h2>
+                <p className="mx-auto mt-4 max-w-md text-white/55">
+                  The latest tips and updates, delivered to your inbox. No fluff.
+                </p>
+                <form className="mx-auto mt-8 flex max-w-md gap-3">
+                  <input
+                    type="email"
+                    aria-label="Email address"
+                    placeholder="you@work.com"
+                    className="flex-1 rounded-full border border-white/10 bg-white/[0.03] px-5 py-2.5 text-sm text-white placeholder:text-white/30 transition-colors focus:border-[#C6F24E] focus:outline-none"
+                  />
+                  <button
+                    type="submit"
+                    className="rounded-full px-6 py-2.5 text-sm font-semibold text-black transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-95"
+                    style={{ backgroundColor: LIME }}
+                  >
+                    Subscribe
+                  </button>
+                </form>
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
-    </div>
+    </BrandShell>
   )
 }

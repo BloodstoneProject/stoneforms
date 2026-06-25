@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { Search, BookOpen, Video, FileText, HelpCircle } from 'lucide-react'
 import { useState } from 'react'
-import { MarketingNav } from '@/components/marketing/MarketingNav'
+import { BrandShell, Reveal, Eyebrow, LimeCTA, LIME, grotesk } from '@/components/marketing/brand'
 
 export default function HelpPage() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -107,7 +107,7 @@ export default function HelpPage() {
     },
   ]
 
-  const allArticles = categories.flatMap(cat => 
+  const allArticles = categories.flatMap(cat =>
     cat.articles.map(article => ({ ...article, category: cat.name }))
   )
 
@@ -119,57 +119,66 @@ export default function HelpPage() {
     : []
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <MarketingNav
-        fixed={false}
-        active="/help"
-        links={[
-          { href: '/features', label: 'Features' },
-          { href: '/templates', label: 'Templates' },
-          { href: '/pricing', label: 'Pricing' },
-          { href: '/help', label: 'Help' },
-        ]}
-      />
-
+    <BrandShell>
       {/* Hero */}
-      <section className="py-20 px-6 bg-secondary border-b border-border">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-5xl sm:text-6xl font-semibold tracking-tight text-foreground mb-6">How can we help?</h1>
-          <p className="text-lg text-muted-foreground mb-8">
-            Search our help center for answers and guides
-          </p>
+      <section className="relative z-10 px-6 pt-40 pb-24 sm:px-12">
+        <div className="mx-auto max-w-3xl text-center">
+          <Reveal>
+            <div className="flex justify-center">
+              <Eyebrow>Help Center</Eyebrow>
+            </div>
+          </Reveal>
+          <Reveal delay={80}>
+            <h1
+              className="mt-6 text-5xl font-semibold tracking-tight sm:text-7xl"
+              style={grotesk}
+            >
+              How can we help?
+            </h1>
+          </Reveal>
+          <Reveal delay={140}>
+            <p className="mt-6 text-lg text-white/55">
+              Search the help center for answers and guides.
+            </p>
+          </Reveal>
 
           {/* Search */}
-          <div className="max-w-2xl mx-auto relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" aria-hidden="true" />
-            <input
-              type="text"
-              aria-label="Search the help center"
-              placeholder="Search for help..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3.5 bg-background border border-input rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors text-base"
-            />
-          </div>
+          <Reveal delay={200}>
+            <div className="relative mx-auto mt-10 max-w-2xl">
+              <Search
+                className="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-white/40"
+                aria-hidden="true"
+              />
+              <input
+                type="text"
+                aria-label="Search the help center"
+                placeholder="Search for help..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full rounded-full border border-white/10 bg-white/[0.03] py-3.5 pl-13 pr-5 text-base text-white placeholder:text-white/30 transition-colors focus:border-[#C6F24E] focus:outline-none"
+                style={{ paddingLeft: '3.25rem' }}
+              />
+            </div>
+          </Reveal>
 
           {/* Search Results */}
           {searchTerm && (
-            <div className="max-w-2xl mx-auto mt-3 bg-card border border-border rounded-md text-left">
+            <div className="mx-auto mt-3 max-w-2xl rounded-2xl border border-white/10 bg-white/[0.02] p-2 text-left">
               {filteredArticles.length > 0 ? (
-                <div className="p-2">
+                <div className="rounded-xl border border-white/5 p-2" style={{ backgroundColor: '#131313' }}>
                   {filteredArticles.slice(0, 5).map((article, i) => (
                     <Link
                       key={i}
                       href={`/help/${article.slug}`}
-                      className="block p-3 hover:bg-secondary rounded-md transition-colors"
+                      className="block rounded-lg p-3 transition-colors hover:bg-white/[0.04]"
                     >
-                      <h3 className="font-medium text-foreground">{article.title}</h3>
-                      <p className="text-sm text-muted-foreground mt-1">{article.category}</p>
+                      <h3 className="font-medium text-white" style={grotesk}>{article.title}</h3>
+                      <p className="mt-1 text-sm text-white/40">{article.category}</p>
                     </Link>
                   ))}
                 </div>
               ) : (
-                <div className="p-8 text-center text-muted-foreground">
+                <div className="rounded-xl border border-white/5 p-8 text-center text-white/40" style={{ backgroundColor: '#131313' }}>
                   No articles found. Try different keywords.
                 </div>
               )}
@@ -179,56 +188,76 @@ export default function HelpPage() {
       </section>
 
       {/* Categories */}
-      <section className="py-16 px-6">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground mb-12 text-center">
-            Browse by Category
-          </h2>
+      <section className="relative z-10 px-6 pb-28 sm:px-12">
+        <div className="mx-auto max-w-6xl">
+          <Reveal>
+            <h2
+              className="mb-14 text-center text-3xl font-semibold tracking-tight sm:text-4xl"
+              style={grotesk}
+            >
+              Browse by category.
+            </h2>
+          </Reveal>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid gap-6 md:grid-cols-2">
             {categories.map((category, i) => (
-              <div key={i} className="bg-card border border-border rounded-lg p-8">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-11 h-11 bg-secondary border border-border rounded-md flex items-center justify-center">
-                    <category.icon className="w-5 h-5 text-foreground" />
+              <Reveal key={i} delay={(i % 2) * 80}>
+                <div className="h-full rounded-[1.75rem] border border-white/10 bg-white/[0.02] p-2 transition-colors duration-500 hover:border-white/20">
+                  <div
+                    className="h-full rounded-[calc(1.75rem-0.5rem)] border border-white/5 p-7 sm:p-8"
+                    style={{ backgroundColor: '#131313' }}
+                  >
+                    <div className="mb-6 flex items-center gap-3">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03]">
+                        <category.icon className="h-5 w-5" strokeWidth={1.75} style={{ color: LIME }} />
+                      </div>
+                      <h3 className="text-xl font-semibold tracking-tight text-white" style={grotesk}>
+                        {category.name}
+                      </h3>
+                    </div>
+                    <ul className="space-y-3">
+                      {category.articles.map((article, j) => (
+                        <li key={j}>
+                          <Link
+                            href={`/help/${article.slug}`}
+                            className="text-sm text-white/50 transition-colors hover:text-white"
+                          >
+                            {article.title}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <h3 className="text-xl font-semibold tracking-tight text-foreground">{category.name}</h3>
                 </div>
-                <ul className="space-y-3">
-                  {category.articles.map((article, j) => (
-                    <li key={j}>
-                      <Link
-                        href={`/help/${article.slug}`}
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {article.title}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
 
       {/* Contact Support */}
-      <section className="py-16 px-6 bg-secondary border-t border-border">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground mb-4">
-            Still need help?
-          </h2>
-          <p className="text-lg text-muted-foreground mb-8">
-            Contact our support team and we will get back to you within 24 hours
-          </p>
-          <Link
-            href="/contact"
-            className="inline-block px-7 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm font-medium"
-          >
-            Contact Support
-          </Link>
+      <section className="relative z-10 px-6 pb-28 sm:px-12">
+        <div className="mx-auto max-w-5xl">
+          <Reveal>
+            <div className="rounded-[1.75rem] border border-white/10 bg-white/[0.02] p-2">
+              <div
+                className="rounded-[calc(1.75rem-0.5rem)] border border-white/5 px-6 py-14 text-center sm:px-12"
+                style={{ backgroundColor: '#131313' }}
+              >
+                <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl" style={grotesk}>
+                  Still need help?
+                </h2>
+                <p className="mx-auto mt-4 max-w-md text-white/55">
+                  Contact the support team. We get back to you within 24 hours.
+                </p>
+                <div className="mt-8 flex justify-center">
+                  <LimeCTA href="/contact">Contact support</LimeCTA>
+                </div>
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
-    </div>
+    </BrandShell>
   )
 }

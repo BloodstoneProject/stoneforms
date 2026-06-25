@@ -51,10 +51,10 @@ export const PLAN_LIMITS = {
       email_notifications: true,
       advanced_analytics: true,
       remove_branding: true,
-      custom_domains: true,
-      team_collaboration: true,
+      custom_domains: false, // not built yet — don't advertise/gate on it
+      team_collaboration: false, // not built yet
       webhooks: true,
-      api_access: true,
+      api_access: false, // not built yet
       priority_support: true,
     }
   }

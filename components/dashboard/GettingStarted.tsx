@@ -113,7 +113,7 @@ export function GettingStarted({
           <div className="w-12 h-12 bg-primary text-primary-foreground rounded-md flex items-center justify-center mb-4">
             <Sparkles className="w-6 h-6" />
           </div>
-          <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+          <h2 className="font-display text-2xl font-semibold tracking-tight text-foreground">
             {hasForm ? "Let's get your form live" : 'Welcome to Stoneforms'}
           </h2>
           <p className="text-muted-foreground mt-1 max-w-lg">
@@ -174,7 +174,7 @@ export function GettingStarted({
               <Lock className="w-5 h-5" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold tracking-tight text-foreground">Unlock more with Pro</h3>
+              <h3 className="font-display font-semibold tracking-tight text-foreground">Unlock more with Pro</h3>
               <p className="text-muted-foreground text-sm mt-1 mb-4">
                 Remove Stoneforms branding, get a custom shareable link, file
                 uploads, email notifications and advanced analytics.

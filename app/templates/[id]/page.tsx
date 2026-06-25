@@ -2,24 +2,26 @@
 import { useParams } from 'next/navigation'
 
 import Link from 'next/link'
-import { ArrowLeft, Star } from 'lucide-react'
+import { ArrowLeft, Check } from 'lucide-react'
 import { FORM_TEMPLATES, getTemplate } from '@/lib/form-templates'
+import { BrandShell, Reveal, LimeCTA, LIME, grotesk } from '@/components/marketing/brand'
 
 export default function TemplateDetailPage() {
   const { id } = (useParams() as any)
-
   const template = getTemplate(id)
 
   if (!template) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground mb-4">Template Not Found</h1>
-          <Link href="/templates" className="text-muted-foreground hover:text-foreground transition-colors">
-            ← Back to Templates
-          </Link>
+      <BrandShell active="/templates">
+        <div className="relative z-10 flex min-h-[60vh] items-center justify-center px-4 text-center">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Template not found</h1>
+            <Link href="/templates" className="mt-4 inline-block text-sm text-white/50 transition-colors hover:text-white">
+              ← Back to templates
+            </Link>
+          </div>
         </div>
-      </div>
+      </BrandShell>
     )
   }
 
@@ -28,179 +30,151 @@ export default function TemplateDetailPage() {
   ).slice(0, 3)
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Header */}
-      <div className="bg-card border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
-            <div className="flex items-start gap-4 flex-1 min-w-0">
-              <Link
-                href="/templates"
-                aria-label="Back to templates"
-                className="text-muted-foreground hover:text-foreground transition-colors mt-1 flex-shrink-0"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </Link>
-              <div className="flex-1 min-w-0">
-                <h1 className="text-2xl font-semibold tracking-tight text-foreground flex items-center gap-3">
+    <BrandShell active="/templates">
+      <section className="relative z-10 px-4 pt-32 sm:pt-36">
+        <div className="mx-auto max-w-5xl">
+          <Reveal>
+            <Link href="/templates" className="inline-flex items-center gap-2 text-sm text-white/50 transition-colors hover:text-white">
+              <ArrowLeft className="h-4 w-4" strokeWidth={1.75} /> All templates
+            </Link>
+            <div className="mt-6 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <h1 className="flex items-center gap-3 text-3xl font-semibold tracking-tight sm:text-5xl">
                   <span>{template.icon}</span>
                   {template.name}
                 </h1>
-                <p className="text-muted-foreground mt-1">{template.description}</p>
+                <p className="mt-3 max-w-xl text-white/55">{template.description}</p>
               </div>
+              <LimeCTA href="/auth/signup">Use this template</LimeCTA>
             </div>
-            <Link
-              href="/auth/signup"
-              className="px-5 py-2.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm font-medium text-center flex-shrink-0"
-            >
-              Use This Template
-            </Link>
-          </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-secondary border border-border rounded-md p-4">
-              <div className="text-muted-foreground text-sm mb-1">Form Fields</div>
-              <div className="text-2xl font-semibold tracking-tight text-foreground">{template.fields.length}</div>
+            {/* Stats */}
+            <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {[
+                { label: 'Form fields', value: String(template.fields.length) },
+                { label: 'Category', value: template.category },
+                { label: 'Type', value: template.quiz ? 'Scored quiz' : 'Standard form' },
+              ].map((s) => (
+                <div key={s.label} className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+                  <div className="text-xs uppercase tracking-[0.16em] text-white/40">{s.label}</div>
+                  <div className="mt-1 text-xl font-semibold tracking-tight" style={grotesk}>{s.value}</div>
+                </div>
+              ))}
             </div>
-            <div className="bg-secondary border border-border rounded-md p-4">
-              <div className="text-muted-foreground text-sm mb-1">Category</div>
-              <div className="text-lg font-semibold tracking-tight text-foreground">{template.category}</div>
-            </div>
-            <div className="bg-secondary border border-border rounded-md p-4">
-              <div className="text-muted-foreground text-sm mb-1">Type</div>
-              <div className="text-lg font-semibold tracking-tight text-foreground">{template.quiz ? 'Scored quiz' : 'Standard form'}</div>
-            </div>
-          </div>
+          </Reveal>
         </div>
-      </div>
+      </section>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid md:grid-cols-3 gap-8">
+      <section className="relative z-10 px-4 py-12 sm:py-16">
+        <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-3">
           {/* Preview */}
-          <div className="md:col-span-2">
-            <div className="bg-card rounded-lg border border-border p-6 sm:p-8">
-              <h2 className="text-xl font-semibold tracking-tight text-foreground mb-6">Template Preview</h2>
-
-              <div className="bg-secondary rounded-lg p-5 sm:p-8 border border-dashed border-border">
-                <div className="max-w-2xl mx-auto space-y-6">
-                  <div className="text-center mb-8">
-                    <h3 className="text-2xl font-semibold tracking-tight text-foreground mb-2">{template.name}</h3>
-                    <p className="text-muted-foreground">{template.description}</p>
+          <Reveal className="md:col-span-2">
+            <div className="rounded-[1.75rem] border border-white/10 bg-white/[0.02] p-2">
+              <div className="rounded-[calc(1.75rem-0.5rem)] border border-white/5 p-6 sm:p-8" style={{ backgroundColor: '#131313' }}>
+                <p className="text-[11px] font-medium uppercase tracking-[0.16em]" style={{ color: LIME }}>Preview</p>
+                <div className="mt-6 space-y-6">
+                  <div className="text-center">
+                    <h3 className="text-2xl font-semibold tracking-tight">{template.name}</h3>
+                    <p className="mt-2 text-white/50">{template.description}</p>
                   </div>
-
                   {template.fields.map((field, i) => (
                     <div key={i}>
                       {field.field_type === 'statement' ? (
-                        <p className="text-foreground font-medium">{field.label}</p>
+                        <p className="font-medium text-white/90">{field.label}</p>
                       ) : (
                         <>
-                          <label className="block text-sm font-medium text-foreground mb-2">
+                          <label className="mb-2 block text-sm font-medium text-white/80">
                             {field.label}
-                            {field.required && <span className="text-destructive ml-1">*</span>}
+                            {field.required && <span className="ml-1" style={{ color: LIME }}>*</span>}
                           </label>
                           {field.options ? (
                             <div className="space-y-2">
                               {field.options.map((opt, oi) => (
-                                <div key={oi} className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <span className="w-4 h-4 rounded-full border border-border flex-shrink-0" />
+                                <div key={oi} className="flex items-center gap-2 text-sm text-white/55">
+                                  <span className="h-4 w-4 flex-shrink-0 rounded-full border border-white/15" />
                                   {opt}
                                 </div>
                               ))}
                             </div>
                           ) : field.field_type === 'long_text' ? (
-                            <div className="w-full h-24 bg-card border border-border rounded-md" />
+                            <div className="h-24 w-full rounded-xl border border-white/10 bg-white/[0.03]" />
                           ) : (
-                            <div className="w-full h-12 bg-card border border-border rounded-md" />
+                            <div className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.03]" />
                           )}
                         </>
                       )}
                     </div>
                   ))}
-
-                  <button className="w-full py-2.5 bg-primary text-primary-foreground rounded-md text-sm font-medium">
+                  <div className="w-full rounded-full py-3 text-center text-sm font-semibold text-black" style={{ backgroundColor: LIME }}>
                     Submit
-                  </button>
-                </div>
-              </div>
-
-              {/* Quiz outcomes */}
-              {template.quiz && (
-                <div className="mt-8">
-                  <h3 className="text-lg font-semibold tracking-tight text-foreground mb-3">Possible results</h3>
-                  <div className="space-y-3">
-                    {template.quiz.outcomes.map((o) => (
-                      <div key={o.id} className="border border-border rounded-md p-4">
-                        <div className="flex items-center justify-between mb-1">
-                          <h4 className="font-medium text-foreground">{o.title}</h4>
-                          <span className="text-xs text-muted-foreground">
-                            {o.minScore}–{o.maxScore} pts
-                          </span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{o.message}</p>
-                      </div>
-                    ))}
                   </div>
                 </div>
-              )}
+
+                {template.quiz && (
+                  <div className="mt-8">
+                    <h3 className="text-lg font-semibold tracking-tight">Possible results</h3>
+                    <div className="mt-3 space-y-3">
+                      {template.quiz.outcomes.map((o) => (
+                        <div key={o.id} className="rounded-xl border border-white/10 p-4">
+                          <div className="mb-1 flex items-center justify-between">
+                            <h4 className="font-medium text-white/90">{o.title}</h4>
+                            <span className="text-xs text-white/40">{o.minScore}–{o.maxScore} pts</span>
+                          </div>
+                          <p className="text-sm text-white/50">{o.message}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          </Reveal>
 
           {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Features */}
-            <div className="bg-card rounded-lg border border-border p-6">
-              <h3 className="font-semibold tracking-tight text-foreground mb-4">Included Features</h3>
-              <ul className="space-y-3">
+          <Reveal delay={120} className="space-y-6">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+              <h3 className="font-semibold tracking-tight">Included</h3>
+              <ul className="mt-4 space-y-3">
                 {['Mobile optimized', 'Validation built in', 'Export responses', 'Analytics included'].map((feat) => (
-                  <li key={feat} className="flex items-center gap-3">
-                    <div className="w-5 h-5 bg-secondary border border-border rounded-full flex items-center justify-center flex-shrink-0">
-                      <Star className="w-3 h-3 text-foreground" />
-                    </div>
-                    <span className="text-muted-foreground">{feat}</span>
+                  <li key={feat} className="flex items-center gap-3 text-sm text-white/60">
+                    <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: LIME }}>
+                      <Check className="h-3 w-3 text-black" strokeWidth={2.5} />
+                    </span>
+                    {feat}
                   </li>
                 ))}
               </ul>
             </div>
 
-            {/* CTA */}
-            <div className="bg-primary text-primary-foreground rounded-lg p-6">
-              <h3 className="font-semibold tracking-tight text-xl mb-2">Ready to use?</h3>
-              <p className="text-primary-foreground/70 mb-4 text-sm">
-                Sign up free and start using this template in minutes
-              </p>
-              <Link
-                href="/auth/signup"
-                className="block w-full py-2.5 bg-background text-foreground border border-border rounded-md text-center text-sm font-medium hover:bg-secondary transition-colors"
-              >
-                Get Started Free
-              </Link>
+            <div className="relative overflow-hidden rounded-2xl border border-white/10 p-6" style={{ backgroundColor: 'rgba(198,242,78,0.1)' }}>
+              <h3 className="text-xl font-semibold tracking-tight">Ready to use?</h3>
+              <p className="mb-5 mt-2 text-sm text-white/55">Sign up free and start with this template in minutes.</p>
+              <LimeCTA href="/auth/signup">Get started — free</LimeCTA>
             </div>
 
-            {/* Similar Templates */}
             {similar.length > 0 && (
-              <div className="bg-card rounded-lg border border-border p-6">
-                <h3 className="font-semibold tracking-tight text-foreground mb-4">Similar Templates</h3>
-                <div className="space-y-3">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+                <h3 className="font-semibold tracking-tight">Similar templates</h3>
+                <div className="mt-4 space-y-3">
                   {similar.map((s) => (
                     <Link
                       key={s.id}
                       href={`/templates/${s.id}`}
-                      className="block p-3 border border-border rounded-md hover:bg-secondary transition-colors"
+                      className="block rounded-xl border border-white/10 p-3 transition-colors hover:border-white/20"
                     >
-                      <h4 className="font-medium text-foreground text-sm flex items-center gap-2">
+                      <h4 className="flex items-center gap-2 text-sm font-medium text-white/90">
                         <span>{s.icon}</span>
                         {s.name}
                       </h4>
-                      <p className="text-xs text-muted-foreground mt-1">{s.fields.length} fields</p>
+                      <p className="mt-1 text-xs text-white/40">{s.fields.length} fields</p>
                     </Link>
                   ))}
                 </div>
               </div>
             )}
-          </div>
+          </Reveal>
         </div>
-      </div>
-    </div>
+      </section>
+    </BrandShell>
   )
 }
