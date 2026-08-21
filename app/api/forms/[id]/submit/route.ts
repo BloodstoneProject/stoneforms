@@ -335,8 +335,11 @@ export async function POST(
     }
 
     // Owner notification email.
+    // MUST use the admin client: notification_settings is owner-only under RLS
+    // and this runs as an anonymous respondent, so the cookie-scoped client
+    // reads zero rows and the notification silently never sends.
     try {
-      const { data: notificationSettings } = await supabase
+      const { data: notificationSettings } = await createAdminClient()
         .from('notification_settings')
         .select('*')
         .eq('form_id', params.id)

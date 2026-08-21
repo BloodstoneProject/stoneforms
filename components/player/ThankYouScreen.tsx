@@ -93,7 +93,7 @@ export function ThankYouScreen({
         <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: theme.textColor }}>
           {resolvedTitle || 'Thank you!'}
         </h1>
-        <p className="text-lg md:text-xl opacity-70" style={{ color: theme.textColor }}>
+        <p className="text-lg md:text-xl opacity-70" style={{ color: theme.textColor, whiteSpace: 'pre-line' }}>
           {resolvedMessage || 'Your response has been recorded.'}
         </p>
 

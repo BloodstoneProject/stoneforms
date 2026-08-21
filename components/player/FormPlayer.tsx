@@ -915,7 +915,13 @@ function FormPlayerInner({
       // ending's redirectUrl are resolved with the live context.
       const endingRedirect = (() => {
         const e = resolveEnding((settings as any).endings, { endingId: resolvedEndingId })
-        return e?.redirectUrl ? resolveRecall(e.redirectUrl, recallCtx) : ''
+        if (!e?.redirectUrl) return ''
+        // An ending with buttonText is a click-through, not an auto-bounce:
+        // the thank-you screen renders and ThankYouScreen's button does the
+        // navigating. Without buttonText the redirect stays automatic, which
+        // keeps legacy settings.redirectUrl behaviour unchanged.
+        if (e.buttonText) return ''
+        return resolveRecall(e.redirectUrl, recallCtx)
       })()
       const redirectTarget = endingRedirect || settings.redirectUrl || ''
       if (redirectTarget) {
@@ -1005,6 +1011,8 @@ function FormPlayerInner({
       <ThankYouScreen
         title={endTitle}
         message={endMessage}
+        ending={ending}
+        recallCtx={recallCtx}
         hideBranding={hideBranding}
         theme={{ primaryColor: c.primary, backgroundColor: c.background, textColor: c.text, font: ff, buttonRadius: radius }}
         gamify={gamifyOn ? { xp } : undefined}
@@ -1069,7 +1077,7 @@ function FormPlayerInner({
             {resolveRecall(settings.welcome?.title || formTitle || '', recallCtx)}
           </h1>
           {(settings.welcome?.description || formDescription) && (
-            <p className="text-base sm:text-lg md:text-xl mb-10 opacity-70" style={{ color: c.text }}>
+            <p className="text-base sm:text-lg md:text-xl mb-10 opacity-70" style={{ color: c.text, whiteSpace: 'pre-line' }}>
               {resolveRecall(settings.welcome?.description || formDescription || '', recallCtx)}
             </p>
           )}
@@ -1301,7 +1309,11 @@ function FormPlayerInner({
           <div className="flex items-center gap-2 mb-5 text-sm font-medium" style={{ color: c.primary }}>
             <span>{index + 1}</span>
             <ArrowRight className="w-3.5 h-3.5 opacity-60" />
-            <span className="opacity-50">{questions.length}</span>
+            {/* orderedIds, not questions: `index` is a position in the filtered
+                flow, so the total must exclude hidden fields and page breaks too
+                or a form with hidden attribution fields reads "1 → 17" on eight
+                questions. */}
+            <span className="opacity-50">{orderedIds.length}</span>
           </div>
 
           {draftRestored && (

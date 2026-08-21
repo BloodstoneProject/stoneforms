@@ -59,10 +59,12 @@ export function QuestionRenderer({
           )}
         </h2>
         {question.description && (
+          // Author copy is multi-paragraph (section intros, consent notes);
+          // pre-line keeps the blank lines they typed.
           <p
             id={descId}
             className="text-lg"
-            style={{ color: theme.textColor, opacity: 0.7 }}
+            style={{ color: theme.textColor, opacity: 0.7, whiteSpace: 'pre-line' }}
           >
             {question.description}
           </p>
@@ -1020,11 +1022,25 @@ function PictureChoiceField({
   const s = settingsOf(question)
   const randomize = s.randomize === true
   const images: Record<string, string> = (s.images as Record<string, string>) || {}
+  // Multi-select parity with ChoiceField. lib/field-types.ts documents
+  // minSelect/maxSelect as applying to picture_choice, so honour them here too;
+  // `allowMultiple` is the opt-in (single-select stays the default).
+  const multi = s.allowMultiple === true
+  const maxSelect = Number.isFinite(Number(s.maxSelect)) && Number(s.maxSelect) > 0 ? Number(s.maxSelect) : undefined
   const baseChoices = question.choices || []
   const ordered = useMemo(
     () => (randomize ? seededShuffle(baseChoices, question.id) : baseChoices),
     [baseChoices, randomize, question.id]
   )
+  const selectedArr: string[] = multi
+    ? (Array.isArray(value) ? value : [])
+    : (value !== undefined && value !== null && value !== '' ? [String(value)] : [])
+  const onPick = (v: string) => {
+    if (!multi) { onChange(v); return }
+    if (selectedArr.includes(v)) { onChange(selectedArr.filter((x) => x !== v)); return }
+    if (maxSelect !== undefined && selectedArr.length >= maxSelect) return // cap reached
+    onChange([...selectedArr, v])
+  }
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null
@@ -1032,26 +1048,28 @@ function PictureChoiceField({
       if (e.metaKey || e.ctrlKey || e.altKey) return
       const key = e.key.toUpperCase()
       const idx = ordered.findIndex((_, i) => hotkeyFor(i) === key)
-      if (idx >= 0) { e.preventDefault(); e.stopPropagation(); onChange(ordered[idx].value) }
+      if (idx >= 0) { e.preventDefault(); e.stopPropagation(); onPick(ordered[idx].value) }
     }
     window.addEventListener('keydown', onKey, true)
     return () => window.removeEventListener('keydown', onKey, true)
+    // Mirrors ChoiceField: re-register when the selection changes so the
+    // multi-select toggle never reads a stale `selectedArr`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ordered])
+  }, [ordered, selectedArr, multi, maxSelect])
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4" role="radiogroup" aria-labelledby={a11y.labelId} aria-describedby={describedBy}>
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4" role={multi ? 'group' : 'radiogroup'} aria-labelledby={a11y.labelId} aria-describedby={describedBy}>
       {ordered.map((choice, i) => {
-        const isSelected = value === choice.value
+        const isSelected = selectedArr.includes(choice.value)
         const img = images[choice.value]
         return (
           <button
             key={choice.id}
             type="button"
-            role="radio"
+            role={multi ? 'checkbox' : 'radio'}
             aria-checked={isSelected}
             aria-label={choice.label}
             aria-keyshortcuts={hotkeyFor(i)}
-            onClick={() => onChange(choice.value)}
+            onClick={() => onPick(choice.value)}
             className={cn(
               'group flex flex-col rounded-xl border-2 overflow-hidden transition-all text-left hover:shadow-md',
               isSelected && 'ring-2'
