@@ -56,3 +56,6 @@ next-env.d.ts
 # OS
 Thumbs.db
 .env*
+
+# Client form-field exports pulled for migration work - client data, never committed
+.backups/
