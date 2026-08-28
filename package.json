@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "for f in lib/__tests__/*.test.ts; do echo \"-- $f\"; tsx \"$f\" || exit 1; done"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.105.0",
@@ -39,6 +40,7 @@
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.15",
     "tailwindcss-animate": "^1.0.7",
+    "tsx": "^4.23.12",
     "typescript": "^5.6.3"
   }
 }

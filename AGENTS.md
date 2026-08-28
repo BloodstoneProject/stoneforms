@@ -103,12 +103,25 @@ generation, `app/api/ai/generate`).
 They have separate secrets and separate failure modes. Fixing one does not fix
 the other.
 
-## The tests cannot be run with `npm test`
+## Tests — `npm test` (fixed 28 Aug 2026)
 
-`lib/__tests__/` contains `endings`, `logic`, `recall` and `variables` tests, but
-`package.json` has only `dev`, `build`, `start` and `lint` — **there is no test
-script and no runner configured.** The tests exist and are unrunnable as
-checked in. Do not claim test coverage here.
+`lib/__tests__/` holds `endings`, `logic`, `recall` and `variables` — **56
+assertions in total**, all passing.
+
+They are plain assertion scripts, not framework tests: each calls
+`process.exit(1)` on the first failure and prints a pass count otherwise. They
+run under **`tsx`**, which is now a devDependency, via:
+
+```
+npm test
+```
+
+The script loops over `lib/__tests__/*.test.ts` and propagates a non-zero exit,
+so a failing test fails the run. **A new test file is picked up automatically** —
+just add it to that directory.
+
+Until 28 Aug 2026 there was no test script at all and these were unrunnable as
+checked in.
 
 Migrations are minimal: `database/schema.sql` plus a single
 `database/migrations/google_sheets.sql`. Anything else in the live database has
