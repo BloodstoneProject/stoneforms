@@ -268,11 +268,15 @@ export async function POST(
     // once paid. Forms with no payment field keep the exact original behaviour.
     const hasPaymentField = (fields || []).some((f) => f.field_type === 'payment')
 
-    // Create submission. Generate the id ourselves and do NOT .select() it back:
-    // anonymous respondents can INSERT (RLS) but cannot SELECT submissions (only
-    // the form owner can), so reading the row back would fail for them.
+    // Create submission. Generate the id ourselves and do NOT .select() it back.
+    // Written with the service-role client so the anon "Anyone can submit to
+    // published forms" INSERT policy can be dropped: while it exists, anyone
+    // holding the public anon key can POST rows straight to PostgREST and skip
+    // every check above (rate limit, reCAPTCHA, password, schedule, response
+    // cap, required fields). Without the service-role key (Preview, local) this
+    // falls back to anon and still works for as long as that policy exists.
     const submissionId = crypto.randomUUID()
-    const { error: submissionError } = await supabase
+    const { error: submissionError } = await createAdminClient()
       .from('submissions')
       .insert({
         id: submissionId,
