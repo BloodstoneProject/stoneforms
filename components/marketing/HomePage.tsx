@@ -10,19 +10,19 @@ export default function Homepage() {
       span: 'md:col-span-3',
       kicker: 'Logic that ships free',
       title: 'Branching, recall & variables',
-      desc: 'Jump logic, multi-condition rules, named variables and answer piping ({{name}}) — the power features Typeform tucks behind paid plans. Here they’re just on.',
+      desc: 'Jump logic, multi-condition rules, named variables and answer piping ({{name}}), on every plan including Free.',
     },
     {
       span: 'md:col-span-3',
-      kicker: 'Describe it, get a form',
-      title: 'AI form generation built in',
-      desc: 'Type what you want. Get a real, editable form with the right field types in seconds — then make it yours.',
+      kicker: 'Skip the blank page',
+      title: '21 ready-made templates',
+      desc: 'Contact, quote, booking, feedback, quiz and registration forms with the questions already in place. Pick one, then make it yours.',
     },
     {
       span: 'md:col-span-2',
       kicker: '25+ field types',
       title: 'Every input you need',
-      desc: 'Contact info, matrix, NPS, scheduling, payments, signature, file upload, rating, ranking — and more.',
+      desc: 'Contact info, matrix, NPS, scheduling, signature, file upload, rating, ranking and more.',
     },
     {
       span: 'md:col-span-2',
@@ -39,20 +39,19 @@ export default function Homepage() {
   ]
 
   const gated = [
-    'Logic jumps locked to paid plans',
     'Per-response limits on free',
     'Remove-branding = upgrade',
     'Integrations behind higher tiers',
     'Price climbs as you grow',
   ]
   const unlocked = [
-    'Logic, recall & variables — free',
-    'AI form generation — built in',
+    'Logic, recall & variables, free',
+    'Ready-made templates',
     '25+ field types, all of them',
     'Multiple endings + redirects',
     'Embed & analytics included',
   ]
-  const proof = ['No credit card', 'Everything unlocked', 'Built-in AI', 'Self-serve in minutes']
+  const proof = ['No credit card', 'Everything unlocked', 'Templates included', 'Self-serve in minutes']
 
   return (
     <BrandShell active="/">
@@ -76,13 +75,13 @@ export default function Homepage() {
           </Reveal>
           <Reveal delay={160}>
             <p className="mx-auto mt-7 max-w-xl text-base leading-relaxed text-white/55 sm:text-lg">
-              Logic, recall, variables, AI generation, 25+ field types — everything the
-              big guys charge for, unlocked. Build a beautiful form in minutes. Free.
+              Logic, recall, variables and 25+ field types, unlocked on every plan.
+              Build a beautiful form in minutes. Free.
             </p>
           </Reveal>
           <Reveal delay={240}>
             <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <LimeCTA href="/auth/signup">Start building — free</LimeCTA>
+              <LimeCTA href="/auth/signup">Start building free</LimeCTA>
               <GhostCTA href="/pricing">See pricing</GhostCTA>
             </div>
             <p className="mt-5 text-xs text-white/35">No card. No catch. Everything unlocked.</p>
@@ -121,7 +120,7 @@ export default function Homepage() {
                   ))}
                 </div>
                 <p className="mt-6 text-xs text-white/30">
-                  &ldquo;Alex&rdquo; is piped in with recall — one of the things you&rsquo;d normally pay for.
+                  &ldquo;Alex&rdquo; is piped in with recall, free on every plan.
                 </p>
               </div>
             </div>
@@ -232,7 +231,7 @@ export default function Homepage() {
                 Free to start. Everything unlocked. No card, no sales call, no catch.
               </p>
               <div className="mt-9 flex justify-center">
-                <LimeCTA href="/auth/signup">Start building — free</LimeCTA>
+                <LimeCTA href="/auth/signup">Start building free</LimeCTA>
               </div>
             </div>
           </div>
