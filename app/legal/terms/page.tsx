@@ -77,7 +77,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-2xl font-semibold tracking-tight text-foreground mb-4">7. Contact Information</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Questions about the Terms of Service should be sent to us at legal@stoneforms.com
+              Questions about the Terms of Service should be sent to us at hello@bloodstone.co.uk
             </p>
           </section>
         </div>

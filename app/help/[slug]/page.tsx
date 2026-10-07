@@ -8,7 +8,8 @@ import { ArrowLeft, ThumbsUp, ThumbsDown } from 'lucide-react'
 export default function HelpArticlePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = (useParams() as any)
   
-  // Generic article content - all 50+ articles use this template
+  // Generic placeholder content: every help slug renders this template. The
+  // /help section is noindex (app/help/layout.tsx) until real articles exist.
   const article = {
     title: slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
     category: 'Getting Started',
@@ -52,15 +53,6 @@ Yes! We offer extensive customization options to fit your specific needs. Check 
 
 Most features are available across all plans, though some advanced options may require a paid subscription. Check our pricing page for details.
 
-## Advanced Features
-
-For power users, we offer advanced capabilities:
-
-- Custom integrations via API
-- Automated workflows
-- Bulk operations
-- Advanced analytics
-
 ## Troubleshooting
 
 If you encounter any issues:
@@ -77,11 +69,10 @@ Now that you understand this feature, you might want to explore:
 - Related features and integrations
 - Advanced customization options
 - Analytics and reporting
-- Team collaboration features
 
 ## Need More Help?
 
-If you still have questions, our support team is here to help. Contact us through the help center or send an email to support@stoneforms.com.
+If you still have questions, our support team is here to help. Send us a message from the contact page at stoneforms.io/contact.
     `,
     relatedArticles: [
       'Quick Start Guide',

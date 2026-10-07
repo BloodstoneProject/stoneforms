@@ -99,7 +99,7 @@ function FeatureCard({
 const FIELD_GROUPS: { label: string; types: string[] }[] = [
   { label: 'Text & choice', types: ['Short text', 'Long text', 'Email', 'Phone', 'Multiple choice', 'Dropdown', 'Yes / No', 'Number'] },
   { label: 'Rich inputs', types: ['Rating', 'Ranking', 'Matrix', 'NPS', 'Opinion scale', 'Date', 'Address', 'Contact info'] },
-  { label: 'Heavy lifting', types: ['File upload', 'Signature', 'Payment', 'Scheduling', 'Statement', 'Legal / consent'] },
+  { label: 'Heavy lifting', types: ['File upload', 'Signature', 'Scheduling', 'Statement', 'Legal / consent'] },
 ]
 
 export default function FeaturesPage() {
@@ -122,17 +122,16 @@ export default function FeaturesPage() {
               className="mt-7 max-w-4xl text-5xl font-semibold leading-[0.98] tracking-tight sm:text-7xl lg:text-[5.25rem]"
               style={grotesk}
             >
-              Everything Typeform
+              Every builder feature
               <br />
-              charges extra for.
-              <span className="text-white/30"> Built in.</span>
+              on every plan.
+              <span className="text-white/30"> Free included.</span>
             </h1>
           </Reveal>
           <Reveal delay={160}>
             <p className="mt-8 max-w-xl text-lg leading-relaxed text-white/55">
-              Logic, scoring, payments, integrations, analytics. The features that sit
-              behind Typeform&apos;s paywall ship in Stoneforms on day one. Built by a solo
-              maker, for solo makers.
+              Logic, scoring, integrations, analytics. They ship in Stoneforms on day one,
+              and they are on the Free plan too. Paid plans are about volume, not features.
             </p>
           </Reveal>
           <Reveal delay={240}>
@@ -149,8 +148,8 @@ export default function FeaturesPage() {
         <div className="mx-auto max-w-6xl">
           <SectionHead
             eyebrow="Start in seconds"
-            title={<>Describe it. Watch it build itself.</>}
-            lede="Type what you want to ask and the AI generates a full form: the right field types, the order, the logic. Then 25+ field types let you make it exactly yours."
+            title={<>Start from a template, not a blank page.</>}
+            lede="Pick one of 21 ready-made templates for lead capture, surveys, quizzes or registrations. Then 25+ field types let you make it exactly yours."
           />
 
           <div className="mt-14 grid gap-4 lg:grid-cols-12">
@@ -160,18 +159,18 @@ export default function FeaturesPage() {
                 <div className="flex h-full flex-col justify-between gap-8">
                   <div>
                     <span className="text-[10px] font-medium uppercase tracking-[0.22em] text-white/40">
-                      AI form generation
+                      Templates
                     </span>
                     <h3
                       className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl"
                       style={grotesk}
                     >
-                      A prompt in. A finished form out.
+                      A template in. A finished form out.
                     </h3>
                     <p className="mt-4 max-w-md text-sm leading-relaxed text-white/55">
-                      Stoneforms reads your intent and assembles a working draft: questions,
-                      field types and ordering already in place. Tweak, don&apos;t start
-                      from a blank canvas.
+                      Every template arrives as a working draft: questions, field types and
+                      ordering already in place. Tweak, don&apos;t start from a blank
+                      canvas.
                     </p>
                   </div>
                   {/* faux prompt bar — purely decorative, no fake metric */}
@@ -184,8 +183,7 @@ export default function FeaturesPage() {
                         S
                       </span>
                       <span className="text-sm text-white/45">
-                        &ldquo;A lead intake form for my design studio with budget and
-                        timeline&hellip;&rdquo;
+                        Quote / Estimate Request: budget, timeline and scope
                       </span>
                     </div>
                   </div>
@@ -203,8 +201,8 @@ export default function FeaturesPage() {
               <FeatureCard
                 kicker="Field library"
                 title="25+ field types"
-                body="From plain text to contact info, matrix grids, NPS, scheduling, payments, e-signatures and file uploads."
-                chips={['Matrix', 'NPS', 'Signature', 'Payment', 'Scheduling']}
+                body="From plain text to contact info, matrix grids, NPS, scheduling, e-signatures and file uploads."
+                chips={['Matrix', 'NPS', 'Signature', 'File upload', 'Scheduling']}
                 delay={160}
               />
             </div>
@@ -422,7 +420,7 @@ export default function FeaturesPage() {
                   anything else you can dream up.
                 </p>
                 <div className="mt-6 flex flex-wrap gap-2">
-                  {['Slack', 'Notion', 'Mailchimp', 'Google Sheets', 'Airtable', 'Webhooks'].map(
+                  {['Slack', 'Notion', 'Mailchimp', 'Airtable', 'Webhooks'].map(
                     (name) => (
                       <span
                         key={name}

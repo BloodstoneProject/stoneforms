@@ -1,76 +1,33 @@
 'use client'
 
 import Link from 'next/link'
-import { Calendar, User, ArrowUpRight } from 'lucide-react'
+import { User, ArrowUpRight } from 'lucide-react'
 import { BrandShell, Reveal, Eyebrow, LIME, grotesk } from '@/components/marketing/brand'
 
 export default function BlogPage() {
+  // Only posts that have a body in app/blog/[slug]/page.tsx. The earlier list
+  // carried invented author names, invented dates and a "comparison" with no
+  // data behind it; all removed 7 Oct 2026.
   const posts = [
     {
       id: 1,
       slug: 'how-to-create-high-converting-forms',
-      title: 'How to Create High-Converting Forms in 2024',
-      excerpt: 'Learn the proven strategies for creating forms that convert at 80%+ rates. From design to psychology.',
-      author: 'Sarah Johnson',
-      date: '2024-02-10',
+      title: 'How to Create High-Converting Forms',
+      excerpt: 'Practical design choices that help more people finish your forms.',
+      author: 'Stoneforms',
       category: 'Best Practices',
-      readTime: '8 min read',
+      readTime: '5 min read',
       image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800',
-    },
-    {
-      id: 2,
-      slug: 'form-builder-comparison-2024',
-      title: 'Form Builder Comparison 2024: Which Tool is Right for You?',
-      excerpt: 'An honest comparison of the top form builders on the market. Features, pricing, and real-world use cases.',
-      author: 'Michael Chen',
-      date: '2024-02-08',
-      category: 'Comparison',
-      readTime: '12 min read',
-      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800',
     },
     {
       id: 3,
       slug: 'gdpr-compliance-forms',
-      title: 'GDPR Compliance for Forms: Everything You Need to Know',
-      excerpt: 'A complete guide to making your forms GDPR compliant. Legal requirements and best practices.',
-      author: 'Emma Wilson',
-      date: '2024-02-05',
+      title: 'GDPR and Forms: The Basics',
+      excerpt: 'What GDPR asks of a form that collects personal data, in plain English.',
+      author: 'Stoneforms',
       category: 'Legal',
-      readTime: '10 min read',
+      readTime: '4 min read',
       image: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800',
-    },
-    {
-      id: 4,
-      slug: 'mobile-form-optimization',
-      title: 'Mobile Form Optimization: 10 Tips to Boost Conversions',
-      excerpt: 'Over 60% of forms are now filled on mobile. Here is how to optimize your forms for mobile users.',
-      author: 'David Kim',
-      date: '2024-02-03',
-      category: 'Optimization',
-      readTime: '7 min read',
-      image: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800',
-    },
-    {
-      id: 5,
-      slug: 'form-analytics-guide',
-      title: 'The Complete Guide to Form Analytics',
-      excerpt: 'Understanding form analytics is key to optimization. Learn what metrics matter and how to track them.',
-      author: 'Sarah Johnson',
-      date: '2024-02-01',
-      category: 'Analytics',
-      readTime: '9 min read',
-      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800',
-    },
-    {
-      id: 6,
-      slug: 'ab-testing-forms',
-      title: 'A/B Testing Forms: A Step-by-Step Guide',
-      excerpt: 'Learn how to run effective A/B tests on your forms to increase conversion rates.',
-      author: 'Michael Chen',
-      date: '2024-01-28',
-      category: 'Testing',
-      readTime: '11 min read',
-      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800',
     },
   ]
 
@@ -138,10 +95,6 @@ export default function BlogPage() {
                             <User className="h-3.5 w-3.5" strokeWidth={1.75} />
                             {post.author}
                           </span>
-                          <span className="flex items-center gap-1.5">
-                            <Calendar className="h-3.5 w-3.5" strokeWidth={1.75} />
-                            {new Date(post.date).toLocaleDateString()}
-                          </span>
                           <ArrowUpRight
                             className="ml-auto h-4 w-4 text-white/30 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[#C6F24E]"
                             strokeWidth={2}
@@ -157,44 +110,6 @@ export default function BlogPage() {
         </div>
       </section>
 
-      {/* Newsletter */}
-      <section className="relative z-10 px-6 pb-28 sm:px-12">
-        <div className="mx-auto max-w-5xl">
-          <Reveal>
-            <div className="rounded-[1.75rem] border border-white/10 bg-white/[0.02] p-2">
-              <div
-                className="rounded-[calc(1.75rem-0.5rem)] border border-white/5 px-6 py-14 text-center sm:px-12"
-                style={{ backgroundColor: '#131313' }}
-              >
-                <h2
-                  className="text-3xl font-semibold tracking-tight sm:text-4xl"
-                  style={grotesk}
-                >
-                  Subscribe to the newsletter.
-                </h2>
-                <p className="mx-auto mt-4 max-w-md text-white/55">
-                  The latest tips and updates, delivered to your inbox. No fluff.
-                </p>
-                <form className="mx-auto mt-8 flex max-w-md gap-3">
-                  <input
-                    type="email"
-                    aria-label="Email address"
-                    placeholder="you@work.com"
-                    className="flex-1 rounded-full border border-white/10 bg-white/[0.03] px-5 py-2.5 text-sm text-white placeholder:text-white/30 transition-colors focus:border-[#C6F24E] focus:outline-none"
-                  />
-                  <button
-                    type="submit"
-                    className="rounded-full px-6 py-2.5 text-sm font-semibold text-black transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-95"
-                    style={{ backgroundColor: LIME }}
-                  >
-                    Subscribe
-                  </button>
-                </form>
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </section>
     </BrandShell>
   )
 }

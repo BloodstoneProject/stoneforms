@@ -76,7 +76,7 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-2xl font-semibold tracking-tight text-foreground mb-4">7. Contact Us</h2>
             <p className="text-muted-foreground leading-relaxed">
-              If you have questions about this Privacy Policy, please contact us at privacy@stoneforms.com
+              If you have questions about this Privacy Policy, please contact us at hello@bloodstone.co.uk
             </p>
           </section>
         </div>

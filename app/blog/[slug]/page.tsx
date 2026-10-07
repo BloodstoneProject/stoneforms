@@ -1,9 +1,9 @@
 'use client'
-import { useParams } from 'next/navigation'
+import { useParams, notFound } from 'next/navigation'
 
 import { use } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Calendar, User, Clock } from 'lucide-react'
+import { ArrowLeft, User, Clock } from 'lucide-react'
 import { MarketingNav } from '@/components/marketing/MarketingNav'
 
 export default function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -12,20 +12,19 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
   const posts = [
     {
       slug: 'how-to-create-high-converting-forms',
-      title: 'How to Create High-Converting Forms in 2024',
-      excerpt: 'Learn the proven strategies for creating forms that convert at 80%+ rates.',
-      author: 'Sarah Johnson',
-      date: '2024-02-10',
-      readTime: '8 min read',
+      title: 'How to Create High-Converting Forms',
+      excerpt: 'Practical design choices that help more people finish your forms.',
+      author: 'Stoneforms',
+      readTime: '5 min read',
       category: 'Best Practices',
       content: `
-# How to Create High-Converting Forms in 2024
+# How to Create High-Converting Forms
 
 Forms are the gateway to your business. Whether you are capturing leads, registering users, or collecting feedback, the design and functionality of your forms can make or break your conversion rates.
 
 ## 1. Keep It Simple
 
-The number one rule of form design is simplicity. Every additional field you add decreases your conversion rate by an average of 5%. Ask yourself: do you really need this information right now?
+The number one rule of form design is simplicity. Every extra field is one more reason to stop. Ask yourself: do you really need this information right now?
 
 **Best Practice:** Start with the minimum required fields. You can always collect more information later once the relationship is established.
 
@@ -45,7 +44,7 @@ Users need to know the form is working. Provide immediate visual feedback when t
 
 ## 4. Optimize for Mobile
 
-Over 60% of forms are now completed on mobile devices. Your forms MUST work flawlessly on small screens.
+Many people will fill in your form on a phone. Your forms must work flawlessly on small screens.
 
 Key mobile optimizations:
 - Use appropriate input types (email, tel, number)
@@ -55,7 +54,7 @@ Key mobile optimizations:
 
 ## 5. Add Progress Indicators
 
-For multi-step forms, always show users where they are in the process. Progress bars reduce abandonment by 28%.
+For multi-step forms, always show users where they are in the process, so they know how much is left.
 
 ## Conclusion
 
@@ -65,61 +64,14 @@ Ready to build better forms? Try Stoneforms today and see the difference.
       `,
     },
     {
-      slug: 'form-builder-comparison-2024',
-      title: 'Form Builder Comparison 2024',
-      excerpt: 'An honest comparison of the top form builders on the market.',
-      author: 'Michael Chen',
-      date: '2024-02-08',
-      readTime: '12 min read',
-      category: 'Comparison',
-      content: `
-# Form Builder Comparison 2024: Which Tool is Right for You?
-
-The form builder market is crowded. With dozens of options available, how do you choose the right one for your business? We have tested them all.
-
-## The Contenders
-
-We evaluated the top 10 form builders based on:
-- Ease of use
-- Features
-- Pricing
-- Customer support
-- Integrations
-
-## Stoneforms
-
-**Pros:**
-- Intuitive interface
-- Built-in CRM
-- Affordable pricing
-- Great mobile experience
-
-**Cons:**
-- Newer platform (but actively developing)
-
-**Best For:** Small to medium businesses looking for an all-in-one solution
-
-## Others We Tested
-
-We also evaluated several other popular platforms. Each has its strengths and weaknesses depending on your specific needs.
-
-## Our Verdict
-
-For most businesses, Stoneforms offers the best balance of features, usability, and price. The built-in CRM is a game-changer.
-
-However, if you need very specific enterprise features, you might want to explore other options as well.
-      `,
-    },
-    {
       slug: 'gdpr-compliance-forms',
-      title: 'GDPR Compliance for Forms',
-      excerpt: 'A complete guide to making your forms GDPR compliant.',
-      author: 'Emma Wilson',
-      date: '2024-02-05',
-      readTime: '10 min read',
+      title: 'GDPR and Forms: The Basics',
+      excerpt: 'What GDPR asks of a form that collects personal data, in plain English.',
+      author: 'Stoneforms',
+      readTime: '4 min read',
       category: 'Legal',
       content: `
-# GDPR Compliance for Forms: Everything You Need to Know
+# GDPR and Forms: The Basics
 
 If you collect data from EU citizens, GDPR compliance is not optional. Here is what you need to know.
 
@@ -150,20 +102,21 @@ Users can request deletion of their data (the "right to be forgotten").
 
 ## How Stoneforms Helps
 
-Stoneforms is built with GDPR compliance in mind:
-- Consent checkboxes built-in
-- Data export functionality
-- Easy data deletion
-- EU data centers available
+Stoneforms gives you the building blocks:
+- A consent field type for an unticked, explicit checkbox
+- Export of your responses
+- Deletion of individual responses
 
 ## Conclusion
 
-GDPR compliance might seem complex, but with the right tools it is manageable. Stoneforms makes it easy to stay compliant while still collecting the data you need.
+GDPR compliance might seem complex, but with the right tools it is manageable. This is general information, not legal advice; check your own obligations with a qualified adviser.
       `,
     },
   ]
 
-  const post = posts.find(p => p.slug === slug) || posts[0]
+  // An unknown slug is a 404, not a copy of the first post under a new URL.
+  const post = posts.find(p => p.slug === slug)
+  if (!post) notFound()
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -200,10 +153,6 @@ GDPR compliance might seem complex, but with the right tools it is manageable. S
             <div className="flex items-center gap-2">
               <User className="w-5 h-5" />
               <span>{post.author}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
-              <span>{new Date(post.date).toLocaleDateString()}</span>
             </div>
             <div className="flex items-center gap-2">
               <Clock className="w-5 h-5" />

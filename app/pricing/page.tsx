@@ -20,7 +20,7 @@ const BUILD_FOR_EVERYONE = [
   '25+ field types',
   'Conditional logic & branching',
   'Answer recall & variables',
-  'AI form generation',
+  'Ready-made templates',
   'Embed anywhere',
   'Unlimited fields per form',
 ]
@@ -101,7 +101,7 @@ const PLANS: Plan[] = [
 const FAQ = [
   {
     q: 'Is logic really free?',
-    a: 'Yes. Conditional logic, branching, answer recall, variables, AI generation, 25+ field types and embedding all ship on the Free plan. You never pay to unlock how a form works. Paid plans are about scale, not features.',
+    a: 'Yes. Conditional logic, branching, answer recall, variables, 25+ field types and embedding all ship on the Free plan. You never pay to unlock how a form works. Paid plans are about scale, not features.',
   },
   {
     q: 'Do I need a credit card to start?',
@@ -113,11 +113,11 @@ const FAQ = [
   },
   {
     q: 'What happens if I hit my response limit?',
-    a: 'Your forms keep working and your existing data is safe. New responses pause for the rest of the month until the limit resets, or you can move up a plan for more headroom on the spot.',
+    a: 'Your forms keep working and your existing data is safe. New responses pause for the rest of the month until the limit resets, or you can move up a plan for more headroom.',
   },
   {
     q: "What's the catch versus Typeform?",
-    a: 'There is no Typeform tax. The same builder muscle, minus the price tag that climbs every time you want logic or volume. You build for free and pay a flat, honest rate only when you scale.',
+    a: 'There is no Typeform tax. The same builder muscle, with every builder feature on the Free plan. You build for free and pay a flat, honest rate only when you scale.',
   },
 ]
 
@@ -210,7 +210,7 @@ export default function PricingPage() {
                     Everything you need to build.
                   </h2>
                   <p className="mt-3 text-sm leading-relaxed text-white/55">
-                    Logic, recall, variables, AI generation and 25+ field types
+                    Logic, recall, variables and 25+ field types
                     are not premium add-ons here. They are the baseline, on the
                     Free plan, no card required.
                   </p>
