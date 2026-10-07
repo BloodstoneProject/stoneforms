@@ -103,7 +103,7 @@ function BillingInner() {
         )}
         {status === 'cancelled' && (
           <div className="p-4 card-surface bg-muted text-muted-foreground text-sm">
-            Checkout cancelled — no changes were made.
+            Checkout cancelled - no changes were made.
           </div>
         )}
         {error && (

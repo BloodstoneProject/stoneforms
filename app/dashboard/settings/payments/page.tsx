@@ -96,7 +96,7 @@ export default function PaymentsSettingsPage() {
           ) : status.connected && status.chargesEnabled ? (
             <div className="rounded-md border border-border bg-secondary p-4">
               <div className="flex items-center gap-2 text-foreground font-medium">
-                <CheckCircle2 className="w-5 h-5" /> Stripe connected — you can accept payments
+                <CheckCircle2 className="w-5 h-5" /> Stripe connected - you can accept payments
               </div>
               <p className="text-sm text-muted-foreground mt-1">
                 Payments on your forms will be deposited to your connected Stripe account.

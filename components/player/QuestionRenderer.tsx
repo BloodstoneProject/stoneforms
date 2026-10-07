@@ -424,7 +424,7 @@ function renderQuestionInput(
                   type="button"
                   role="radio"
                   aria-checked={isSelected}
-                  aria-label={`${n}${n === 0 ? ` — ${leftLabel}` : n === 10 ? ` — ${rightLabel}` : ''}`}
+                  aria-label={`${n}${n === 0 ? ` - ${leftLabel}` : n === 10 ? ` - ${rightLabel}` : ''}`}
                   onClick={() => onChange(n)}
                   className={cn(
                     'h-12 rounded-lg border-2 flex items-center justify-center font-semibold transition-all hover:scale-105',
@@ -939,7 +939,7 @@ function ChoiceField({
         <Input
           type="text"
           value={otherText}
-          aria-label="Other — please specify"
+          aria-label="Other - please specify"
           onChange={(e) => {
             setOtherText(e.target.value)
             const txt = e.target.value
@@ -1000,7 +1000,7 @@ function DropdownField({
         <Input
           type="text"
           value={otherText}
-          aria-label="Other — please specify"
+          aria-label="Other - please specify"
           onChange={(e) => { setOtherText(e.target.value); onChange(e.target.value ? `Other: ${e.target.value}` : OTHER_VALUE) }}
           placeholder="Please specify…"
           className="text-lg py-5 border-2 focus:ring-2"

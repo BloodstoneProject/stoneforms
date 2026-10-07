@@ -115,7 +115,7 @@ export async function createNotionPage({
     titleKey = found?.name || titleProperty || 'Name'
   }
 
-  const titleValue = `${formTitle} — ${new Date().toLocaleString('en-GB')}`
+  const titleValue = `${formTitle} - ${new Date().toLocaleString('en-GB')}`
 
   const properties: Record<string, any> = {}
   properties[titleKey] = { title: [{ type: 'text', text: { content: titleValue.slice(0, 200) } }] }

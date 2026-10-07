@@ -1022,7 +1022,7 @@ export default function FormBuilderPage({ params }: { params: Promise<{ id: stri
                       <span className="text-sm font-medium text-foreground">Gamified experience</span>
                     </label>
                     <p className="text-xs text-muted-foreground mb-2 pl-6">
-                      Adds playful touches as people answer — celebratory confetti at milestones and an emoji reaction bar on each question.
+                      Adds playful touches as people answer - celebratory confetti at milestones and an emoji reaction bar on each question.
                     </p>
                     {form.settings?.gamify?.enabled !== false && (
                       <div className="space-y-2 pl-6">
@@ -1741,7 +1741,7 @@ function PaymentConfig({
           value={pay.description || ''}
           onChange={(e) => write({ description: e.target.value || undefined })}
           className="w-full text-sm border border-input rounded-md px-3 py-2 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground"
-          placeholder="e.g. Event ticket — General admission"
+          placeholder="e.g. Event ticket - General admission"
         />
       </div>
 
@@ -1820,7 +1820,7 @@ function FieldTypeSettings({
           </div>
           <div>
             <label className={FT_LABEL_CLASS}>Start at</label>
-            <input type="number" value={s.startAt ?? ''} placeholder="—"
+            <input type="number" value={s.startAt ?? ''} placeholder="-"
               onChange={(e) => onUpdateSetting(field, 'startAt', num(e.target.value))} className={FT_INPUT_CLASS} />
           </div>
         </div>

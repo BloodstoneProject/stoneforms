@@ -64,7 +64,7 @@ export async function sendSlackMessage({ webhookUrl, formTitle, pairs }: SlackSe
     const res = await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: truncate(`New response: ${formTitle} — ${summary}`, 2900), blocks }),
+      body: JSON.stringify({ text: truncate(`New response: ${formTitle} - ${summary}`, 2900), blocks }),
       signal: controller.signal,
     })
     if (!res.ok) {

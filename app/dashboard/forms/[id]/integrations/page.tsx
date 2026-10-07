@@ -353,7 +353,7 @@ export default function IntegrationsPage({ params }: { params: Promise<{ id: str
                     <div className="flex items-center gap-1 shrink-0">
                       <button
                         onClick={() => toggleWebhook(hook)}
-                        title={hook.is_active ? 'Active — click to pause' : 'Paused — click to activate'}
+                        title={hook.is_active ? 'Active - click to pause' : 'Paused - click to activate'}
                         aria-label={hook.is_active ? 'Pause webhook' : 'Activate webhook'}
                         className={`p-2 rounded-md ${hook.is_active ? 'text-foreground hover:bg-secondary' : 'text-muted-foreground hover:bg-secondary'}`}
                       >

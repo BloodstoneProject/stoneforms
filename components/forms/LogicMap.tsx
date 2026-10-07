@@ -76,7 +76,7 @@ export function LogicMap({ fields, rules, endingTitles = {} }: LogicMapProps) {
   }
 
   if (fields.length === 0) {
-    return <div className="card-surface p-8 text-center text-muted-foreground text-sm">No fields yet — add some to see the map.</div>
+    return <div className="card-surface p-8 text-center text-muted-foreground text-sm">No fields yet - add some to see the map.</div>
   }
 
   return (

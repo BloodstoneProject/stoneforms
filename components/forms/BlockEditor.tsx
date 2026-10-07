@@ -322,7 +322,7 @@ export default function BlockEditor({ field, onUpdateSetting }: BlockEditorProps
     case 'divider':
       return (
         <p className="text-sm text-muted-foreground">
-          A horizontal rule. No settings — it just draws a line between blocks.
+          A horizontal rule. No settings - it just draws a line between blocks.
         </p>
       )
 

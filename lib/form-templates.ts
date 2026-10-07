@@ -227,7 +227,7 @@ export const FORM_TEMPLATES: FormTemplate[] = [
     category: 'Quizzes & assessments',
     icon: '🧠',
     fields: [
-      { field_type: 'statement', label: 'Test your knowledge — 5 quick questions. Good luck!' },
+      { field_type: 'statement', label: 'Test your knowledge - 5 quick questions. Good luck!' },
       { field_type: 'multiple_choice', label: 'What does HTML stand for?', required: true, options: ['Hyper Text Markup Language', 'High Tech Modern Language', 'Hyperlink Text Mode Language'], scoring: { 'Hyper Text Markup Language': 1, 'High Tech Modern Language': 0, 'Hyperlink Text Mode Language': 0 } },
       { field_type: 'multiple_choice', label: 'Which planet is known as the Red Planet?', required: true, options: ['Venus', 'Mars', 'Jupiter'], scoring: { Venus: 0, Mars: 1, Jupiter: 0 } },
       { field_type: 'yes_no', label: 'True or false: water boils at 100°C at sea level.', required: true, scoring: { true: 1, false: 0 } },
@@ -238,7 +238,7 @@ export const FORM_TEMPLATES: FormTemplate[] = [
       enabled: true,
       showResults: true,
       outcomes: [
-        { id: 'low', minScore: 0, maxScore: 2, title: 'Keep learning!', message: 'You got a few right — there’s room to grow. Try again!' },
+        { id: 'low', minScore: 0, maxScore: 2, title: 'Keep learning!', message: 'You got a few right - there’s room to grow. Try again!' },
         { id: 'mid', minScore: 3, maxScore: 4, title: 'Nicely done!', message: 'A solid score. You clearly know your stuff.' },
         { id: 'high', minScore: 5, maxScore: 5, title: 'Genius!', message: 'A perfect score. Impressive!' },
       ],
@@ -274,7 +274,7 @@ export const FORM_TEMPLATES: FormTemplate[] = [
     category: 'Quizzes & assessments',
     icon: '🎯',
     fields: [
-      { field_type: 'statement', label: 'See if we’re a fit — 4 quick questions, then we’ll be in touch.' },
+      { field_type: 'statement', label: 'See if we’re a fit - 4 quick questions, then we’ll be in touch.' },
       { field_type: 'dropdown', label: 'Company size', required: true, options: ['Just me', '2–10', '11–50', '51–200', '200+'], scoring: { 'Just me': 0, '2–10': 1, '11–50': 2, '51–200': 3, '200+': 3 } },
       { field_type: 'dropdown', label: 'Monthly budget for this', required: true, options: ['< £500', '£500–£2k', '£2k–£10k', '£10k+'], scoring: { '< £500': 0, '£500–£2k': 1, '£2k–£10k': 2, '£10k+': 3 } },
       { field_type: 'multiple_choice', label: 'When are you looking to start?', required: true, options: ['This week', 'This month', 'This quarter', 'Just researching'], scoring: { 'This week': 3, 'This month': 2, 'This quarter': 1, 'Just researching': 0 } },
@@ -287,7 +287,7 @@ export const FORM_TEMPLATES: FormTemplate[] = [
       showResults: true,
       outcomes: [
         { id: 'nurture', minScore: 0, maxScore: 4, title: 'Thanks!', message: 'We’ll send over some resources to help you decide.' },
-        { id: 'warm', minScore: 5, maxScore: 8, title: 'Let’s talk soon', message: 'You look like a great fit — we’ll reach out to book a call.' },
+        { id: 'warm', minScore: 5, maxScore: 8, title: 'Let’s talk soon', message: 'You look like a great fit - we’ll reach out to book a call.' },
         { id: 'hot', minScore: 9, maxScore: 11, title: 'Priority lead', message: 'Perfect fit. Our team will contact you within one business day.' },
       ],
     },
@@ -310,9 +310,9 @@ export const FORM_TEMPLATES: FormTemplate[] = [
       enabled: true,
       showResults: true,
       outcomes: [
-        { id: 'early', minScore: 0, maxScore: 10, title: 'Getting started', message: 'You’re early in the journey — focus on clarity and quick wins first.' },
+        { id: 'early', minScore: 0, maxScore: 10, title: 'Getting started', message: 'You’re early in the journey - focus on clarity and quick wins first.' },
         { id: 'building', minScore: 11, maxScore: 25, title: 'Building momentum', message: 'You have good foundations. A clear plan will take you far.' },
-        { id: 'ready', minScore: 26, maxScore: 40, title: 'Ready to scale', message: 'You’re in great shape — it’s time to move fast.' },
+        { id: 'ready', minScore: 26, maxScore: 40, title: 'Ready to scale', message: 'You’re in great shape - it’s time to move fast.' },
       ],
     },
   },

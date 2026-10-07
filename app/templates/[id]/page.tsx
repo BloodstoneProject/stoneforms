@@ -149,7 +149,7 @@ export default function TemplateDetailPage() {
             <div className="relative overflow-hidden rounded-2xl border border-white/10 p-6" style={{ backgroundColor: 'rgba(198,242,78,0.1)' }}>
               <h3 className="text-xl font-semibold tracking-tight">Ready to use?</h3>
               <p className="mb-5 mt-2 text-sm text-white/55">Sign up free and start with this template in minutes.</p>
-              <LimeCTA href="/auth/signup">Get started — free</LimeCTA>
+              <LimeCTA href="/auth/signup">Get started free</LimeCTA>
             </div>
 
             {similar.length > 0 && (

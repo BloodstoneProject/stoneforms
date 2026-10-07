@@ -51,7 +51,7 @@ export async function GET(request: Request) {
       .order('position')
 
     // 3. Create a new spreadsheet titled after the form.
-    const title = `Stoneforms — ${form.title || formId}`
+    const title = `Stoneforms - ${form.title || formId}`
     const createRes = await fetch(SHEETS_API, {
       method: 'POST',
       headers: {

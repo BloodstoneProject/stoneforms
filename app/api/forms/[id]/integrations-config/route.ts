@@ -210,7 +210,7 @@ async function runTest(type: string, config: any, formTitle: string): Promise<vo
   }
   if (type === 'crm') {
     // No external service to hit; enabling the integration is all that's needed.
-    throw new Error('No test needed — enable Sync to CRM to upsert contacts on submission.')
+    throw new Error('No test needed - enable Sync to CRM to upsert contacts on submission.')
   }
   throw new Error('Unknown integration type')
 }

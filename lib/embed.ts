@@ -78,7 +78,7 @@ function originOf(opts: SnippetOptions): string {
 export function buildIframeSnippet(opts: SnippetOptions): string {
   const origin = originOf(opts)
   const height = opts.height ?? 600
-  return `<!-- Stoneforms — ${opts.title} -->
+  return `<!-- Stoneforms - ${opts.title} -->
 <iframe
   src="${origin}/embed/${opts.id}"
   width="100%"
@@ -94,7 +94,7 @@ export function buildIframeSnippet(opts: SnippetOptions): string {
 export function buildInlineSnippet(opts: SnippetOptions): string {
   const origin = originOf(opts)
   const height = opts.height ?? 600
-  return `<!-- Stoneforms — ${opts.title} -->
+  return `<!-- Stoneforms - ${opts.title} -->
 <div data-stoneform="${opts.id}" data-mode="inline" data-height="${height}">
   <noscript>
     <a href="${origin}/f/${opts.id}">Open ${escapeAttr(opts.title)}</a>
@@ -107,7 +107,7 @@ export function buildInlineSnippet(opts: SnippetOptions): string {
 export function buildPopupSnippet(opts: SnippetOptions): string {
   const origin = originOf(opts)
   const label = opts.buttonLabel || 'Open form'
-  return `<!-- Stoneforms — ${opts.title} -->
+  return `<!-- Stoneforms - ${opts.title} -->
 <div data-stoneform="${opts.id}" data-mode="popup" data-button="${escapeAttr(label)}">
   <noscript>
     <a href="${origin}/f/${opts.id}">${escapeAttr(label)}</a>
@@ -120,7 +120,7 @@ export function buildPopupSnippet(opts: SnippetOptions): string {
 export function buildSliderSnippet(opts: SnippetOptions): string {
   const origin = originOf(opts)
   const label = opts.buttonLabel || 'Open form'
-  return `<!-- Stoneforms — ${opts.title} -->
+  return `<!-- Stoneforms - ${opts.title} -->
 <div data-stoneform="${opts.id}" data-mode="slider" data-button="${escapeAttr(label)}">
   <noscript>
     <a href="${origin}/f/${opts.id}">${escapeAttr(label)}</a>

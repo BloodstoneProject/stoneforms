@@ -586,7 +586,7 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
                               {response.metadata.status}
                             </span>
                           ) : (
-                            <span className="text-xs text-muted-foreground">—</span>
+                            <span className="text-xs text-muted-foreground">-</span>
                           )}
                           {Array.isArray(response.metadata?.tags) && response.metadata.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1">

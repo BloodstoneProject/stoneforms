@@ -145,7 +145,7 @@ export default function IntegrationCard({
             <button
               onClick={toggleEnabled}
               disabled={saving}
-              title={enabled ? 'Enabled — click to pause' : 'Paused — click to enable'}
+              title={enabled ? 'Enabled - click to pause' : 'Paused - click to enable'}
               aria-label={enabled ? `Pause ${title} integration` : `Enable ${title} integration`}
               className={`p-2 rounded-md ${enabled ? 'text-foreground hover:bg-secondary' : 'text-muted-foreground hover:bg-secondary'}`}
             >

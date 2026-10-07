@@ -140,7 +140,7 @@ export default function EmbedCodeGenerator({ formId, formTitle }: EmbedCodeGener
         {embedType === 'iframe' && (
           <p>
             A plain iframe that works even where scripts are blocked. Fixed height (no
-            auto-resize) — adjust the height above to suit your form.
+            auto-resize) - adjust the height above to suit your form.
           </p>
         )}
       </div>

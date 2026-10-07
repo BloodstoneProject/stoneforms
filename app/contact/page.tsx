@@ -111,7 +111,7 @@ export default function ContactPage() {
                   </span>
                   <h3 className="mt-5 text-xl font-semibold text-white" style={grotesk}>Message sent.</h3>
                   <p className="mt-2 max-w-sm text-sm text-white/55">
-                    Thanks for reaching out — we&apos;ll get back to you at the email you provided.
+                    Thanks for reaching out. We&apos;ll get back to you at the email you provided.
                   </p>
                 </div>
               ) : (

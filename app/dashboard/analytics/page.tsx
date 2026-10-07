@@ -71,7 +71,7 @@ export default function AnalyticsPage() {
           {forms.length === 0 ? (
             <div className="px-6 py-12 text-center">
               <Inbox className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
-              <p className="text-muted-foreground">No forms yet — create one to start collecting analytics.</p>
+              <p className="text-muted-foreground">No forms yet - create one to start collecting analytics.</p>
             </div>
           ) : (
             <div className="divide-y divide-border">

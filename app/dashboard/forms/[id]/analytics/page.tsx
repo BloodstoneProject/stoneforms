@@ -408,7 +408,7 @@ function SourceList({ title, buckets }: { title: string; buckets: SourceBucket[]
   )
 }
 
-function EmptyChart({ message = 'No data yet — share your form to start collecting responses.' }: { message?: string }) {
+function EmptyChart({ message = 'No data yet - share your form to start collecting responses.' }: { message?: string }) {
   return (
     <div className="h-[200px] flex flex-col items-center justify-center text-center">
       <BarChart3 className="w-10 h-10 text-muted-foreground mb-3" />
