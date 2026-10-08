@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Mail, MessageSquare, HelpCircle, Check } from 'lucide-react'
 import { BrandShell, Reveal, Eyebrow, LIME, grotesk } from '@/components/marketing/brand'
+import { trackLead } from '@/lib/site-analytics'
 
 export default function ContactPage() {
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
@@ -28,6 +29,7 @@ export default function ContactPage() {
       })
       const data = await res.json().catch(() => ({}))
       if (res.ok) {
+        trackLead('contact')
         setStatus('sent')
       } else {
         setStatus('error')

@@ -3,6 +3,11 @@ import { Inter, Space_Grotesk } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider, themeNoFlashScript } from '@/components/theme-provider'
 import { SITE_URL, SITE_NAME, DEFAULT_DESCRIPTION } from '@/lib/seo'
+import SiteAnalytics from '@/components/site-analytics/SiteAnalytics'
+import { siteGaId } from '@/lib/site-analytics'
+
+// Stoneforms' own GA4, marketing pages only. Unset: no tag and no banner.
+const SITE_GA_ID = siteGaId()
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
 // Marketing display face ("Electric & sharp" brand). App chrome keeps Inter;
@@ -44,6 +49,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} ${spaceGrotesk.variable}`}>
         <ThemeProvider>{children}</ThemeProvider>
+        {SITE_GA_ID && <SiteAnalytics gaId={SITE_GA_ID} />}
       </body>
     </html>
   )

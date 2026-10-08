@@ -71,6 +71,9 @@ export default function PrivacyPage() {
             <p className="text-muted-foreground leading-relaxed">
               We use cookies and similar tracking technologies to track activity on our service. You can instruct your browser to refuse all cookies or to indicate when a cookie is being sent.
             </p>
+            <p className="text-muted-foreground leading-relaxed mt-4">
+              On the stoneforms.io marketing pages we use Google Analytics, provided by Google LLC, to understand how visitors find and use the site. It sets analytics cookies only if you press Accept in our cookie banner; if you reject or ignore the banner it does not load. It is not loaded on forms you fill in or on the dashboard. To change your choice, clear this site&apos;s stored data in your browser and the banner will ask again.
+            </p>
           </section>
 
           <section>
