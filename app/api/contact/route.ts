@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { sendEmail } from '@/lib/email-utils'
 import { getClientIp, rateLimit } from '@/lib/rate-limit'
+import { attributionFromRequest, forwardLeadToLab } from '@/lib/byter-lab'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -75,6 +76,18 @@ export async function POST(request: Request) {
       { status: 502 }
     )
   }
+
+  // Copy to Byter Lab only now: the honeypot has passed and the email that is
+  // this form's own record has gone. Never throws and is capped at 3 seconds,
+  // so a Lab outage cannot fail the form.
+  await forwardLeadToLab({
+    form: 'contact',
+    email,
+    name,
+    sourceDetail: 'Contact page',
+    attribution: attributionFromRequest(request),
+    payload: { form_name: 'contact', message, subject: subject || undefined },
+  })
 
   return NextResponse.json({ ok: true })
 }
