@@ -1,7 +1,7 @@
 // Server-only landing helpers. Kept separate from lib/landing.ts so the pure
 // config types/normalizers there stay importable by client components (the
 // landing editor) without pulling in next/headers via the server Supabase client.
-import { createServerSupabaseClient } from './supabase-server'
+import { createAdminClient } from './supabase-server'
 import { normalizeLanding, type LandingConfig } from './landing'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -23,7 +23,8 @@ export async function resolveFormForLanding(
   slugOrId: string
 ): Promise<ResolvedLandingForm | null> {
   if (!slugOrId) return null
-  const supabase = createServerSupabaseClient()
+  // Service-role read, filtered to published. Anon has no SELECT on forms.
+  const supabase = createAdminClient()
 
   let query = supabase
     .from('forms')

@@ -1,4 +1,4 @@
-import { createServerSupabaseClient, createAdminClient } from '@/lib/supabase-server'
+import { createAdminClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { checkCanAcceptResponse } from '@/lib/plan-enforcement'
@@ -29,7 +29,9 @@ export async function POST(
     )
   }
 
-  const supabase = createServerSupabaseClient()
+  // Service-role client: anon has no SELECT on forms/form_fields and no INSERT
+  // on form_events since 9 Oct 2026. The published check below is the gate.
+  const supabase = createAdminClient()
 
   try {
     const body = await request.json()

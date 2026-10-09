@@ -1,4 +1,4 @@
-import { createServerSupabaseClient, createAdminClient } from '@/lib/supabase-server'
+import { createAdminClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 import { getUserPlan } from '@/lib/plan-enforcement'
 import { hasPlanFeature } from '@/lib/plan-limits'
@@ -13,13 +13,15 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 // The [id] param may be a UUID *or* a vanity slug. When it isn't a UUID we
 // resolve the form by slug (case-insensitive). This powers /f/{slug} and the
 // subdomain rewrite ({sub}.host -> /f/{sub}).
-// Relies on RLS policies ("Public can view published forms" / "...fields of
-// published forms"), so anonymous respondents can load the form to fill it in.
+// Reads with the service-role client, filtered to status = 'published'. Since
+// 9 Oct 2026 anon has no SELECT on forms or form_fields: the open policies let
+// anyone read settings.access.password (the very hash the gate compares) and
+// every question of a password-protected form straight from PostgREST.
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const supabase = createServerSupabaseClient()
+  const supabase = createAdminClient()
   const idParam = params.id
 
   const baseSelect = 'id, title, description, theme, settings, status, logic, user_id'
