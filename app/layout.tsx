@@ -20,6 +20,8 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  // Search Console (lewis@byter.com, the login Byter Lab reads with).
+  verification: { google: '4ftgO3d3wpKkw17CRYiLLt3X1cnGGUOEiRvy7lbyq-U' },
   title: {
     default: 'Stoneforms: Typeform-grade forms, without the Typeform tax',
     template: '%s | Stoneforms',
